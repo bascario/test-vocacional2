@@ -11,7 +11,7 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
-                🎯 Panel Administrativo
+                Panel Administrativo
             </div>
             <div class="nav-menu">
                 <span><?= htmlspecialchars($_SESSION['user_name']) ?> (<?= $_SESSION['user_role'] ?>)</span>
@@ -25,8 +25,11 @@
             <ul class="sidebar-menu">
                 <li><a href="/test-vocacional/admin" class="active">📊 Dashboard</a></li>
                 <li><a href="/test-vocacional/admin/questions">❓ Gestión de Preguntas</a></li>
-                <?php if ($_SESSION['user_role'] === 'administrador'): ?>
-                    <li><a href="/test-vocacional/admin/questions/import">📥 Importar Preguntas</a></li>
+                <?php if (in_array($_SESSION['user_role'], ['administrador','dece'])): ?>
+                    <?php if ($_SESSION['user_role'] === 'administrador'): ?>
+                        <li><a href="/test-vocacional/admin/questions/import">📥 Importar Preguntas</a></li>
+                    <?php endif; ?>
+                    <li><a href="/test-vocacional/admin/institutions">🏫 Instituciones</a></li>
                 <?php endif; ?>
                 <li><a href="/test-vocacional/admin/reports/group">📋 Reportes Grupales</a></li>
             </ul>
@@ -59,7 +62,7 @@
                 <div class="stat-card">
                     <div class="stat-icon">📈</div>
                     <div class="stat-content">
-                        <h3><?= round($stats['average_scores']['ciencias'] ?? 0, 1) ?>%</h3>
+                        <h3><?= round($stats['average_scores']['ciencias']?? 0, 1) ?>%</h3>
                         <p>Promedio en Ciencias</p>
                     </div>
                 </div>
@@ -74,6 +77,18 @@
             </div>
 
             <!-- Charts -->
+            <?php
+                // Ensure average_scores has numeric values for all areas
+                $avgRaw = $stats['average_scores'] ?? [];
+                $avgScores = [
+                    'ciencias' => isset($avgRaw['ciencias']) ? round((float)$avgRaw['ciencias'], 1) : 0.0,
+                    'tecnologia' => isset($avgRaw['tecnologia']) ? round((float)$avgRaw['tecnologia'], 1) : 0.0,
+                    'humanidades' => isset($avgRaw['humanidades']) ? round((float)$avgRaw['humanidades'], 1) : 0.0,
+                    'artes' => isset($avgRaw['artes']) ? round((float)$avgRaw['artes'], 1) : 0.0,
+                    'salud' => isset($avgRaw['salud']) ? round((float)$avgRaw['salud'], 1) : 0.0,
+                    'negocios' => isset($avgRaw['negocios']) ? round((float)$avgRaw['negocios'], 1) : 0.0,
+                ];
+            ?>
             <div class="charts-section">
                 <div class="chart-container">
                     <h3>Tests Realizados por Mes</h3>
@@ -103,15 +118,37 @@
                         <tbody>
                             <?php foreach ($recentTests as $test):
                                 $scores = json_decode($test['puntajes_json'], true);
-                                $mainArea = array_keys($scores, max($scores))[0];
+
+                                // Determine main area by porcentaje if available, otherwise fallback
+                                $mainArea = 'N/A';
+                                if (is_array($scores) && !empty($scores)) {
+                                    $maxPct = -INF;
+                                    foreach ($scores as $areaKey => $areaData) {
+                                        $pct = 0;
+                                        if (is_array($areaData) && isset($areaData['porcentaje'])) {
+                                            $pct = (float)$areaData['porcentaje'];
+                                        } elseif (is_numeric($areaData)) {
+                                            $pct = (float)$areaData;
+                                        }
+                                        if ($pct > $maxPct) {
+                                            $maxPct = $pct;
+                                            $mainArea = $areaKey;
+                                        }
+                                    }
+                                }
+
+                                // Safe student name and course (avoid undefined index warnings)
+                                $studentName = trim((string)($test['nombre'] ?? '') . ' ' . (string)($test['apellido'] ?? ''));
+                                if ($studentName === '') $studentName = '—';
+                                $curso = (string)($test['curso'] ?? '—');
                             ?>
                             <tr>
                                 <td><?= date('d/m/Y H:i', strtotime($test['fecha_test'])) ?></td>
-                                <td><?= htmlspecialchars($test['nombre'] . ' ' . $test['apellido']) ?></td>
-                                <td><?= htmlspecialchars($test['curso']) ?></td>
-                                <td><?= ucfirst($mainArea) ?></td>
+                                <td><?= htmlspecialchars($studentName) ?></td>
+                                <td><?= htmlspecialchars($curso) ?></td>
+                                <td><?= htmlspecialchars(ucfirst((string)$mainArea)) ?></td>
                                 <td>
-                                    <a href="/test-vocacional/admin/reports/individual?student_id=<?= $test['usuario_id'] ?>" 
+                                    <a href="/test-vocacional/admin/reports/individual?student_id=<?= htmlspecialchars($test['usuario_id']) ?>" 
                                        class="btn btn-sm btn-primary" target="_blank">Ver PDF</a>
                                 </td>
                             </tr>
@@ -179,13 +216,13 @@
                 labels: ['Ciencias', 'Tecnología', 'Humanidades', 'Artes', 'Salud', 'Negocios'],
                 datasets: [{
                     data: [
-                        <?= round($stats['average_scores']['ciencias'], 1) ?>,
-                        <?= round($stats['average_scores']['tecnologia'], 1) ?>,
-                        <?= round($stats['average_scores']['humanidades'], 1) ?>,
-                        <?= round($stats['average_scores']['artes'], 1) ?>,
-                        <?= round($stats['average_scores']['salud'], 1) ?>,
-                        <?= round($stats['average_scores']['negocios'], 1) ?>
-                    ],
+                            <?= $avgScores['ciencias'] ?>,
+                            <?= $avgScores['tecnologia'] ?>,
+                            <?= $avgScores['humanidades'] ?>,
+                            <?= $avgScores['artes'] ?>,
+                            <?= $avgScores['salud'] ?>,
+                            <?= $avgScores['negocios'] ?>
+                        ],
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.8)',
                         'rgba(54, 162, 235, 0.8)',

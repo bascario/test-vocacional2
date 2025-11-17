@@ -1,11 +1,9 @@
 <?php
-// Remover los require_once individuales, ya que el autoload los cargará
-
 class AuthController {
     private $userModel;
     
     public function __construct() {
-        $this->userModel = new User(); // Esto ahora funcionará con el autoload
+        $this->userModel = new User();
     }
     
     public function index() {
@@ -55,7 +53,8 @@ class AuthController {
                 'email' => $_POST['email'] ?? '',
                 'nombre' => $_POST['nombre'] ?? '',
                 'apellido' => $_POST['apellido'] ?? '',
-                'curso' => $_POST['curso'] ?? '',
+                'institucion_id' => !empty($_POST['institucion_id']) ? (int)$_POST['institucion_id'] : null,
+                'bachillerato' => $_POST['bachillerato'] ?? '',
                 'rol' => 'estudiante'
             ];
             
@@ -71,6 +70,10 @@ class AuthController {
                 require_once 'views/register.php';
             }
         } else {
+            // Load institutions for selection
+            require_once 'models/Institucion.php';
+            $institucionModel = new Institucion();
+            $institutions = $institucionModel->getAll();
             require_once 'views/register.php';
         }
     }

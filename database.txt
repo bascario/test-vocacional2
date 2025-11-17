@@ -11,6 +11,7 @@ CREATE TABLE usuarios (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     curso VARCHAR(50),
+    institucion_id INT DEFAULT NULL,
     rol ENUM('administrador', 'dece', 'estudiante') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -44,7 +45,7 @@ CREATE TABLE respuestas_detalle (
     id INT PRIMARY KEY AUTO_INCREMENT,
     test_id INT NOT NULL,
     pregunta_id INT NOT NULL,
-    respuesta INT NOT NULL CHECK (respuesta BETWEEN 1 AND 5),
+    respuesta INT NOT NULL CHECK (respuesta BETWEEN 0 AND 1),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (test_id) REFERENCES resultados_test(id) ON DELETE CASCADE,
     FOREIGN KEY (pregunta_id) REFERENCES preguntas(id) ON DELETE CASCADE,
@@ -145,3 +146,21 @@ INSERT INTO preguntas (categoria, tipo, pregunta, peso) VALUES
 CREATE INDEX idx_usuarios_rol ON usuarios(rol);
 CREATE INDEX idx_usuarios_curso ON usuarios(curso);
 CREATE INDEX idx_resultados_fecha ON resultados_test(fecha_test);
+
+-- Tabla de instituciones educativas
+CREATE TABLE instituciones_educativas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(255) NOT NULL,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    tipo ENUM('Fiscal', 'Fiscomisional') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_codigo (codigo),
+    INDEX idx_nombre (nombre),
+    INDEX idx_tipo (tipo)
+);
+
+-- Migration: si ya existe la tabla usuarios, agregar columna institucion_id y FK
+-- Ejecutar solo si la columna no existe:
+-- ALTER TABLE usuarios ADD COLUMN institucion_id INT DEFAULT NULL;
+-- ALTER TABLE usuarios ADD CONSTRAINT fk_usuarios_institucion FOREIGN KEY (institucion_id) REFERENCES instituciones_educativas(id) ON DELETE SET NULL;

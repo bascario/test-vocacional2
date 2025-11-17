@@ -100,6 +100,31 @@ switch ($request) {
         $controller = new QuestionController();
         $controller->delete();
         break;
+
+    case '/admin/institutions':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        AuthMiddleware::checkRole(['administrador', 'dece']);
+        require_once 'controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->institutions();
+        break;
+
+    case '/admin/users':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        AuthMiddleware::checkRole(['administrador']);
+        require_once 'controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->users();
+        break;
+
+    case '/institutions/search':
+        // Public endpoint for autocomplete/search of institutions
+        require_once 'controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->searchInstitutions();
+        break;
         
     case '/admin/reports/individual':
         require_once 'middleware/AuthMiddleware.php';

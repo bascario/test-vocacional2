@@ -11,7 +11,7 @@
         <div class="login-container">
             <div class="login-card">
                 <div class="login-header">
-                    <h1>🎯 Test Vocacional</h1>
+                    <h1>Test Vocacional</h1>
                     <p>Sistema de Orientación Vocacional</p>
                 </div>
                 

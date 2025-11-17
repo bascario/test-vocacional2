@@ -34,15 +34,38 @@ class TestController {
             exit;
         }
         
+        // Ensure user is logged in and valid
+        if (!isset($_SESSION['user_id'])) {
+            $_SESSION['error'] = "Debes iniciar sesión para completar el test.";
+            header('Location: /test-vocacional/login');
+            exit;
+        }
+
+        $user = $this->userModel->find($_SESSION['user_id']);
+        if (!$user) {
+            // Clear potentially invalid session and ask to login again
+            session_unset();
+            session_destroy();
+            session_start();
+            $_SESSION['error'] = "Sesión inválida. Por favor inicia sesión de nuevo.";
+            header('Location: /test-vocacional/login');
+            exit;
+        }
+
         try {
             // Create test result
             $testId = $this->testModel->createTest($_SESSION['user_id'], $respuestas);
-            
+
             $_SESSION['success'] = "Test completado exitosamente";
             header('Location: /test-vocacional/results');
             exit;
         } catch (Exception $e) {
-            $_SESSION['error'] = "Error al guardar el test: " . $e->getMessage();
+            // Log or provide a friendly message for FK issues
+            if (strpos($e->getMessage(), '1452') !== false || strpos($e->getMessage(), 'foreign key') !== false) {
+                $_SESSION['error'] = "No se pudo guardar el test: usuario no válido. Por favor inicia sesión de nuevo.";
+            } else {
+                $_SESSION['error'] = "Error al guardar el test: " . $e->getMessage();
+            }
             header('Location: /test-vocacional/test');
             exit;
         }
@@ -61,6 +84,8 @@ class TestController {
         $latestResult = $results[0];
         $scores = json_decode($latestResult['puntajes_json'], true);
         
+        // Load recommendation helper so view can call getRecommendationText()
+        require_once 'utils/Recommendations.php';
         require_once 'views/test_results.php';
     }
 }

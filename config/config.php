@@ -7,7 +7,7 @@ define('DB_PASS', '');
 
 // Application settings
 define('APP_NAME', 'Sistema de Test Vocacional');
-define('APP_URL', 'http://localhost/test-vocacional');
+define('APP_URL', 'https://www.desarrollodesoftware.com.ec/test-vocacional/');
 define('APP_EMAIL', 'admin@colegio.edu');
 
 // File upload settings
@@ -22,9 +22,9 @@ define('PASSWORD_MIN_LENGTH', 6);
 // Test settings
 define('TEST_CATEGORIES', ['ciencias', 'tecnologia', 'humanidades', 'artes', 'salud', 'negocios']);
 define('TEST_TYPES', ['intereses', 'habilidades', 'valores']);
-define('LIKERT_SCALE', [1, 2, 3, 4, 5]);
+define('LIKERT_SCALE', [0, 1]); // Binary scale: 0 = No, 1 = Sí
 
-// Results thresholds
+// Results thresholds (adjusted for binary scale)
 define('APTO_THRESHOLD', 80);
 define('POTENCIAL_THRESHOLD', 60);
 

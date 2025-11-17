@@ -2,8 +2,8 @@
     "require": {
         "php": ">=7.4",
         "tecnickcom/tcpdf": "^6.4",
-        "phpoffice/phpspreadsheet": "^1.29",
-        "phpoffice/phpword": "^1.1"
+        "phpoffice/phpspreadsheet": "^5.1",
+        "phpoffice/phpword": "^1.4"
     },
     "autoload": {
         "psr-4": {
