@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= APP_NAME ?> - Panel Administrativo</title>
     <link rel="stylesheet" href="/test-vocacional/assets/css/styles.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/test-vocacional/assets/img/logoTUVN.ico">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
+                <img src="/test-vocacional/assets/img/logoTUVN.png" alt="Logo TUVN"
+                    style="height: 40px; margin-right: 10px; vertical-align: middle;">
                 Panel Administrativo
             </div>
             <div class="nav-menu">
@@ -25,7 +31,7 @@
             <ul class="sidebar-menu">
                 <li><a href="/test-vocacional/admin" class="active">📊 Dashboard</a></li>
                 <li><a href="/test-vocacional/admin/questions">❓ Gestión de Preguntas</a></li>
-                <?php if (in_array($_SESSION['user_role'], ['administrador','dece'])): ?>
+                <?php if (in_array($_SESSION['user_role'], ['administrador', 'dece'])): ?>
                     <?php if ($_SESSION['user_role'] === 'administrador'): ?>
                         <li><a href="/test-vocacional/admin/questions/import">📥 Importar Preguntas</a></li>
                     <?php endif; ?>
@@ -50,7 +56,7 @@
                         <p>Tests Completados</p>
                     </div>
                 </div>
-                
+
                 <div class="stat-card">
                     <div class="stat-icon">📝</div>
                     <div class="stat-content">
@@ -58,19 +64,19 @@
                         <p>Estudiantes Registrados</p>
                     </div>
                 </div>
-                
+
                 <div class="stat-card">
                     <div class="stat-icon">📈</div>
                     <div class="stat-content">
-                        <h3><?= round($stats['average_scores']['ciencias']?? 0, 1) ?>%</h3>
+                        <h3><?= round($stats['average_scores']['ciencias'] ?? 0, 1) ?>%</h3>
                         <p>Promedio en Ciencias</p>
                     </div>
                 </div>
-                
+
                 <div class="stat-card">
                     <div class="stat-icon">🎯</div>
                     <div class="stat-content">
-                        <h3><?= round($stats['average_scores']['tecnologia']?? 0, 1) ?>%</h3>
+                        <h3><?= round($stats['average_scores']['tecnologia'] ?? 0, 1) ?>%</h3>
                         <p>Promedio en Tecnología</p>
                     </div>
                 </div>
@@ -78,23 +84,23 @@
 
             <!-- Charts -->
             <?php
-                // Ensure average_scores has numeric values for all areas
-                $avgRaw = $stats['average_scores'] ?? [];
-                $avgScores = [
-                    'ciencias' => isset($avgRaw['ciencias']) ? round((float)$avgRaw['ciencias'], 1) : 0.0,
-                    'tecnologia' => isset($avgRaw['tecnologia']) ? round((float)$avgRaw['tecnologia'], 1) : 0.0,
-                    'humanidades' => isset($avgRaw['humanidades']) ? round((float)$avgRaw['humanidades'], 1) : 0.0,
-                    'artes' => isset($avgRaw['artes']) ? round((float)$avgRaw['artes'], 1) : 0.0,
-                    'salud' => isset($avgRaw['salud']) ? round((float)$avgRaw['salud'], 1) : 0.0,
-                    'negocios' => isset($avgRaw['negocios']) ? round((float)$avgRaw['negocios'], 1) : 0.0,
-                ];
+            // Ensure average_scores has numeric values for all areas
+            $avgRaw = $stats['average_scores'] ?? [];
+            $avgScores = [
+                'ciencias' => isset($avgRaw['ciencias']) ? round((float) $avgRaw['ciencias'], 1) : 0.0,
+                'tecnologia' => isset($avgRaw['tecnologia']) ? round((float) $avgRaw['tecnologia'], 1) : 0.0,
+                'humanidades' => isset($avgRaw['humanidades']) ? round((float) $avgRaw['humanidades'], 1) : 0.0,
+                'artes' => isset($avgRaw['artes']) ? round((float) $avgRaw['artes'], 1) : 0.0,
+                'salud' => isset($avgRaw['salud']) ? round((float) $avgRaw['salud'], 1) : 0.0,
+                'negocios' => isset($avgRaw['negocios']) ? round((float) $avgRaw['negocios'], 1) : 0.0,
+            ];
             ?>
             <div class="charts-section">
                 <div class="chart-container">
                     <h3>Tests Realizados por Mes</h3>
                     <canvas id="monthlyChart"></canvas>
                 </div>
-                
+
                 <div class="chart-container">
                     <h3>Promedio General por Área</h3>
                     <canvas id="areasChart"></canvas>
@@ -126,9 +132,9 @@
                                     foreach ($scores as $areaKey => $areaData) {
                                         $pct = 0;
                                         if (is_array($areaData) && isset($areaData['porcentaje'])) {
-                                            $pct = (float)$areaData['porcentaje'];
+                                            $pct = (float) $areaData['porcentaje'];
                                         } elseif (is_numeric($areaData)) {
-                                            $pct = (float)$areaData;
+                                            $pct = (float) $areaData;
                                         }
                                         if ($pct > $maxPct) {
                                             $maxPct = $pct;
@@ -138,20 +144,21 @@
                                 }
 
                                 // Safe student name and course (avoid undefined index warnings)
-                                $studentName = trim((string)($test['nombre'] ?? '') . ' ' . (string)($test['apellido'] ?? ''));
-                                if ($studentName === '') $studentName = '—';
-                                $curso = (string)($test['curso'] ?? '—');
-                            ?>
-                            <tr>
-                                <td><?= date('d/m/Y H:i', strtotime($test['fecha_test'])) ?></td>
-                                <td><?= htmlspecialchars($studentName) ?></td>
-                                <td><?= htmlspecialchars($curso) ?></td>
-                                <td><?= htmlspecialchars(ucfirst((string)$mainArea)) ?></td>
-                                <td>
-                                    <a href="/test-vocacional/admin/reports/individual?student_id=<?= htmlspecialchars($test['usuario_id']) ?>" 
-                                       class="btn btn-sm btn-primary" target="_blank">Ver PDF</a>
-                                </td>
-                            </tr>
+                                $studentName = trim((string) ($test['nombre'] ?? '') . ' ' . (string) ($test['apellido'] ?? ''));
+                                if ($studentName === '')
+                                    $studentName = '—';
+                                $curso = (string) ($test['curso'] ?? '—');
+                                ?>
+                                <tr>
+                                    <td><?= date('d/m/Y H:i', strtotime($test['fecha_test'])) ?></td>
+                                    <td><?= htmlspecialchars($studentName) ?></td>
+                                    <td><?= htmlspecialchars($curso) ?></td>
+                                    <td><?= htmlspecialchars(ucfirst((string) $mainArea)) ?></td>
+                                    <td>
+                                        <a href="/test-vocacional/admin/reports/individual?student_id=<?= htmlspecialchars($test['usuario_id']) ?>"
+                                            class="btn btn-sm btn-primary" target="_blank">Ver PDF</a>
+                                    </td>
+                                </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -177,7 +184,7 @@
         // Monthly Chart
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
         const monthlyData = <?= json_encode($stats['tests_by_month']) ?>;
-        
+
         new Chart(monthlyCtx, {
             type: 'line',
             data: {
@@ -216,13 +223,13 @@
                 labels: ['Ciencias', 'Tecnología', 'Humanidades', 'Artes', 'Salud', 'Negocios'],
                 datasets: [{
                     data: [
-                            <?= $avgScores['ciencias'] ?>,
-                            <?= $avgScores['tecnologia'] ?>,
-                            <?= $avgScores['humanidades'] ?>,
-                            <?= $avgScores['artes'] ?>,
-                            <?= $avgScores['salud'] ?>,
-                            <?= $avgScores['negocios'] ?>
-                        ],
+                        <?= $avgScores['ciencias'] ?>,
+                        <?= $avgScores['tecnologia'] ?>,
+                        <?= $avgScores['humanidades'] ?>,
+                        <?= $avgScores['artes'] ?>,
+                        <?= $avgScores['salud'] ?>,
+                        <?= $avgScores['negocios'] ?>
+                    ],
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.8)',
                         'rgba(54, 162, 235, 0.8)',
@@ -244,4 +251,5 @@
         });
     </script>
 </body>
+
 </html>

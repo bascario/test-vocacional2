@@ -15,6 +15,8 @@ if (!isset($_SESSION['user_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?? APP_NAME ?></title>
     <link rel="stylesheet" href="/test-vocacional/assets/css/styles.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/test-vocacional/assets/img/logoTUVN.ico">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -22,7 +24,8 @@ if (!isset($_SESSION['user_id'])) {
 <nav class="navbar">
     <div class="nav-container">
         <div class="nav-brand">
-            🎯 <?= APP_NAME ?>
+            <img src="/test-vocacional/assets/img/logoTUVN.png" alt="Logo TUVN" style="height: 40px; margin-right: 10px; vertical-align: middle;">
+            <?= APP_NAME ?>
         </div>
         <div class="nav-menu">
             <span><?= htmlspecialchars($_SESSION['user_name'] ?? 'Usuario') ?> (<?= $_SESSION['user_role'] ?? 'Rol' ?>)</span>

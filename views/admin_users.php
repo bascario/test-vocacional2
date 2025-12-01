@@ -16,11 +16,18 @@
             <p>Listado de usuarios y asignación de roles</p>
         </div>
 
-        <?php if (isset($_SESSION['success'])): ?>
-            <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?></div>
+        <?php
+            $success = $_SESSION['success'] ?? null;
+            $error = $_SESSION['error'] ?? null;
+            if ($success) unset($_SESSION['success']);
+            if ($error) unset($_SESSION['error']);
+        ?>
+
+        <?php if ($success): ?>
+            <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
         <?php endif; ?>
-        <?php if (isset($_SESSION['error'])): ?>
-            <div class="alert alert-error"><?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
+        <?php if ($error): ?>
+            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
         <div class="table-container">

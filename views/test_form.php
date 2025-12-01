@@ -24,12 +24,8 @@
         <div class="test-header">
             <h1>Test de Orientación Vocacional</h1>
             <p>Responde cada pregunta según tus intereses, habilidades y valores personales</p>
-            
             <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-error">
-                    <?= htmlspecialchars($_SESSION['error']) ?>
-                    <?php unset($_SESSION['error']); ?>
-                </div>
+                <div class="alert alert-error"><?= htmlspecialchars($_SESSION['error']) ?><?php unset($_SESSION['error']); ?></div>
             <?php endif; ?>
         </div>
 
@@ -40,212 +36,226 @@
             <span class="progress-text" id="progressText">0% completado</span>
         </div>
 
-        <!-- Category Navigation Tabs -->
-        <div class="category-tabs">
-            <?php 
-            $categories = array_keys($questions);
-            foreach ($categories as $index => $category): 
-            ?>
-                <button type="button" class="category-tab <?= $index === 0 ? 'active' : '' ?>" 
-                        data-category="<?= $category ?>"
-                        onclick="switchCategory('<?= $category ?>')">
-                    <span class="tab-title"><?= ucfirst($category) ?></span>
-                    <span class="tab-progress" id="progress-<?= $category ?>">0/0</span>
-                </button>
-            <?php endforeach; ?>
-        </div>
-
         <form method="POST" action="/test-vocacional/test/submit" id="testForm">
-            <?php 
-            $totalQuestions = 0;
-            
-            // Contar total de preguntas
-            foreach ($questions as $categoryQuestions) {
-                foreach ($categoryQuestions as $typeQuestions) {
-                    $totalQuestions += count($typeQuestions);
-                }
-            }
+            <?php
+                // $questions is a flattened list provided by the controller
+                $totalQuestions = count($questions);
             ?>
-            
-            <?php foreach ($questions as $categoryIndex => $categoryQuestions): ?>
-                <div class="category-form" id="form-<?= $categoryIndex ?>" 
-                     style="display: <?= $categoryIndex === array_key_first($questions) ? 'block' : 'none' ?>;">
-                    
-                    <div class="category-header">
-                        <h2><?= ucfirst($categoryIndex) ?></h2>
-                        <p class="category-description">Responde las preguntas sobre <?= $categoryIndex ?></p>
-                    </div>
-                    
-                    <?php foreach ($categoryQuestions as $type => $typeQuestions): ?>
-                        <div class="type-subsection">
-                            <h3><?= ucfirst($type) ?></h3>
-                            
-                            <?php foreach ($typeQuestions as $question): ?>
-                                <div class="question-card">
-                                    <p class="question-text">
-                                        <?= htmlspecialchars($question['pregunta']) ?>
-                                    </p>
-                                    
-                                    <div class="likert-scale">
-                                        <label class="likert-option">
-                                            <input type="radio" 
-                                                   name="respuestas[<?= $question['id'] ?>]" 
-                                                   value="1" 
-                                                   required
-                                                   onchange="updateProgress()">
-                                            <span class="likert-label">Sí</span>
-                                        </label>
-                                        <label class="likert-option">
-                                            <input type="radio" 
-                                                   name="respuestas[<?= $question['id'] ?>]" 
-                                                   value="0" 
-                                                   required
-                                                   onchange="updateProgress()">
-                                            <span class="likert-label">No</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endforeach; ?>
-                    
-                    <div class="category-navigation">
-                        <?php 
-                        $categoryKeys = array_keys($questions);
-                        $currentIndex = array_search($categoryIndex, $categoryKeys);
-                        ?>
-                        
-                        <?php if ($currentIndex > 0): ?>
-                            <button type="button" class="btn btn-secondary" 
-                                    onclick="switchCategory('<?= $categoryKeys[$currentIndex - 1] ?>')">
-                                ← Anterior
-                            </button>
-                        <?php else: ?>
-                            <div></div>
-                        <?php endif; ?>
-                        
-                        <?php if ($currentIndex < count($categoryKeys) - 1): ?>
-                            <button type="button" class="btn btn-primary" 
-                                    onclick="switchCategory('<?= $categoryKeys[$currentIndex + 1] ?>')">
-                                Siguiente →
-                            </button>
-                        <?php else: ?>
-                            <button type="submit" class="btn btn-success btn-lg">
-                                Finalizar y Ver Resultados
-                            </button>
-                        <?php endif; ?>
-                    </div>
+
+            <div class="book-container" id="bookContainer">
+                <div class="page" id="pageFront">
+                    <!-- Question content injected by JS / initial rendered below -->
                 </div>
-            <?php endforeach; ?>
+            </div>
+
+            <input type="hidden" id="currentIndex" name="currentIndex" value="0">
+            <div class="page-controls" id="pageControls">
+                <button type="button" class="btn btn-secondary" id="prevBtn">← Anterior</button>
+                <span id="pageCounter">Pregunta 1 de <?= $totalQuestions ?></span>
+                <button type="button" class="btn btn-primary" id="nextBtn">Siguiente →</button>
+            </div>
+
+            <div style="margin-top:18px; text-align:center;">
+                <button type="submit" class="btn btn-success btn-lg" id="submitBtn" style="display:none">Finalizar y Ver Resultados</button>
+            </div>
         </form>
     </div>
 
+    <style>
+        /* Simple 3D page flip book effect */
+        .book-container { perspective: 1200px; margin: 30px auto; max-width: 800px; }
+        .page { background: #fff; padding: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); border-radius: 6px; min-height: 220px; transition: transform 600ms ease, opacity 300ms ease; transform-origin: left center; }
+        .page.flip-out { transform: rotateY(-90deg); opacity: 0; }
+        .page.flip-in { transform: rotateY(90deg); opacity: 0; }
+        .page.show { transform: rotateY(0deg); opacity: 1; }
+        .question-text { font-size: 1.05rem; margin-bottom: 18px; }
+        .likert-scale { display:flex; gap:12px; justify-content:flex-start; }
+        .likert-option { display:inline-flex; align-items:center; gap:8px; }
+        .page-controls { display:flex; justify-content:space-between; align-items:center; margin-top:12px; max-width:800px; margin-left:auto; margin-right:auto; }
+        #username-suggestions .btn { cursor:pointer; }
+    </style>
+
     <script>
-        const categories = <?= json_encode(array_keys($questions)) ?>;
-        const totalQuestions = <?= $totalQuestions ?>;
-        let currentCategory = categories[0];
-        
-        function switchCategory(categoryName) {
-            // Validate current category before switching
-            const currentForm = document.getElementById('form-' + currentCategory);
-            const requiredInputs = currentForm.querySelectorAll('input[required]');
-            let allAnswered = true;
-            
-            requiredInputs.forEach(input => {
+        const questions = <?= json_encode($questions) ?>;
+        const totalQuestions = questions.length;
+        let currentIndex = 0;
+
+        const pageEl = document.getElementById('pageFront');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const pageCounter = document.getElementById('pageCounter');
+
+        function renderQuestion(index) {
+            const q = questions[index];
+            const existingVal = (localStorage.getItem('testProgress') ? JSON.parse(localStorage.getItem('testProgress')) : {})[`respuestas[${q.id}]`];
+            const yesChecked = existingVal === '1';
+            const noChecked = existingVal === '0';
+
+            pageEl.innerHTML = `
+                <div class="question-card">
+                    <p class="question-text">${escapeHtml(q.pregunta)}</p>
+                    <div class="likert-scale">
+                        <label class="likert-option"><input type="radio" name="respuestas[${q.id}]" value="1" ${yesChecked ? 'checked' : ''}> <span>Sí</span></label>
+                        <label class="likert-option"><input type="radio" name="respuestas[${q.id}]" value="0" ${noChecked ? 'checked' : ''}> <span>No</span></label>
+                    </div>
+                </div>
+            `;
+
+            // update page counter and progress
+            pageCounter.textContent = `Pregunta ${index + 1} de ${totalQuestions}`;
+            updateProgressBar();
+            updateControls();
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, function(s) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":"&#39;"})[s]; });
+        }
+
+        function updateProgressBar() {
+            // Count answers saved in localStorage (all pages) plus any currently checked inputs not yet saved
+            let answered = 0;
+            let saved = {};
+            try {
+                saved = JSON.parse(localStorage.getItem('testProgress') || '{}');
+            } catch (e) {
+                saved = {};
+            }
+
+            for (const key in saved) {
+                if (key && key.indexOf('respuestas[') === 0) answered++;
+            }
+
+            // Include any checked inputs present in DOM that may not be in saved (edge case)
+            document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
                 const name = input.name;
-                const isAnswered = document.querySelector(`input[name="${name}"]:checked`);
-                if (!isAnswered) {
-                    allAnswered = false;
+                if (name && name.indexOf('respuestas[') === 0 && !(name in saved)) {
+                    answered++;
                 }
             });
-            
-            if (!allAnswered) {
-                alert('Por favor responde todas las preguntas de esta categoría antes de continuar.');
+
+            // Clamp answered to totalQuestions
+            answered = Math.max(0, Math.min(answered, totalQuestions));
+            const pct = Math.round((answered / totalQuestions) * 100);
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressText').textContent = pct + '% completado';
+        }
+
+        function updateControls() {
+            prevBtn.style.display = currentIndex === 0 ? 'none' : 'inline-block';
+            nextBtn.style.display = currentIndex === totalQuestions - 1 ? 'none' : 'inline-block';
+            submitBtn.style.display = currentIndex === totalQuestions - 1 ? 'inline-block' : 'none';
+        }
+
+        function saveCurrentAnswer() {
+            const q = questions[currentIndex];
+            const checked = document.querySelector(`input[name="respuestas[${q.id}]"]:checked`);
+            const data = JSON.parse(localStorage.getItem('testProgress') || '{}');
+            if (checked) {
+                data[`respuestas[${q.id}]`] = checked.value;
+            } else {
+                delete data[`respuestas[${q.id}]`];
+            }
+            localStorage.setItem('testProgress', JSON.stringify(data));
+        }
+
+        function goTo(index) {
+            if (index < 0 || index >= totalQuestions) return;
+
+            // Validate current question answered before moving forward
+            if (index > currentIndex) {
+                const curQ = questions[currentIndex];
+                const checked = document.querySelector(`input[name="respuestas[${curQ.id}]"]:checked`);
+                if (!checked) {
+                    alert('Por favor responde la pregunta antes de continuar.');
+                    return;
+                }
+            }
+
+            // start flip out
+            pageEl.classList.add('flip-out');
+            pageEl.addEventListener('transitionend', function handler() {
+                pageEl.removeEventListener('transitionend', handler);
+                // Save current answers
+                saveCurrentAnswer();
+                currentIndex = index;
+                renderQuestion(currentIndex);
+                // flip in
+                pageEl.classList.remove('flip-out');
+                pageEl.classList.add('flip-in');
+                requestAnimationFrame(() => {
+                    // allow frame to apply class
+                    setTimeout(() => pageEl.classList.remove('flip-in'), 600);
+                });
+            });
+        }
+
+        prevBtn.addEventListener('click', function(){ goTo(currentIndex - 1); });
+        nextBtn.addEventListener('click', function(){ goTo(currentIndex + 1); });
+
+        // When user interacts with page (click an option), save and update progress
+        document.getElementById('testForm').addEventListener('change', function(e){
+            if (e.target && e.target.name && e.target.name.startsWith('respuestas')) {
+                saveCurrentAnswer();
+                updateProgressBar();
+            }
+        });
+
+        // On submit, ensure all answered — count saved responses in localStorage (all pages)
+        document.getElementById('testForm').addEventListener('submit', function(e){
+            // Count responses stored in localStorage
+            let saved = {};
+            try { saved = JSON.parse(localStorage.getItem('testProgress') || '{}'); } catch (ex) { saved = {}; }
+
+            let answered = 0;
+            for (const key in saved) {
+                if (key && key.indexOf('respuestas[') === 0) answered++;
+            }
+
+            // Also count any checked inputs currently in DOM that may not be saved yet
+            document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
+                const name = input.name;
+                if (name && name.indexOf('respuestas[') === 0 && !(name in saved)) {
+                    answered++;
+                }
+            });
+
+            if (answered < totalQuestions) {
+                e.preventDefault();
+                alert('Por favor responde todas las preguntas antes de enviar el test.');
                 return;
             }
-            
-            // Hide current category
-            document.getElementById('form-' + currentCategory).style.display = 'none';
-            document.querySelector(`.category-tab[data-category="${currentCategory}"]`).classList.remove('active');
-            
-            // Show new category
-            currentCategory = categoryName;
-            document.getElementById('form-' + currentCategory).style.display = 'block';
-            document.querySelector(`.category-tab[data-category="${currentCategory}"]`).classList.add('active');
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            // Save progress
-            saveProgress();
-        }
-        
-        function updateProgress() {
-            const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
-            const progress = (answeredQuestions / totalQuestions) * 100;
-            
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('progressText').textContent = Math.round(progress) + '% completado';
-            
-            // Update individual category progress
-            categories.forEach(category => {
-                const categoryForm = document.getElementById('form-' + category);
-                const categoryInputs = categoryForm.querySelectorAll('input[required]');
-                const categoryAnswered = categoryForm.querySelectorAll('input[type="radio"]:checked').length;
-                document.getElementById('progress-' + category).textContent = categoryAnswered + '/' + categoryInputs.length;
-            });
-        }
-        
-        // Form validation
-        document.getElementById('testForm').addEventListener('submit', function(e) {
-            const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
-            
-            if (answeredQuestions < totalQuestions) {
-                e.preventDefault();
-                alert('Por favor responde todas las preguntas antes de continuar.');
-                return false;
-            }
-        });
 
-        // Auto-save functionality
-        function saveProgress() {
-            const formData = new FormData(document.getElementById('testForm'));
-            const responses = {};
-            
-            for (let [key, value] of formData.entries()) {
-                responses[key] = value;
-            }
-            
-            localStorage.setItem('testProgress', JSON.stringify(responses));
-        }
-
-        function restoreProgress() {
-            const saved = localStorage.getItem('testProgress');
-            if (saved) {
-                const responses = JSON.parse(saved);
-                
-                for (let key in responses) {
-                    const input = document.querySelector(`input[name="${key}"][value="${responses[key]}"]`);
-                    if (input) {
-                        input.checked = true;
-                    }
+            // Append saved responses as hidden inputs (in case some aren't in DOM)
+            for (const key in saved) {
+                if (key && key.indexOf('respuestas[') === 0) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = saved[key];
+                    document.getElementById('testForm').appendChild(input);
                 }
             }
-            updateProgress();
-        }
 
-        // Save progress on change
-        document.getElementById('testForm').addEventListener('change', function() {
-            saveProgress();
-        });
+            // Also include any checked inputs present in DOM that might not be saved
+            document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
+                const name = input.name;
+                if (name && name.indexOf('respuestas[') === 0 && !(name in saved)) {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = name;
+                    hidden.value = input.value;
+                    document.getElementById('testForm').appendChild(hidden);
+                }
+            });
 
-        // Restore progress on page load
-        restoreProgress();
-
-        // Clear saved progress on successful submission
-        document.getElementById('testForm').addEventListener('submit', function() {
+            // Clear saved progress now that we're submitting
             localStorage.removeItem('testProgress');
         });
+
+        // Initial render
+        renderQuestion(0);
+
     </script>
 </body>
 </html>

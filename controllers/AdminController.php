@@ -35,9 +35,21 @@ class AdminController {
         }
         
         try {
+            $currentUserId = $_SESSION['user_id'] ?? null;
+            $currentUserRole = $_SESSION['user_role'] ?? null;
+            
+            // Allow if: admin, dece with same institution, or estudiante downloading their own report
+            $isOwn = ($currentUserId == $studentId);
+            $isAdmin = ($currentUserRole === 'administrador');
+            $isDece = ($currentUserRole === 'dece');
+            
+            if (!$isOwn && !$isAdmin && !$isDece) {
+                throw new Exception('Acceso denegado: no tienes permiso para descargar este reporte');
+            }
+            
             // If current user is DECE, only allow generating report for students in the same institution
-            if (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'dece') {
-                $current = $this->userModel->find($_SESSION['user_id']);
+            if ($isDece && !$isOwn) {
+                $current = $this->userModel->find($currentUserId);
                 if (empty($current) || empty($current['institucion_id'])) {
                     throw new Exception('Acceso denegado: tu cuenta no está vinculada a una institución');
                 }

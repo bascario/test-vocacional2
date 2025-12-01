@@ -34,6 +34,12 @@ switch ($request) {
         $controller = new AuthController();
         $controller->register();
         break;
+
+    case '/auth/check-username':
+        require_once 'controllers/AuthController.php';
+        $controller = new AuthController();
+        $controller->checkUsername();
+        break;
         
     case '/logout':
         require_once 'controllers/AuthController.php';
@@ -128,8 +134,7 @@ switch ($request) {
         
     case '/admin/reports/individual':
         require_once 'middleware/AuthMiddleware.php';
-        AuthMiddleware::checkAuth();
-        AuthMiddleware::checkRole(['administrador', 'dece']);
+        AuthMiddleware::checkAuth(); // Only require logged in, role check is done in controller
         require_once 'controllers/AdminController.php';
         $controller = new AdminController();
         $controller->generateIndividualReport();
