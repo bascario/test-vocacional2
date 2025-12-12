@@ -6,12 +6,12 @@
     <title><?= APP_NAME ?> - Registro</title>
     <link rel="stylesheet" href="/test-vocacional/assets/css/styles.css">
     <!-- CSS de Select2 -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-<!-- jQuery (requerido por Select2) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- JS de Select2 -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
+    <!-- jQuery (requerido por Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- JS de Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -62,14 +62,12 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="bachillerato">Tipo de Bachillerato</label>
-                        <select id="bachillerato" name="bachillerato" required>
-                            <option value="">Selecciona el bachillerato</option>
-                            <option value="Bachillerato General Unificado">Bachillerato General Unificado</option>
-                            <option value="Técnico">Técnico</option>
-                        </select>
+                        <label for="telefono">Número de Celular (Opcional)</label>
+                        <input type="tel" id="telefono" name="telefono" 
+                               placeholder="Ej: 0987654321" 
+                               pattern="[0-9]{10}" 
+                               title="Ingresa un número de 10 dígitos">
                     </div>
-                    
                     
                     <div class="form-group">
                         <label for="password">Contraseña</label>

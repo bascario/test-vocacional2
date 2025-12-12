@@ -35,7 +35,7 @@ class VocationalTest extends BaseModel
         $questionModel = new Question();
 
         foreach ($respuestas as $preguntaId => $respuesta) {
-            // normalize/validate answer to 0 or 1
+            // normalize/validate answer to 1-5
             $respuestaNorm = $this->normalizeAnswer($respuesta);
 
             $pregunta = $questionModel->find($preguntaId);
@@ -47,7 +47,8 @@ class VocationalTest extends BaseModel
             $categoria = $pregunta['categoria'];
             $peso = $pregunta['peso'] ?? 1;
 
-            $puntajes[$categoria] += ($respuestaNorm * $peso);
+            // For 1-5 scale: convert to 0-4 range, then multiply by peso
+            $puntajes[$categoria] += (($respuestaNorm - 1) * $peso);
             $conteos[$categoria]++;
         }
 
@@ -56,7 +57,8 @@ class VocationalTest extends BaseModel
         foreach (TEST_CATEGORIES as $category) {
             if ($conteos[$category] > 0) {
                 $promedio = $puntajes[$category] / $conteos[$category];
-                $porcentaje = ($promedio / 1) * 100; // Binary scale (max value is 1)
+                // For 1-5 scale: max value per question is 4 (5-1), so divide by 4
+                $porcentaje = ($promedio / 4) * 100;
 
                 // Clamp percentage to the [0,100] range to avoid values >100
                 if (!is_numeric($porcentaje)) {
@@ -100,9 +102,8 @@ class VocationalTest extends BaseModel
         );
 
         foreach ($respuestas as $preguntaId => $respuesta) {
-            // Force to 0 or 1: treat "1", 1, true as 1; everything else as 0
-            $val = (string) trim((string) $respuesta);
-            $normalized = ($val === '1' || $val === 1 || $val === true) ? 1 : 0;
+            // Normalize to 1-5 range
+            $normalized = $this->normalizeAnswer($respuesta);
 
             // Execute with explicit integer casting
             $stmt->execute([(int) $testId, (int) $preguntaId, (int) $normalized]);
@@ -110,35 +111,26 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Normalize different possible input values to integer 0 or 1.
-     * Accepts numeric 0/1, strings '0'/'1', 'si','sí','no','true','false','on','off', booleans.
-     * Throws Exception on unrecognized values to avoid inserting invalid values.
+     * Normalize and validate input values to integer 1-5 for Likert scale.
+     * Accepts numeric 1-5 or strings '1'-'5'.
+     * Throws Exception on unrecognized or out-of-range values.
      */
     private function normalizeAnswer($val)
     {
-        if (is_bool($val)) {
-            return $val ? 1 : 0;
-        }
-
         if (is_numeric($val)) {
             $n = (int) $val;
-            if ($n === 0 || $n === 1)
+            if ($n >= 1 && $n <= 5)
                 return $n;
         }
 
         if (is_string($val)) {
-            $v = trim(mb_strtolower($val));
-            // common true values
-            $truthy = ['1', 'si', 'sí', 'yes', 'y', 'true', 't', 'on'];
-            $falsy = ['0', 'no', 'n', 'false', 'f', 'off'];
-
-            if (in_array($v, $truthy, true))
-                return 1;
-            if (in_array($v, $falsy, true))
-                return 0;
+            $v = trim($val);
+            if (in_array($v, ['1', '2', '3', '4', '5'], true)) {
+                return (int) $v;
+            }
         }
 
-        throw new Exception('Valor de respuesta inválido: ' . json_encode($val));
+        throw new Exception('Respuesta inválida: debe ser un valor entre 1 y 5. Recibido: ' . json_encode($val));
     }
 
 

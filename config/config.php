@@ -22,7 +22,7 @@ define('PASSWORD_MIN_LENGTH', 6);
 // Test settings
 define('TEST_CATEGORIES', ['ciencias', 'tecnologia', 'humanidades', 'artes', 'salud', 'negocios']);
 define('TEST_TYPES', ['intereses', 'habilidades', 'valores']);
-define('LIKERT_SCALE', [0, 1]); // Binary scale: 0 = No, 1 = Sí
+define('LIKERT_SCALE', [1, 2, 3, 4, 5]); // 1=Totalmente en desacuerdo, 2=En desacuerdo, 3=Es difícil decidir, 4=De acuerdo, 5=Totalmente de acuerdo
 
 // Results thresholds (adjusted for binary scale)
 define('APTO_THRESHOLD', 80);

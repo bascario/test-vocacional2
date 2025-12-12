@@ -349,3 +349,51 @@ Stack trace:
 #3 C:\laragon\www\test-vocacional\index.php(63): TestController->submit()
 #4 {main}
 
+=== Exception at 2025-12-03T11:41:43-05:00 ===
+Message: Valor de respuesta inválido: "5"
+Code: 0
+User ID: 2
+POST respuestas count: 1
+POST respuestas content:
+array (
+  3 => '5',
+)
+Stack trace:
+#0 C:\laragon\www\test-vocacional\models\VocationalTest.php(39): VocationalTest->normalizeAnswer('5')
+#1 C:\laragon\www\test-vocacional\models\VocationalTest.php(9): VocationalTest->calculateScores(Array)
+#2 C:\laragon\www\test-vocacional\controllers\TestController.php(65): VocationalTest->createTest(2, Array)
+#3 C:\laragon\www\test-vocacional\index.php(63): TestController->submit()
+#4 {main}
+
+=== Exception at 2025-12-03T11:42:33-05:00 ===
+Message: Valor de respuesta inválido: "5"
+Code: 0
+User ID: 2
+POST respuestas count: 1
+POST respuestas content:
+array (
+  3 => '5',
+)
+Stack trace:
+#0 C:\laragon\www\test-vocacional\models\VocationalTest.php(39): VocationalTest->normalizeAnswer('5')
+#1 C:\laragon\www\test-vocacional\models\VocationalTest.php(9): VocationalTest->calculateScores(Array)
+#2 C:\laragon\www\test-vocacional\controllers\TestController.php(65): VocationalTest->createTest(2, Array)
+#3 C:\laragon\www\test-vocacional\index.php(63): TestController->submit()
+#4 {main}
+
+=== Exception at 2025-12-03T11:45:58-05:00 ===
+Message: SQLSTATE[HY000]: General error: 3819 Check constraint 'chk_respuesta' is violated.
+Code: HY000
+User ID: 2
+POST respuestas count: 1
+POST respuestas content:
+array (
+  3 => '5',
+)
+Stack trace:
+#0 C:\laragon\www\test-vocacional\models\VocationalTest.php(109): PDOStatement->execute(Array)
+#1 C:\laragon\www\test-vocacional\models\VocationalTest.php(18): VocationalTest->storeDetailedAnswers('6', Array)
+#2 C:\laragon\www\test-vocacional\controllers\TestController.php(65): VocationalTest->createTest(2, Array)
+#3 C:\laragon\www\test-vocacional\index.php(63): TestController->submit()
+#4 {main}
+

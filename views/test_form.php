@@ -69,8 +69,8 @@
         .page.flip-in { transform: rotateY(90deg); opacity: 0; }
         .page.show { transform: rotateY(0deg); opacity: 1; }
         .question-text { font-size: 1.05rem; margin-bottom: 18px; }
-        .likert-scale { display:flex; gap:12px; justify-content:flex-start; }
-        .likert-option { display:inline-flex; align-items:center; gap:8px; }
+        .likert-scale { display:flex; gap:10px; justify-content:flex-start; flex-wrap: wrap; }
+        .likert-option { display:inline-flex; align-items:center; gap:6px; font-size: 0.9rem; }
         .page-controls { display:flex; justify-content:space-between; align-items:center; margin-top:12px; max-width:800px; margin-left:auto; margin-right:auto; }
         #username-suggestions .btn { cursor:pointer; }
     </style>
@@ -89,15 +89,31 @@
         function renderQuestion(index) {
             const q = questions[index];
             const existingVal = (localStorage.getItem('testProgress') ? JSON.parse(localStorage.getItem('testProgress')) : {})[`respuestas[${q.id}]`];
-            const yesChecked = existingVal === '1';
-            const noChecked = existingVal === '0';
 
             pageEl.innerHTML = `
                 <div class="question-card">
                     <p class="question-text">${escapeHtml(q.pregunta)}</p>
                     <div class="likert-scale">
-                        <label class="likert-option"><input type="radio" name="respuestas[${q.id}]" value="1" ${yesChecked ? 'checked' : ''}> <span>Sí</span></label>
-                        <label class="likert-option"><input type="radio" name="respuestas[${q.id}]" value="0" ${noChecked ? 'checked' : ''}> <span>No</span></label>
+                        <label class="likert-option">
+                            <input type="radio" name="respuestas[${q.id}]" value="1" ${existingVal === '1' ? 'checked' : ''}>
+                            <span>1. Totalmente en desacuerdo</span>
+                        </label>
+                        <label class="likert-option">
+                            <input type="radio" name="respuestas[${q.id}]" value="2" ${existingVal === '2' ? 'checked' : ''}>
+                            <span>2. En desacuerdo</span>
+                        </label>
+                        <label class="likert-option">
+                            <input type="radio" name="respuestas[${q.id}]" value="3" ${existingVal === '3' ? 'checked' : ''}>
+                            <span>3. Es difícil decidir</span>
+                        </label>
+                        <label class="likert-option">
+                            <input type="radio" name="respuestas[${q.id}]" value="4" ${existingVal === '4' ? 'checked' : ''}>
+                            <span>4. De acuerdo</span>
+                        </label>
+                        <label class="likert-option">
+                            <input type="radio" name="respuestas[${q.id}]" value="5" ${existingVal === '5' ? 'checked' : ''}>
+                            <span>5. Totalmente de acuerdo</span>
+                        </label>
                     </div>
                 </div>
             `;
@@ -109,7 +125,7 @@
         }
 
         function escapeHtml(str) {
-            return String(str).replace(/[&<>"']/g, function(s) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":"&#39;"})[s]; });
+            return String(str).replace(/[&<>"']/g, function(s) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[s]; });
         }
 
         function updateProgressBar() {
