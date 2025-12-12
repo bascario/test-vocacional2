@@ -276,5 +276,235 @@ class PDFGenerator
 
         return $recommendations;
     }
+
+    /**
+     * Generate DECE institution report with statistics and charts
+     */
+    public function generateDECEReport($institucion, $stats, $performanceByCourse, $performanceByParalelo, $studentResults, $curso = null, $paralelo = null)
+    {
+        $this->pdf->AddPage();
+
+        // Title
+        $this->pdf->SetFont('helvetica', 'B', 16);
+        $title = 'REPORTE DECE - ' . strtoupper($institucion['nombre']);
+        $this->pdf->Cell(0, 10, $title, 0, 1, 'C');
+        $this->pdf->Ln(5);
+
+        // Institution info
+        $this->pdf->SetFont('helvetica', '', 10);
+        $this->pdf->Cell(0, 6, 'Código: ' . $institucion['codigo'] . ' | Tipo: ' . $institucion['tipo'], 0, 1, 'C');
+        $this->pdf->Cell(0, 6, 'Fecha de generación: ' . date('d/m/Y H:i'), 0, 1, 'C');
+
+        // Filters applied
+        if ($curso || $paralelo) {
+            $filterText = 'Filtros aplicados: ';
+            if ($curso)
+                $filterText .= 'Curso: ' . $curso . ' ';
+            if ($paralelo)
+                $filterText .= 'Paralelo: ' . $paralelo;
+            $this->pdf->Cell(0, 6, $filterText, 0, 1, 'C');
+        }
+        $this->pdf->Ln(10);
+
+        // Statistics Summary
+        $this->pdf->SetFont('helvetica', 'B', 12);
+        $this->pdf->Cell(0, 8, 'RESUMEN ESTADÍSTICO', 0, 1, 'L');
+        $this->pdf->SetFont('helvetica', '', 10);
+
+        $html = '
+        <table border="1" cellpadding="5">
+            <tr>
+                <td><strong>Total Estudiantes:</strong></td>
+                <td>' . ($stats['total_students'] ?? 0) . '</td>
+                <td><strong>Tests Completados:</strong></td>
+                <td>' . ($stats['total_tests'] ?? 0) . '</td>
+            </tr>
+            <tr>
+                <td><strong>Tasa de Completación:</strong></td>
+                <td>' . (($stats['total_students'] ?? 0) > 0 ? round((($stats['total_tests'] ?? 0) / $stats['total_students']) * 100, 1) : 0) . '%</td>
+                <td><strong>Período:</strong></td>
+                <td>Últimos 12 meses</td>
+            </tr>
+        </table>
+        ';
+        $this->pdf->writeHTML($html, true, false, true, false, '');
+        $this->pdf->Ln(10);
+
+        // Average scores by area
+        $this->pdf->SetFont('helvetica', 'B', 12);
+        $this->pdf->Cell(0, 8, 'PROMEDIO POR ÁREA VOCACIONAL', 0, 1, 'L');
+
+        $avgScores = $stats['average_scores'] ?? [];
+        $html = '
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr style="background-color: #f0f0f0;">
+                    <th><strong>Área</strong></th>
+                    <th><strong>Promedio</strong></th>
+                    <th><strong>Nivel</strong></th>
+                </tr>
+            </thead>
+            <tbody>
+        ';
+
+        foreach (TEST_CATEGORIES as $category) {
+            $score = isset($avgScores[$category]) ? round((float) $avgScores[$category], 1) : 0;
+            $estado = $score >= 70 ? 'APTO' : ($score >= 50 ? 'POTENCIAL' : 'POR REFORZAR');
+            $color = $this->getStateColor($estado);
+
+            $html .= '
+                <tr>
+                    <td>' . ucfirst($category) . '</td>
+                    <td>' . $score . '%</td>
+                    <td style="color: ' . $color . '; font-weight: bold;">' . $estado . '</td>
+                </tr>
+            ';
+        }
+
+        $html .= '</tbody></table>';
+        $this->pdf->writeHTML($html, true, false, true, false, '');
+        $this->pdf->Ln(10);
+
+        // Performance by course
+        if (!empty($performanceByCourse)) {
+            $this->pdf->SetFont('helvetica', 'B', 12);
+            $this->pdf->Cell(0, 8, 'RENDIMIENTO POR CURSO', 0, 1, 'L');
+
+            $html = '
+            <table border="1" cellpadding="4">
+                <thead>
+                    <tr style="background-color: #f0f0f0;">
+                        <th><strong>Curso</strong></th>
+                        <th><strong>Tests</strong></th>
+                        <th><strong>Ciencias</strong></th>
+                        <th><strong>Tecnología</strong></th>
+                        <th><strong>Humanidades</strong></th>
+                        <th><strong>Artes</strong></th>
+                        <th><strong>Salud</strong></th>
+                        <th><strong>Negocios</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+            ';
+
+            foreach ($performanceByCourse as $courseData) {
+                $html .= '
+                    <tr>
+                        <td>' . htmlspecialchars($courseData['curso']) . '</td>
+                        <td>' . $courseData['total_tests'] . '</td>
+                        <td>' . round((float) ($courseData['ciencias'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($courseData['tecnologia'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($courseData['humanidades'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($courseData['artes'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($courseData['salud'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($courseData['negocios'] ?? 0), 1) . '%</td>
+                    </tr>
+                ';
+            }
+
+            $html .= '</tbody></table>';
+            $this->pdf->writeHTML($html, true, false, true, false, '');
+            $this->pdf->Ln(10);
+        }
+
+        // Performance by paralelo
+        if (!empty($performanceByParalelo)) {
+            $this->pdf->SetFont('helvetica', 'B', 12);
+            $this->pdf->Cell(0, 8, 'RENDIMIENTO POR PARALELO - CURSO: ' . strtoupper($curso), 0, 1, 'L');
+
+            $html = '
+            <table border="1" cellpadding="4">
+                <thead>
+                    <tr style="background-color: #f0f0f0;">
+                        <th><strong>Paralelo</strong></th>
+                        <th><strong>Tests</strong></th>
+                        <th><strong>Ciencias</strong></th>
+                        <th><strong>Tecnología</strong></th>
+                        <th><strong>Humanidades</strong></th>
+                        <th><strong>Artes</strong></th>
+                        <th><strong>Salud</strong></th>
+                        <th><strong>Negocios</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+            ';
+
+            foreach ($performanceByParalelo as $paraleloData) {
+                $html .= '
+                    <tr>
+                        <td>' . htmlspecialchars($paraleloData['paralelo']) . '</td>
+                        <td>' . $paraleloData['total_tests'] . '</td>
+                        <td>' . round((float) ($paraleloData['ciencias'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($paraleloData['tecnologia'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($paraleloData['humanidades'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($paraleloData['artes'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($paraleloData['salud'] ?? 0), 1) . '%</td>
+                        <td>' . round((float) ($paraleloData['negocios'] ?? 0), 1) . '%</td>
+                    </tr>
+                ';
+            }
+
+            $html .= '</tbody></table>';
+            $this->pdf->writeHTML($html, true, false, true, false, '');
+            $this->pdf->Ln(10);
+        }
+
+        // Student results summary
+        if (!empty($studentResults)) {
+            $this->pdf->AddPage();
+            $this->pdf->SetFont('helvetica', 'B', 12);
+            $this->pdf->Cell(0, 8, 'LISTADO DE ESTUDIANTES', 0, 1, 'L');
+
+            $html = '
+            <table border="1" cellpadding="3">
+                <thead>
+                    <tr style="background-color: #f0f0f0;">
+                        <th><strong>Estudiante</strong></th>
+                        <th><strong>Curso</strong></th>
+                        <th><strong>Paralelo</strong></th>
+                        <th><strong>Fecha Test</strong></th>
+                        <th><strong>Área Principal</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+            ';
+
+            foreach ($studentResults as $student) {
+                $studentName = trim($student['nombre'] . ' ' . $student['apellido']);
+                $mainArea = 'Pendiente';
+                $testDate = '—';
+
+                if (!empty($student['puntajes_json'])) {
+                    $scores = json_decode($student['puntajes_json'], true);
+                    $maxPct = -INF;
+                    foreach ($scores as $areaKey => $areaData) {
+                        $pct = is_array($areaData) && isset($areaData['porcentaje'])
+                            ? (float) $areaData['porcentaje']
+                            : 0;
+                        if ($pct > $maxPct) {
+                            $maxPct = $pct;
+                            $mainArea = ucfirst($areaKey);
+                        }
+                    }
+                    $testDate = date('d/m/Y', strtotime($student['fecha_test']));
+                }
+
+                $html .= '
+                    <tr>
+                        <td>' . htmlspecialchars($studentName) . '</td>
+                        <td>' . htmlspecialchars($student['curso'] ?? '—') . '</td>
+                        <td>' . htmlspecialchars($student['paralelo'] ?? '—') . '</td>
+                        <td>' . $testDate . '</td>
+                        <td>' . htmlspecialchars($mainArea) . '</td>
+                    </tr>
+                ';
+            }
+
+            $html .= '</tbody></table>';
+            $this->pdf->writeHTML($html, true, false, true, false, '');
+        }
+
+        return $this->pdf->Output('reporte_dece.pdf', 'S');
+    }
 }
 ?>

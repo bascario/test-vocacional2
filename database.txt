@@ -11,6 +11,9 @@ CREATE TABLE usuarios (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     curso VARCHAR(50),
+    paralelo VARCHAR(10),
+    bachillerato VARCHAR(100),
+    telefono VARCHAR(20),
     institucion_id INT DEFAULT NULL,
     rol ENUM('administrador', 'dece', 'estudiante') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -164,3 +167,9 @@ CREATE TABLE instituciones_educativas (
 -- Ejecutar solo si la columna no existe:
 -- ALTER TABLE usuarios ADD COLUMN institucion_id INT DEFAULT NULL;
 -- ALTER TABLE usuarios ADD CONSTRAINT fk_usuarios_institucion FOREIGN KEY (institucion_id) REFERENCES instituciones_educativas(id) ON DELETE SET NULL;
+
+-- Migration: agregar campos paralelo, bachillerato y telefono
+-- Ejecutar solo si las columnas no existen:
+-- ALTER TABLE usuarios ADD COLUMN paralelo VARCHAR(10) AFTER curso;
+-- ALTER TABLE usuarios ADD COLUMN bachillerato VARCHAR(100) AFTER paralelo;
+-- ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(20) AFTER bachillerato;

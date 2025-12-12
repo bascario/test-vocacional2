@@ -34,6 +34,7 @@
                 <?php if (in_array($_SESSION['user_role'], ['administrador', 'dece'])): ?>
                     <?php if ($_SESSION['user_role'] === 'administrador'): ?>
                         <li><a href="/test-vocacional/admin/questions/import">📥 Importar Preguntas</a></li>
+                        <li><a href="/test-vocacional/admin/users">👥 Gestión de Usuarios</a></li>
                     <?php endif; ?>
                     <li><a href="/test-vocacional/admin/institutions">🏫 Instituciones</a></li>
                 <?php endif; ?>

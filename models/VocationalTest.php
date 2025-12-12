@@ -210,5 +210,212 @@ SQL;
 
         return $stats;
     }
+
+    /**
+     * Get statistics filtered by institution for DECE dashboard
+     */
+    public function getStatisticsByInstitution($institucionId, $curso = null, $paralelo = null)
+    {
+        $stats = [];
+        
+        // Build WHERE clause
+        $where = "u.institucion_id = ?";
+        $params = [$institucionId];
+        
+        if ($curso) {
+            $where .= " AND u.curso = ?";
+            $params[] = $curso;
+        }
+        
+        if ($paralelo) {
+            $where .= " AND u.paralelo = ?";
+            $params[] = $paralelo;
+        }
+        
+        // Total tests for this institution
+        $sql = "SELECT COUNT(*) as total 
+                FROM {$this->table} rt
+                JOIN usuarios u ON rt.usuario_id = u.id
+                WHERE {$where}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $stats['total_tests'] = $stmt->fetch()['total'];
+        
+        // Total students
+        $sql = "SELECT COUNT(DISTINCT u.id) as total 
+                FROM usuarios u
+                WHERE {$where} AND u.rol = 'estudiante'";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $stats['total_students'] = $stmt->fetch()['total'];
+        
+        // Average scores by area for this institution
+        $sql = "SELECT
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                FROM {$this->table} rt
+                JOIN usuarios u ON rt.usuario_id = u.id
+                WHERE {$where}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $stats['average_scores'] = $stmt->fetch();
+        
+        // Tests by month for this institution
+        $sql = "SELECT DATE_FORMAT(rt.fecha_test, '%Y-%m') as mes, COUNT(*) as cantidad
+                FROM {$this->table} rt
+                JOIN usuarios u ON rt.usuario_id = u.id
+                WHERE {$where} AND rt.fecha_test >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+                GROUP BY mes
+                ORDER BY mes";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $stats['tests_by_month'] = $stmt->fetchAll();
+        
+        return $stats;
+    }
+
+    /**
+     * Get trends by institution for DECE dashboard
+     */
+    public function getTrendsByInstitution($institucionId)
+    {
+        $sql = "SELECT 
+                    DATE_FORMAT(rt.fecha_test, '%Y-%m') as mes,
+                    COUNT(*) as total_tests,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                FROM {$this->table} rt
+                JOIN usuarios u ON rt.usuario_id = u.id
+                WHERE u.institucion_id = ? AND rt.fecha_test >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+                GROUP BY mes
+                ORDER BY mes";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$institucionId]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get distribution by area for DECE dashboard
+     */
+    public function getDistributionByArea($institucionId, $curso = null, $paralelo = null)
+    {
+        $where = "u.institucion_id = ?";
+        $params = [$institucionId];
+        
+        if ($curso) {
+            $where .= " AND u.curso = ?";
+            $params[] = $curso;
+        }
+        
+        if ($paralelo) {
+            $where .= " AND u.paralelo = ?";
+            $params[] = $paralelo;
+        }
+        
+        $sql = "SELECT
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje') >= 70 THEN 1 ELSE 0 END) as ciencias,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje') >= 70 THEN 1 ELSE 0 END) as tecnologia,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje') >= 70 THEN 1 ELSE 0 END) as humanidades,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.artes.porcentaje') >= 70 THEN 1 ELSE 0 END) as artes,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.salud.porcentaje') >= 70 THEN 1 ELSE 0 END) as salud,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje') >= 70 THEN 1 ELSE 0 END) as negocios
+                FROM {$this->table} rt
+                JOIN usuarios u ON rt.usuario_id = u.id
+                WHERE {$where}";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetch();
+    }
+
+    /**
+     * Get performance by course for DECE dashboard
+     */
+    public function getPerformanceByCourse($institucionId)
+    {
+        $sql = "SELECT 
+                    u.curso,
+                    COUNT(*) as total_tests,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                FROM {$this->table} rt
+                JOIN usuarios u ON rt.usuario_id = u.id
+                WHERE u.institucion_id = ? AND u.curso IS NOT NULL
+                GROUP BY u.curso
+                ORDER BY u.curso";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$institucionId]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get performance by paralelo for DECE dashboard
+     */
+    public function getPerformanceByParalelo($institucionId, $curso)
+    {
+        $sql = "SELECT 
+                    u.paralelo,
+                    COUNT(*) as total_tests,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                FROM {$this->table} rt
+                JOIN usuarios u ON rt.usuario_id = u.id
+                WHERE u.institucion_id = ? AND u.curso = ? AND u.paralelo IS NOT NULL
+                GROUP BY u.paralelo
+                ORDER BY u.paralelo";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$institucionId, $curso]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get student results for DECE dashboard with filters
+     */
+    public function getStudentResultsByInstitution($institucionId, $curso = null, $paralelo = null)
+    {
+        $where = "u.institucion_id = ? AND u.rol = 'estudiante'";
+        $params = [$institucionId];
+        
+        if ($curso) {
+            $where .= " AND u.curso = ?";
+            $params[] = $curso;
+        }
+        
+        if ($paralelo) {
+            $where .= " AND u.paralelo = ?";
+            $params[] = $paralelo;
+        }
+        
+        $sql = "SELECT 
+                    u.id, u.nombre, u.apellido, u.email, u.curso, u.paralelo, u.bachillerato,
+                    rt.id as test_id, rt.fecha_test, rt.puntajes_json
+                FROM usuarios u
+                LEFT JOIN {$this->table} rt ON u.id = rt.usuario_id
+                WHERE {$where}
+                ORDER BY u.curso, u.paralelo, u.apellido, u.nombre";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
 }
 ?>

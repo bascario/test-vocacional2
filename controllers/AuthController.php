@@ -59,6 +59,8 @@ class AuthController
                 'nombre' => $_POST['nombre'] ?? '',
                 'apellido' => $_POST['apellido'] ?? '',
                 'institucion_id' => !empty($_POST['institucion_id']) ? (int) $_POST['institucion_id'] : null,
+                'curso' => $_POST['curso'] ?? '',
+                'paralelo' => $_POST['paralelo'] ?? '',
                 'bachillerato' => $_POST['bachillerato'] ?? '',
                 'telefono' => $_POST['telefono'] ?? '',
                 'rol' => 'estudiante'

@@ -61,6 +61,16 @@ class User extends BaseModel
             $insertData['institucion_id'] = $data['institucion_id'];
         }
 
+        // Optional curso
+        if (!empty($data['curso'])) {
+            $insertData['curso'] = $data['curso'];
+        }
+
+        // Optional paralelo
+        if (!empty($data['paralelo'])) {
+            $insertData['paralelo'] = $data['paralelo'];
+        }
+
         // Optional bachillerato type
         if (!empty($data['bachillerato'])) {
             $insertData['bachillerato'] = $data['bachillerato'];
@@ -132,5 +142,56 @@ class User extends BaseModel
 
         $stmt = $this->db->prepare("UPDATE {$this->table} SET rol = ? WHERE id = ?");
         return $stmt->execute([$role, $userId]);
+    }
+
+    /**
+     * Get all students from a specific institution
+     */
+    public function getStudentsByInstitution($institucionId, $curso = null, $paralelo = null)
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE rol = 'estudiante' AND institucion_id = ?";
+        $params = [$institucionId];
+
+        if ($curso) {
+            $sql .= " AND curso = ?";
+            $params[] = $curso;
+        }
+
+        if ($paralelo) {
+            $sql .= " AND paralelo = ?";
+            $params[] = $paralelo;
+        }
+
+        $sql .= " ORDER BY curso, paralelo, apellido, nombre";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get unique courses in an institution
+     */
+    public function getCoursesByInstitution($institucionId)
+    {
+        $sql = "SELECT DISTINCT curso FROM {$this->table} 
+                WHERE institucion_id = ? AND curso IS NOT NULL AND curso != ''
+                ORDER BY curso";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$institucionId]);
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * Get paralelos for a specific course in an institution
+     */
+    public function getParalelosByCourse($institucionId, $curso)
+    {
+        $sql = "SELECT DISTINCT paralelo FROM {$this->table} 
+                WHERE institucion_id = ? AND curso = ? AND paralelo IS NOT NULL AND paralelo != ''
+                ORDER BY paralelo";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$institucionId, $curso]);
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN);
     }
 }
