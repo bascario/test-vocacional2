@@ -1,4 +1,8 @@
 <?php
+require_once 'models/User.php';
+require_once 'models/VocationalTest.php';
+require_once 'models/Institucion.php';
+
 class DECEController
 {
     private $userModel;
@@ -20,7 +24,7 @@ class DECEController
         // Verify DECE role
         if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'dece') {
             $_SESSION['error'] = 'Acceso no autorizado';
-            header('Location: /test-vocacional/admin');
+            header('Location: /test-vocacional/login');
             exit;
         }
 
@@ -28,8 +32,8 @@ class DECEController
         $currentUser = $this->userModel->find($_SESSION['user_id']);
 
         if (empty($currentUser['institucion_id'])) {
-            $_SESSION['error'] = 'Tu cuenta no está vinculada a una institución';
-            header('Location: /test-vocacional/admin');
+            $_SESSION['error'] = 'Tu cuenta no está vinculada a una institución. Contacta al administrador.';
+            header('Location: /test-vocacional/login');
             exit;
         }
 
@@ -100,7 +104,7 @@ class DECEController
     {
         if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'dece') {
             $_SESSION['error'] = 'Acceso no autorizado';
-            header('Location: /test-vocacional/admin');
+            header('Location: /test-vocacional/login');
             exit;
         }
 
@@ -165,7 +169,7 @@ class DECEController
     {
         if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'dece') {
             $_SESSION['error'] = 'Acceso no autorizado';
-            header('Location: /test-vocacional/admin');
+            header('Location: /test-vocacional/login');
             exit;
         }
 

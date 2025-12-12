@@ -74,13 +74,15 @@ switch ($request) {
     case '/admin':
         require_once 'middleware/AuthMiddleware.php';
         AuthMiddleware::checkAuth();
-        AuthMiddleware::checkRole(['administrador', 'dece']);
 
-        // Redirect DECE users to their specialized dashboard
-        if ($_SESSION['user_role'] === 'dece') {
+        // Redirect DECE users to their specialized dashboard BEFORE role check
+        if (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'dece') {
             header('Location: /test-vocacional/admin/dece');
             exit;
         }
+
+        // Only administrators can access main admin dashboard
+        AuthMiddleware::checkRole(['administrador']);
 
         require_once 'controllers/AdminController.php';
         $controller = new AdminController();

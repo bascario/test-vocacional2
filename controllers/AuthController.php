@@ -97,8 +97,10 @@ class AuthController
     {
         switch ($role) {
             case 'administrador':
-            case 'dece':
                 header('Location: /test-vocacional/admin');
+                break;
+            case 'dece':
+                header('Location: /test-vocacional/admin/dece');
                 break;
             case 'estudiante':
                 header('Location: /test-vocacional/test');

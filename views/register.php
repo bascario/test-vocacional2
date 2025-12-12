@@ -61,19 +61,35 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="telefono">Número de Celular (Opcional)</label>
+                        <label for="telefono">Número de Celular (Representante)</label>
                         <input type="tel" id="telefono" name="telefono" placeholder="Ej: 0987654321" pattern="[0-9]{10}"
                             title="Ingresa un número de 10 dígitos">
                     </div>
 
                     <div class="form-group">
                         <label for="curso">Curso (Opcional)</label>
-                        <input type="text" id="curso" name="curso" placeholder="Ej: 3ro BGU, 1ro BGU">
+                        <select id="curso" name="curso">
+                            <option value="">Selecciona un curso</option>
+                            <option value="1ero BGU">1ero BGU</option>
+                            <option value="2do BGU">2do BGU</option>
+                            <option value="3ero BGU">3ero BGU</option>
+                            <option value="1ero BT">1ero BT</option>
+                            <option value="2do BT">2do BT</option>
+                            <option value="3ero BT">3ero BT</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
                         <label for="paralelo">Paralelo (Opcional)</label>
-                        <input type="text" id="paralelo" name="paralelo" placeholder="Ej: A, B, C" maxlength="10">
+                        <select id="paralelo" name="paralelo">
+                            <option value="">Selecciona un paralelo</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="E">E</option>
+                            <option value="Otro">Otro</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
@@ -81,7 +97,6 @@
                         <input type="password" id="password" name="password" required
                             placeholder="Ingresa tu contraseña (mínimo 6 caracteres)">
                     </div>
-
                     <button type="submit" class="btn btn-primary btn-block">
                         Registrarse
                     </button>
