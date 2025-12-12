@@ -1,52 +1,56 @@
 <?php
 require_once 'models/Institucion.php';
 
-class AdminController {
+class AdminController
+{
     private $userModel;
     private $testModel;
     private $institucionModel;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->userModel = new User();
         $this->testModel = new VocationalTest();
         $this->institucionModel = new Institucion();
     }
-    
-    public function index() {
+
+    public function index()
+    {
         // Get statistics
         $stats = $this->testModel->getStatistics();
-        
+
         // Get recent tests
         $recentTests = $this->testModel->findAll([], 'fecha_test DESC LIMIT 10');
-        
+
         // Get students by course
         $students = $this->userModel->getStudentsByCourse();
-        
+
         require_once 'views/admin_dashboard.php';
     }
-    
-    public function generateIndividualReport() {
+
+    public function generateIndividualReport()
+    {
         $studentId = $_GET['student_id'] ?? null;
-        
+
         if (!$studentId) {
             $_SESSION['error'] = "ID de estudiante no proporcionado";
             header('Location: /test-vocacional/admin');
             exit;
         }
-        
+
         try {
             $currentUserId = $_SESSION['user_id'] ?? null;
             $currentUserRole = $_SESSION['user_role'] ?? null;
-            
+
             // Allow if: admin, dece with same institution, or estudiante downloading their own report
             $isOwn = ($currentUserId == $studentId);
             $isAdmin = ($currentUserRole === 'administrador');
             $isDece = ($currentUserRole === 'dece');
-            
+
             if (!$isOwn && !$isAdmin && !$isDece) {
                 throw new Exception('Acceso denegado: no tienes permiso para descargar este reporte');
             }
-            
+
             // If current user is DECE, only allow generating report for students in the same institution
             if ($isDece && !$isOwn) {
                 $current = $this->userModel->find($currentUserId);
@@ -62,36 +66,37 @@ class AdminController {
             }
 
             $results = $this->testModel->getResultsByUser($studentId);
-            
+
             if (empty($results)) {
                 throw new Exception("No se encontraron resultados para este estudiante");
             }
-            
+
             $latestResult = $results[0];
             $scores = json_decode($latestResult['puntajes_json'], true);
-            
+
             // Generate PDF
             require_once 'utils/PDFGenerator.php';
             $pdfGenerator = new PDFGenerator();
             $pdfContent = $pdfGenerator->generateIndividualReport($latestResult, $scores);
-            
+
             // Output PDF (use student id in filename)
             header('Content-Type: application/pdf');
             header('Content-Disposition: attachment; filename="reporte_individual_' . $studentId . '.pdf"');
             echo $pdfContent;
             exit;
-            
+
         } catch (Exception $e) {
             $_SESSION['error'] = "Error al generar reporte: " . $e->getMessage();
             header('Location: /test-vocacional/admin');
             exit;
         }
     }
-    
-    public function generateGroupReport() {
+
+    public function generateGroupReport()
+    {
         $course = $_GET['course'] ?? null;
         $format = $_GET['format'] ?? 'pdf';
-        
+
         try {
             // If current user is DECE, restrict results to their institution
             $institucionFilter = null;
@@ -104,17 +109,17 @@ class AdminController {
             }
 
             $results = $this->testModel->getResultsByCourse($course, $institucionFilter);
-            
+
             if (empty($results)) {
                 throw new Exception("No se encontraron resultados");
             }
-            
+
             if ($format === 'excel') {
                 // Generate Excel
                 require_once 'utils/ExcelGenerator.php';
                 $excelGenerator = new ExcelGenerator();
                 $excelContent = $excelGenerator->generateGroupReport($results);
-                
+
                 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 header('Content-Disposition: attachment; filename="reporte_grupal_' . date('Y-m-d') . '.xlsx"');
                 echo $excelContent;
@@ -124,13 +129,13 @@ class AdminController {
                 require_once 'utils/PDFGenerator.php';
                 $pdfGenerator = new PDFGenerator();
                 $pdfContent = $pdfGenerator->generateGroupReport($results, $course);
-                
+
                 header('Content-Type: application/pdf');
                 header('Content-Disposition: attachment; filename="reporte_grupal_' . date('Y-m-d') . '.pdf"');
                 echo $pdfContent;
                 exit;
             }
-            
+
         } catch (Exception $e) {
             $_SESSION['error'] = "Error al generar reporte grupal: " . $e->getMessage();
             header('Location: /test-vocacional/admin');
@@ -139,7 +144,8 @@ class AdminController {
     }
 
     // Institutions management
-    public function institutions() {
+    public function institutions()
+    {
         // Only admins and dece
         if (empty($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['administrador', 'dece'])) {
             $_SESSION['error'] = 'Acceso no autorizado';
@@ -174,7 +180,8 @@ class AdminController {
             $institutions = [];
             if (!empty($current['institucion_id'])) {
                 $inst = $this->institucionModel->find($current['institucion_id']);
-                if ($inst) $institutions[] = $inst;
+                if ($inst)
+                    $institutions[] = $inst;
             }
         } else {
             $institutions = $this->institucionModel->getAll();
@@ -183,7 +190,8 @@ class AdminController {
     }
 
     // Public search endpoint used by registration autocomplete
-    public function searchInstitutions() {
+    public function searchInstitutions()
+    {
         $q = $_GET['q'] ?? '';
         $results = [];
 
@@ -207,7 +215,8 @@ class AdminController {
     }
 
     // Users management: list users and allow admin to change roles
-    public function users() {
+    public function users()
+    {
         // Only administrador
         if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'administrador') {
             $_SESSION['error'] = 'Acceso no autorizado';
@@ -215,29 +224,59 @@ class AdminController {
             exit;
         }
 
-        // Handle role change
+        // Handle role and assignment changes
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userId = $_POST['user_id'] ?? null;
             $role = $_POST['role'] ?? null;
+            $zonaId = $_POST['zona_id'] ?? null;
+            $institucionId = $_POST['institucion_id'] ?? null;
 
             if (empty($userId) || empty($role)) {
-                $_SESSION['error'] = 'Faltan datos para actualizar el rol';
+                $_SESSION['error'] = 'Faltan datos para actualizar el usuario';
                 header('Location: /test-vocacional/admin/users');
                 exit;
             }
 
             try {
-                $this->userModel->updateRole((int)$userId, $role);
-                $_SESSION['success'] = 'Rol actualizado correctamente';
+                // Update role
+                $this->userModel->updateRole((int) $userId, $role);
+
+                // Update zona_id if provided (for zonal role)
+                if ($role === 'zonal' && !empty($zonaId)) {
+                    $this->userModel->updateZona((int) $userId, $zonaId);
+                } elseif ($role !== 'zonal') {
+                    // Clear zona_id if not zonal role
+                    $this->userModel->updateZona((int) $userId, null);
+                }
+
+                // Update institucion_id if provided (for dece role)
+                if ($role === 'dece' && !empty($institucionId)) {
+                    $this->userModel->updateInstitucion((int) $userId, $institucionId);
+                } elseif ($role !== 'dece') {
+                    // Clear institucion_id if not dece role
+                    $this->userModel->updateInstitucion((int) $userId, null);
+                }
+
+                $_SESSION['success'] = 'Usuario actualizado correctamente';
             } catch (Exception $e) {
-                $_SESSION['error'] = 'Error al actualizar rol: ' . $e->getMessage();
+                $_SESSION['error'] = 'Error al actualizar usuario: ' . $e->getMessage();
             }
 
             header('Location: /test-vocacional/admin/users');
             exit;
         }
 
+        // Get all users
         $users = $this->userModel->findAll([], 'apellido, nombre');
+
+        // Get institutions for DECE assignment
+        require_once 'models/Institucion.php';
+        $institucionModel = new Institucion();
+        $institutions = $institucionModel->getAll();
+
+        // Get zonas for zonal assignment
+        $zonas = $institucionModel->getZonaList();
+
         require_once 'views/admin_users.php';
     }
 }

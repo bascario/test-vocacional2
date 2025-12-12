@@ -126,10 +126,14 @@
                             <?php foreach ($recentTests as $test):
                                 $scores = json_decode($test['puntajes_json'], true);
 
+                                // Include RIASEC helper
+                                require_once 'utils/riasec_helpers.php';
+
                                 // Determine main area by porcentaje if available, otherwise fallback
                                 $mainArea = 'N/A';
                                 if (is_array($scores) && !empty($scores)) {
                                     $maxPct = -INF;
+                                    $mainCategory = '';
                                     foreach ($scores as $areaKey => $areaData) {
                                         $pct = 0;
                                         if (is_array($areaData) && isset($areaData['porcentaje'])) {
@@ -139,8 +143,12 @@
                                         }
                                         if ($pct > $maxPct) {
                                             $maxPct = $pct;
-                                            $mainArea = $areaKey;
+                                            $mainCategory = $areaKey;
                                         }
+                                    }
+                                    // Convert to RIASEC label
+                                    if ($mainCategory) {
+                                        $mainArea = getCategoryLabel($mainCategory);
                                     }
                                 }
 
@@ -154,7 +162,7 @@
                                     <td><?= date('d/m/Y H:i', strtotime($test['fecha_test'])) ?></td>
                                     <td><?= htmlspecialchars($studentName) ?></td>
                                     <td><?= htmlspecialchars($curso) ?></td>
-                                    <td><?= htmlspecialchars(ucfirst((string) $mainArea)) ?></td>
+                                    <td><strong><?= htmlspecialchars($mainArea) ?></strong></td>
                                     <td>
                                         <a href="/test-vocacional/admin/reports/individual?student_id=<?= htmlspecialchars($test['usuario_id']) ?>"
                                             class="btn btn-sm btn-primary" target="_blank">Ver PDF</a>

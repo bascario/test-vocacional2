@@ -121,7 +121,8 @@
             <div class="institution-header">
                 <h2><?= htmlspecialchars($institucion['nombre']) ?></h2>
                 <p>Código: <?= htmlspecialchars($institucion['codigo']) ?> | Tipo:
-                    <?= htmlspecialchars($institucion['tipo']) ?></p>
+                    <?= htmlspecialchars($institucion['tipo']) ?>
+                </p>
             </div>
 
             <!-- Filters -->
@@ -180,14 +181,19 @@
                     <div class="stat-icon">📈</div>
                     <div class="stat-content">
                         <?php
+                        require_once 'utils/riasec_helpers.php';
                         $avgScores = $stats['average_scores'] ?? [];
                         $topArea = 'N/A';
                         $topScore = 0;
+                        $topCategory = '';
                         foreach ($avgScores as $area => $score) {
                             if ($score > $topScore) {
                                 $topScore = $score;
-                                $topArea = ucfirst($area);
+                                $topCategory = $area;
                             }
+                        }
+                        if ($topCategory) {
+                            $topArea = getCategoryLabel($topCategory);
                         }
                         ?>
                         <h3><?= $topArea ?></h3>
@@ -269,6 +275,7 @@
                             <tbody>
                                 <?php foreach ($studentResults as $student): ?>
                                     <?php
+                                    require_once 'utils/riasec_helpers.php';
                                     $studentName = trim($student['nombre'] . ' ' . $student['apellido']);
                                     $mainArea = 'Pendiente';
                                     $testDate = '—';
@@ -276,14 +283,18 @@
                                     if (!empty($student['puntajes_json'])) {
                                         $scores = json_decode($student['puntajes_json'], true);
                                         $maxPct = -INF;
+                                        $mainCategory = '';
                                         foreach ($scores as $areaKey => $areaData) {
                                             $pct = is_array($areaData) && isset($areaData['porcentaje'])
                                                 ? (float) $areaData['porcentaje']
                                                 : 0;
                                             if ($pct > $maxPct) {
                                                 $maxPct = $pct;
-                                                $mainArea = ucfirst($areaKey);
+                                                $mainCategory = $areaKey;
                                             }
+                                        }
+                                        if ($mainCategory) {
+                                            $mainArea = getCategoryLabel($mainCategory);
                                         }
                                         $testDate = date('d/m/Y', strtotime($student['fecha_test']));
                                     }
@@ -294,7 +305,7 @@
                                         <td><?= htmlspecialchars($student['paralelo'] ?? '—') ?></td>
                                         <td><?= htmlspecialchars($student['bachillerato'] ?? '—') ?></td>
                                         <td><?= $testDate ?></td>
-                                        <td><?= htmlspecialchars($mainArea) ?></td>
+                                        <td><strong><?= htmlspecialchars($mainArea) ?></strong></td>
                                         <td>
                                             <?php if (!empty($student['test_id'])): ?>
                                                 <a href="/test-vocacional/admin/reports/individual?student_id=<?= $student['id'] ?>"
@@ -376,12 +387,12 @@
             }
         });
 
-        // Areas Chart
+        // Areas Chart with RIASEC labels
         const areasCtx = document.getElementById('areasChart').getContext('2d');
         new Chart(areasCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Ciencias', 'Tecnología', 'Humanidades', 'Artes', 'Salud', 'Negocios'],
+                labels: ['INVESTIGADORA', 'REALISTA', 'SOCIAL', 'ARTÍSTICA', 'SOCIAL', 'EMPRENDEDORA'],
                 datasets: [{
                     data: [
                         <?= $avgScores['ciencias'] ?>,
@@ -392,12 +403,12 @@
                         <?= $avgScores['negocios'] ?>
                     ],
                     backgroundColor: [
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)',
-                        'rgba(255, 159, 64, 0.8)'
+                        'rgba(72, 187, 120, 0.8)',  // INVESTIGADORA - Green
+                        'rgba(102, 126, 234, 0.8)', // REALISTA - Blue
+                        'rgba(245, 101, 101, 0.8)', // SOCIAL - Red
+                        'rgba(237, 137, 54, 0.8)',  // ARTÍSTICA - Orange
+                        'rgba(245, 101, 101, 0.8)', // SOCIAL - Red
+                        'rgba(159, 122, 234, 0.8)'  // EMPRENDEDORA - Purple
                     ]
                 }]
             },
@@ -423,34 +434,34 @@
                     labels: courseData.map(item => item.curso),
                     datasets: [
                         {
-                            label: 'Ciencias',
+                            label: 'INVESTIGADORA',
                             data: courseData.map(item => parseFloat(item.ciencias || 0)),
-                            backgroundColor: 'rgba(255, 99, 132, 0.8)'
+                            backgroundColor: 'rgba(72, 187, 120, 0.8)'
                         },
                         {
-                            label: 'Tecnología',
+                            label: 'REALISTA',
                             data: courseData.map(item => parseFloat(item.tecnologia || 0)),
-                            backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)'
                         },
                         {
-                            label: 'Humanidades',
+                            label: 'SOCIAL',
                             data: courseData.map(item => parseFloat(item.humanidades || 0)),
-                            backgroundColor: 'rgba(255, 206, 86, 0.8)'
+                            backgroundColor: 'rgba(245, 101, 101, 0.8)'
                         },
                         {
-                            label: 'Artes',
+                            label: 'ARTÍSTICA',
                             data: courseData.map(item => parseFloat(item.artes || 0)),
-                            backgroundColor: 'rgba(75, 192, 192, 0.8)'
+                            backgroundColor: 'rgba(237, 137, 54, 0.8)'
                         },
                         {
-                            label: 'Salud',
+                            label: 'SOCIAL (Salud)',
                             data: courseData.map(item => parseFloat(item.salud || 0)),
-                            backgroundColor: 'rgba(153, 102, 255, 0.8)'
+                            backgroundColor: 'rgba(245, 101, 101, 0.6)'
                         },
                         {
-                            label: 'Negocios',
+                            label: 'EMPRENDEDORA',
                             data: courseData.map(item => parseFloat(item.negocios || 0)),
-                            backgroundColor: 'rgba(255, 159, 64, 0.8)'
+                            backgroundColor: 'rgba(159, 122, 234, 0.8)'
                         }
                     ]
                 },
@@ -478,34 +489,34 @@
                     labels: paraleloData.map(item => item.paralelo),
                     datasets: [
                         {
-                            label: 'Ciencias',
+                            label: 'INVESTIGADORA',
                             data: paraleloData.map(item => parseFloat(item.ciencias || 0)),
-                            backgroundColor: 'rgba(255, 99, 132, 0.8)'
+                            backgroundColor: 'rgba(72, 187, 120, 0.8)'
                         },
                         {
-                            label: 'Tecnología',
+                            label: 'REALISTA',
                             data: paraleloData.map(item => parseFloat(item.tecnologia || 0)),
-                            backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)'
                         },
                         {
-                            label: 'Humanidades',
+                            label: 'SOCIAL',
                             data: paraleloData.map(item => parseFloat(item.humanidades || 0)),
-                            backgroundColor: 'rgba(255, 206, 86, 0.8)'
+                            backgroundColor: 'rgba(245, 101, 101, 0.8)'
                         },
                         {
-                            label: 'Artes',
+                            label: 'ARTÍSTICA',
                             data: paraleloData.map(item => parseFloat(item.artes || 0)),
-                            backgroundColor: 'rgba(75, 192, 192, 0.8)'
+                            backgroundColor: 'rgba(237, 137, 54, 0.8)'
                         },
                         {
-                            label: 'Salud',
+                            label: 'SOCIAL (Salud)',
                             data: paraleloData.map(item => parseFloat(item.salud || 0)),
-                            backgroundColor: 'rgba(153, 102, 255, 0.8)'
+                            backgroundColor: 'rgba(245, 101, 101, 0.6)'
                         },
                         {
-                            label: 'Negocios',
+                            label: 'EMPRENDEDORA',
                             data: paraleloData.map(item => parseFloat(item.negocios || 0)),
-                            backgroundColor: 'rgba(255, 159, 64, 0.8)'
+                            backgroundColor: 'rgba(159, 122, 234, 0.8)'
                         }
                     ]
                 },

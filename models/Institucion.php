@@ -1,8 +1,10 @@
 <?php
-class Institucion extends BaseModel {
+class Institucion extends BaseModel
+{
     protected $table = 'instituciones_educativas';
 
-    public function createInstitution($data) {
+    public function createInstitution($data)
+    {
         // Validate required fields
         if (empty($data['nombre']) || empty($data['codigo']) || empty($data['tipo'])) {
             throw new Exception('Nombre, código y tipo son obligatorios');
@@ -33,7 +35,8 @@ class Institucion extends BaseModel {
         ]);
     }
 
-    public function getAll($limit = null) {
+    public function getAll($limit = null)
+    {
         if ($limit) {
             $stmt = $this->db->prepare("SELECT * FROM {$this->table} ORDER BY nombre LIMIT ?");
             $stmt->execute([$limit]);
@@ -44,20 +47,64 @@ class Institucion extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function findByCodigo($codigo) {
+    public function findByCodigo($codigo)
+    {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE codigo = ?");
         $stmt->execute([$codigo]);
         return $stmt->fetch();
     }
 
-    public function search($q, $limit = 20) {
+    public function search($q, $limit = 20)
+    {
         $q = trim($q);
-        if ($q === '') return [];
+        if ($q === '')
+            return [];
 
         $like = "%" . $q . "%";
         $stmt = $this->db->prepare("SELECT id, nombre, codigo, tipo FROM {$this->table} WHERE nombre LIKE ? OR codigo LIKE ? ORDER BY nombre LIMIT ?");
-        $stmt->execute([$like, $like, (int)$limit]);
+        $stmt->execute([$like, $like, (int) $limit]);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Get all institutions in a specific zona
+     */
+    public function getByZona($zona)
+    {
+        $stmt = $this->db->prepare("
+            SELECT * FROM {$this->table} 
+            WHERE zona = ? 
+            ORDER BY nombre
+        ");
+        $stmt->execute([$zona]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get list of unique zonas
+     */
+    public function getZonaList()
+    {
+        $stmt = $this->db->query("
+            SELECT DISTINCT zona 
+            FROM {$this->table} 
+            WHERE zona IS NOT NULL AND zona != ''
+            ORDER BY zona
+        ");
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * Update zona for an institution
+     */
+    public function updateZona($id, $zona)
+    {
+        $stmt = $this->db->prepare("
+            UPDATE {$this->table} 
+            SET zona = ? 
+            WHERE id = ?
+        ");
+        return $stmt->execute([$zona, $id]);
     }
 }
 ?>

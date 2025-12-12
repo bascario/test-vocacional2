@@ -89,6 +89,42 @@ switch ($request) {
         $controller->index();
         break;
 
+    case '/admin/zona':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        AuthMiddleware::checkRole(['zonal']);
+        require_once 'controllers/ZonaController.php';
+        $controller = new ZonaController();
+        $controller->index();
+        break;
+
+    case '/admin/zona/courses':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        AuthMiddleware::checkRole(['zonal']);
+        require_once 'controllers/ZonaController.php';
+        $controller = new ZonaController();
+        $controller->getCourses();
+        break;
+
+    case '/admin/zona/reports/zona':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        AuthMiddleware::checkRole(['zonal']);
+        require_once 'controllers/ZonaController.php';
+        $controller = new ZonaController();
+        $controller->generateZonaReport();
+        break;
+
+    case '/admin/zona/export':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        AuthMiddleware::checkRole(['zonal']);
+        require_once 'controllers/ZonaController.php';
+        $controller = new ZonaController();
+        $controller->exportData();
+        break;
+
     case '/admin/dece':
         require_once 'middleware/AuthMiddleware.php';
         AuthMiddleware::checkAuth();

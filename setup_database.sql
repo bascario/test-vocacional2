@@ -23,8 +23,8 @@ USE `test_vocacional`;
 CREATE TABLE IF NOT EXISTS `instituciones_educativas` (
   `id` int NOT NULL AUTO_INCREMENT,
   `nombre` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `zona` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `distrito` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `zona` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Zona educativa asignada',
+  `distrito` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Distrito educativo',
   `regimen` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `codigo` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
   `tipo` enum('Fiscal','Fiscomisional','Particular') COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -34,8 +34,9 @@ CREATE TABLE IF NOT EXISTS `instituciones_educativas` (
   UNIQUE KEY `codigo` (`codigo`),
   KEY `idx_codigo` (`codigo`),
   KEY `idx_nombre` (`nombre`),
-  KEY `idx_tipo` (`tipo`)
-) ENGINE=InnoDB AUTO_INCREMENT=1215 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `idx_tipo` (`tipo`),
+  KEY `idx_zona` (`zona`)
+) ENGINE=InnoDB AUTO_INCREMENT=1215 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Instituciones educativas con soporte para zonas y distritos';
 
 -- Volcando datos para la tabla test_vocacional.instituciones_educativas: ~499 rows (aproximadamente)
 INSERT INTO `instituciones_educativas` (`id`, `nombre`, `zona`, `distrito`, `regimen`, `codigo`, `tipo`, `created_at`, `updated_at`) VALUES
@@ -622,23 +623,29 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
   `nombre` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `apellido` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `curso` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `paralelo` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bachillerato` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `telefono` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `institucion_id` int DEFAULT NULL,
-  `rol` enum('administrador','dece','estudiante') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `zona_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Zona asignada para usuarios con rol zonal',
+  `rol` enum('administrador','zonal','dece','estudiante') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'estudiante',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   KEY `idx_usuarios_rol` (`rol`),
   KEY `idx_usuarios_curso` (`curso`),
+  KEY `idx_usuarios_paralelo` (`paralelo`),
+  KEY `idx_usuarios_zona` (`zona_id`),
   KEY `idx_usuarios_username` (`username`),
   KEY `fk_usuarios_institucion` (`institucion_id`),
   CONSTRAINT `fk_usuarios_institucion` FOREIGN KEY (`institucion_id`) REFERENCES `instituciones_educativas` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de usuarios del sistema con soporte para roles: administrador, zonal, dece, estudiante';
 
 -- Volcando datos para la tabla test_vocacional.usuarios: ~2 rows (aproximadamente)
-INSERT INTO `usuarios` (`id`, `username`, `password`, `email`, `nombre`, `apellido`, `curso`, `institucion_id`, `rol`, `created_at`, `updated_at`) VALUES
-	(1, 'admin', '0192023a7bbd73250516f069df18b500', 'admin@colegio.edu', 'Administrador', 'Sistema', NULL, NULL, 'administrador', '2025-11-23 16:33:57', '2025-11-23 16:33:57'),
-	(2, 'Ruben', 'e10adc3949ba59abbe56e057f20f883e', 'rjaramillo@istici.edu.ec', 'Rubén Patricio', 'Jaramillo Caicedo', NULL, NULL, 'estudiante', '2025-11-23 17:03:08', '2025-11-23 17:03:08');
+INSERT INTO `usuarios` (`id`, `username`, `password`, `email`, `nombre`, `apellido`, `curso`, `paralelo`, `bachillerato`, `telefono`, `institucion_id`, `zona_id`, `rol`, `created_at`, `updated_at`) VALUES
+	(1, 'admin', '0192023a7bbd73250516f069df18b500', 'admin@colegio.edu', 'Administrador', 'Sistema', NULL, NULL, NULL, NULL, NULL, NULL, 'administrador', '2025-11-23 16:33:57', '2025-11-23 16:33:57'),
+	(2, 'Ruben', 'e10adc3949ba59abbe56e057f20f883e', 'rjaramillo@istici.edu.ec', 'Rubén Patricio', 'Jaramillo Caicedo', NULL, NULL, NULL, NULL, NULL, NULL, 'estudiante', '2025-11-23 17:03:08', '2025-11-23 17:03:08');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

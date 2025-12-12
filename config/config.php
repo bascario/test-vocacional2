@@ -19,10 +19,31 @@ define('ALLOWED_WORD_TYPES', ['application/msword', 'application/vnd.openxmlform
 define('SESSION_LIFETIME', 3600); // 1 hour
 define('PASSWORD_MIN_LENGTH', 6);
 
-// Test settings
-define('TEST_CATEGORIES', ['ciencias', 'tecnologia', 'humanidades', 'artes', 'salud', 'negocios']);
+// Test settings - RIASEC Model (Holland)
+// Categorías usando el modelo RIASEC directamente
+define('TEST_CATEGORIES', ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional']);
 define('TEST_TYPES', ['intereses', 'habilidades', 'valores']);
 define('LIKERT_SCALE', [1, 2, 3, 4, 5]); // 1=Totalmente en desacuerdo, 2=En desacuerdo, 3=Es difícil decidir, 4=De acuerdo, 5=Totalmente de acuerdo
+
+// RIASEC Category Labels (Display names)
+define('CATEGORY_LABELS', [
+    'Realista' => 'REALISTA',
+    'Investigador' => 'INVESTIGADORA',
+    'Artístico' => 'ARTÍSTICA',
+    'Social' => 'SOCIAL',
+    'Emprendedor' => 'EMPRENDEDORA',
+    'Convencional' => 'CONVENCIONAL'
+]);
+
+// RIASEC Display Order for Charts
+define('RIASEC_ORDER', [
+    'REALISTA' => 'Realista',
+    'INVESTIGADORA' => 'Investigador',
+    'ARTÍSTICA' => 'Artístico',
+    'SOCIAL' => 'Social',
+    'EMPRENDEDORA' => 'Emprendedor',
+    'CONVENCIONAL' => 'Convencional'
+]);
 
 // Results thresholds (adjusted for binary scale)
 define('APTO_THRESHOLD', 80);

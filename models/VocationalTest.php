@@ -217,21 +217,21 @@ SQL;
     public function getStatisticsByInstitution($institucionId, $curso = null, $paralelo = null)
     {
         $stats = [];
-        
+
         // Build WHERE clause
         $where = "u.institucion_id = ?";
         $params = [$institucionId];
-        
+
         if ($curso) {
             $where .= " AND u.curso = ?";
             $params[] = $curso;
         }
-        
+
         if ($paralelo) {
             $where .= " AND u.paralelo = ?";
             $params[] = $paralelo;
         }
-        
+
         // Total tests for this institution
         $sql = "SELECT COUNT(*) as total 
                 FROM {$this->table} rt
@@ -240,7 +240,7 @@ SQL;
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $stats['total_tests'] = $stmt->fetch()['total'];
-        
+
         // Total students
         $sql = "SELECT COUNT(DISTINCT u.id) as total 
                 FROM usuarios u
@@ -248,7 +248,7 @@ SQL;
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $stats['total_students'] = $stmt->fetch()['total'];
-        
+
         // Average scores by area for this institution
         $sql = "SELECT
                     AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
@@ -263,7 +263,7 @@ SQL;
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $stats['average_scores'] = $stmt->fetch();
-        
+
         // Tests by month for this institution
         $sql = "SELECT DATE_FORMAT(rt.fecha_test, '%Y-%m') as mes, COUNT(*) as cantidad
                 FROM {$this->table} rt
@@ -274,7 +274,7 @@ SQL;
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $stats['tests_by_month'] = $stmt->fetchAll();
-        
+
         return $stats;
     }
 
@@ -297,7 +297,7 @@ SQL;
                 WHERE u.institucion_id = ? AND rt.fecha_test >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
                 GROUP BY mes
                 ORDER BY mes";
-        
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$institucionId]);
         return $stmt->fetchAll();
@@ -310,17 +310,17 @@ SQL;
     {
         $where = "u.institucion_id = ?";
         $params = [$institucionId];
-        
+
         if ($curso) {
             $where .= " AND u.curso = ?";
             $params[] = $curso;
         }
-        
+
         if ($paralelo) {
             $where .= " AND u.paralelo = ?";
             $params[] = $paralelo;
         }
-        
+
         $sql = "SELECT
                     SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje') >= 70 THEN 1 ELSE 0 END) as ciencias,
                     SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje') >= 70 THEN 1 ELSE 0 END) as tecnologia,
@@ -331,7 +331,7 @@ SQL;
                 FROM {$this->table} rt
                 JOIN usuarios u ON rt.usuario_id = u.id
                 WHERE {$where}";
-        
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetch();
@@ -356,7 +356,7 @@ SQL;
                 WHERE u.institucion_id = ? AND u.curso IS NOT NULL
                 GROUP BY u.curso
                 ORDER BY u.curso";
-        
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$institucionId]);
         return $stmt->fetchAll();
@@ -381,7 +381,7 @@ SQL;
                 WHERE u.institucion_id = ? AND u.curso = ? AND u.paralelo IS NOT NULL
                 GROUP BY u.paralelo
                 ORDER BY u.paralelo";
-        
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$institucionId, $curso]);
         return $stmt->fetchAll();
@@ -394,17 +394,17 @@ SQL;
     {
         $where = "u.institucion_id = ? AND u.rol = 'estudiante'";
         $params = [$institucionId];
-        
+
         if ($curso) {
             $where .= " AND u.curso = ?";
             $params[] = $curso;
         }
-        
+
         if ($paralelo) {
             $where .= " AND u.paralelo = ?";
             $params[] = $paralelo;
         }
-        
+
         $sql = "SELECT 
                     u.id, u.nombre, u.apellido, u.email, u.curso, u.paralelo, u.bachillerato,
                     rt.id as test_id, rt.fecha_test, rt.puntajes_json
@@ -412,7 +412,148 @@ SQL;
                 LEFT JOIN {$this->table} rt ON u.id = rt.usuario_id
                 WHERE {$where}
                 ORDER BY u.curso, u.paralelo, u.apellido, u.nombre";
-        
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get statistics for all institutions in a zona
+     */
+    public function getStatisticsByZona($zona, $institucionId = null, $curso = null, $paralelo = null)
+    {
+        $sql = "
+            SELECT 
+                COUNT(DISTINCT rt.id) as total_tests,
+                COUNT(DISTINCT rt.usuario_id) as total_students,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+            FROM {$this->table} rt
+            INNER JOIN usuarios u ON rt.usuario_id = u.id
+            INNER JOIN instituciones_educativas ie ON u.institucion_id = ie.id
+            WHERE ie.zona = ?
+        ";
+
+        $params = [$zona];
+
+        if ($institucionId) {
+            $sql .= " AND u.institucion_id = ?";
+            $params[] = $institucionId;
+        }
+
+        if ($curso) {
+            $sql .= " AND u.curso = ?";
+            $params[] = $curso;
+        }
+
+        if ($paralelo) {
+            $sql .= " AND u.paralelo = ?";
+            $params[] = $paralelo;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $stats = $stmt->fetch();
+
+        $stats['average_scores'] = [
+            'ciencias' => $stats['ciencias'] ?? 0,
+            'tecnologia' => $stats['tecnologia'] ?? 0,
+            'humanidades' => $stats['humanidades'] ?? 0,
+            'artes' => $stats['artes'] ?? 0,
+            'salud' => $stats['salud'] ?? 0,
+            'negocios' => $stats['negocios'] ?? 0
+        ];
+
+        return $stats;
+    }
+
+    /**
+     * Get performance comparison by institution within a zona
+     */
+    public function getPerformanceByInstitution($zona)
+    {
+        $sql = "
+            SELECT 
+                ie.id as institucion_id,
+                ie.nombre as institucion_nombre,
+                ie.codigo as institucion_codigo,
+                COUNT(DISTINCT rt.id) as total_tests,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+            FROM instituciones_educativas ie
+            LEFT JOIN usuarios u ON ie.id = u.institucion_id
+            LEFT JOIN {$this->table} rt ON u.id = rt.usuario_id
+            WHERE ie.zona = ?
+            GROUP BY ie.id, ie.nombre, ie.codigo
+            ORDER BY ie.nombre
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$zona]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get student results for zona with optional filters
+     */
+    public function getStudentResultsByZona($zona, $institucionId = null, $curso = null, $paralelo = null)
+    {
+        $sql = "
+            SELECT 
+                u.id as usuario_id,
+                u.nombre,
+                u.apellido,
+                u.email,
+                u.curso,
+                u.paralelo,
+                u.bachillerato,
+                ie.nombre as institucion_nombre,
+                ie.codigo as institucion_codigo,
+                rt.id as test_id,
+                rt.fecha_test,
+                rt.puntajes_json
+            FROM usuarios u
+            INNER JOIN instituciones_educativas ie ON u.institucion_id = ie.id
+            LEFT JOIN (
+                SELECT rt1.*
+                FROM {$this->table} rt1
+                INNER JOIN (
+                    SELECT usuario_id, MAX(fecha_test) as max_fecha
+                    FROM {$this->table}
+                    GROUP BY usuario_id
+                ) rt2 ON rt1.usuario_id = rt2.usuario_id AND rt1.fecha_test = rt2.max_fecha
+            ) rt ON u.id = rt.usuario_id
+            WHERE ie.zona = ? AND u.rol = 'estudiante'
+        ";
+
+        $params = [$zona];
+
+        if ($institucionId) {
+            $sql .= " AND u.institucion_id = ?";
+            $params[] = $institucionId;
+        }
+
+        if ($curso) {
+            $sql .= " AND u.curso = ?";
+            $params[] = $curso;
+        }
+
+        if ($paralelo) {
+            $sql .= " AND u.paralelo = ?";
+            $params[] = $paralelo;
+        }
+
+        $sql .= " ORDER BY ie.nombre, u.apellido, u.nombre";
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();

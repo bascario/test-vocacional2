@@ -135,7 +135,7 @@ class User extends BaseModel
 
     public function updateRole($userId, $role)
     {
-        $allowed = ['administrador', 'dece', 'estudiante'];
+        $allowed = ['administrador', 'zonal', 'dece', 'estudiante'];
         if (!in_array($role, $allowed, true)) {
             throw new Exception('Rol inválido');
         }
@@ -193,5 +193,23 @@ class User extends BaseModel
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$institucionId, $curso]);
         return $stmt->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * Update zona assignment for a user
+     */
+    public function updateZona($userId, $zonaId)
+    {
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET zona_id = ? WHERE id = ?");
+        return $stmt->execute([$zonaId, $userId]);
+    }
+
+    /**
+     * Update institution assignment for a user
+     */
+    public function updateInstitucion($userId, $institucionId)
+    {
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET institucion_id = ? WHERE id = ?");
+        return $stmt->execute([$institucionId, $userId]);
     }
 }

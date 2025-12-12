@@ -99,6 +99,9 @@ class AuthController
             case 'administrador':
                 header('Location: /test-vocacional/admin');
                 break;
+            case 'zonal':
+                header('Location: /test-vocacional/admin/zona');
+                break;
             case 'dece':
                 header('Location: /test-vocacional/admin/dece');
                 break;
