@@ -3,7 +3,7 @@
 class ReportHelper
 {
 
-    // Ordered RIASEC categories matching the Excel model
+    // Categorías RIASEC ordenadas según el modelo de reporte
     public const CATEGORIES = [
         'Realista',
         'Investigadora',
@@ -14,7 +14,7 @@ class ReportHelper
     ];
 
     /**
-     * Map internal keys to the report specific labels
+     * Mapea claves internas a etiquetas específicas del reporte
      */
     public static function getCategoryLabelMap()
     {
@@ -31,8 +31,8 @@ class ReportHelper
     }
 
     /**
-     * Process scores to match the exact report requirement 
-     * (Normalizes keys to Realista, Investigadora, etc.)
+     * Normaliza los puntajes para adaptarlos al formato del reporte
+     * (convierte claves a Realista, Investigadora, Artística, etc.)
      */
     public static function normalizeScores($scores)
     {
@@ -93,7 +93,7 @@ class ReportHelper
     }
 
     /**
-     * Get Top N careers/areas
+     * Obtener las N áreas/carreras principales
      */
     public static function getTopAreas($normalizedScores, $n = 3)
     {
@@ -104,8 +104,8 @@ class ReportHelper
     }
 
     /**
-     * Calculate Differentiation Matrix
-     * Returns a matrix [RowCategory][ColCategory] = Label (Bajo, Media, Alto, or '-')
+     * Calcular la matriz de diferenciación
+     * Devuelve una matriz [FilaCategoria][ColCategoria] = Nivel (Bajo, Media, Alto o '-')
      */
     public static function calculateDifferentiation($normalizedScores)
     {
@@ -139,9 +139,7 @@ class ReportHelper
     }
 
     /**
-     * Calculate Competence (dummy logic based on internal score high/low)
-     * Comparing pair sums or just purely individual levels?
-     * The image shows pairs: "REALISTA - INVESTIGADORA" -> "Alto"
+     * Calcular "Competencia" entre pares (lógica simple basada en promedios)
      */
     public static function calculateCompetence($normalizedScores)
     {
@@ -181,19 +179,18 @@ class ReportHelper
     }
 
     /**
-     * Calculate "Congruencia"
-     * Comparison between implicit preference (test) and explicit preference (what they say).
-     * Since we don't have explicit preference input, we'll placeholder this or 
-     * compare top 1 vs top 2 score closeness.
+     * Calcular "Congruencia"
+     * Comparación entre preferencia implícita (test) y preferencia explícita.
+     * Actualmente sin datos explícitos, se deja como marcador.
      */
     public static function calculateCongruence($normalizedScores)
     {
-        // Placeholder as we lack input data
+        // Marcador: no contamos con preferencia explícita del estudiante
         return "N/A";
     }
 
     /**
-     * Get evaluation text based on top area results (matches CINE table definitions)
+     * Obtener texto de evaluación basado en el área principal (usa definiciones CINE)
      */
     public static function getEvaluationText($topCat)
     {

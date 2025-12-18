@@ -754,6 +754,29 @@ body {
     /* Slimmer when collapsed */
 }
 
+/* Estilos para control de sidebar en móvil */
+.admin-sidebar.hidden-mobile {
+    display: none !important;
+}
+
+.sidebar-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: none;
+    background: #fff;
+    color: var(--secondary-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    cursor: pointer;
+}
+
+@media (min-width: 769px) {
+    .sidebar-toggle-btn { display: none; }
+}
+
 .sidebar-header {
     display: flex;
     align-items: center;

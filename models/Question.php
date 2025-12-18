@@ -2,6 +2,7 @@
 class Question extends BaseModel {
     protected $table = 'preguntas';
     
+    // Obtener preguntas aleatorias por categoría y tipo
     public function getByCategoryAndType($category, $type) {
         $stmt = $this->db->prepare("
             SELECT * FROM {$this->table} 
@@ -12,6 +13,7 @@ class Question extends BaseModel {
         return $stmt->fetchAll();
     }
     
+    // Obtener todas las preguntas agrupadas por categoría y tipo
     public function getAllGrouped() {
         $questions = [];
         foreach (TEST_CATEGORIES as $category) {
@@ -22,6 +24,7 @@ class Question extends BaseModel {
         return $questions;
     }
     
+    // Buscar preguntas por texto
     public function search($keyword) {
         $stmt = $this->db->prepare("
             SELECT * FROM {$this->table} 
@@ -32,6 +35,7 @@ class Question extends BaseModel {
         return $stmt->fetchAll();
     }
     
+    // Importar preguntas desde un arreglo (usa transacción)
     public function importFromArray($questions) {
         $this->db->beginTransaction();
         
@@ -77,6 +81,7 @@ class Question extends BaseModel {
         }
     }
     
+    // Eliminar múltiples preguntas por IDs
     public function deleteMultiple($ids) {
         if (empty($ids)) {
             return 0;

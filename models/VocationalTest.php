@@ -3,9 +3,10 @@ class VocationalTest extends BaseModel
 {
     protected $table = 'resultados_test';
 
+    // Crear resultado de test y guardar respuestas detalladas
     public function createTest($usuarioId, $respuestas, $encuestaData = null)
     {
-        // Calculate scores
+        // Calcular puntajes
         $puntajes = $this->calculateScores($respuestas);
 
         $data = [
@@ -26,6 +27,7 @@ class VocationalTest extends BaseModel
         return $testId;
     }
 
+    // Calcular puntajes agregados por categoría a partir de las respuestas
     private function calculateScores($respuestas)
     {
         $puntajes = [];
@@ -37,7 +39,7 @@ class VocationalTest extends BaseModel
             $conteos[$category] = 0;
         }
 
-        // Get question details
+        // Obtener detalles de la pregunta
         $questionModel = new Question();
 
         foreach ($respuestas as $preguntaId => $respuesta) {
@@ -52,7 +54,7 @@ class VocationalTest extends BaseModel
 
             $categoria = $pregunta['categoria'];
 
-            // Fix: Normalize category name if it comes without accent from DB
+            // Normalizar nombre de categoría si viene sin tilde desde la BD
             if ($categoria === 'Artistico') {
                 $categoria = 'Artístico';
             }
@@ -74,12 +76,12 @@ class VocationalTest extends BaseModel
 
             $peso = $pregunta['peso'] ?? 1;
 
-            // For 1-5 scale: convert to 0-4 range, then multiply by peso
+            // Para escala 1-5: convertir a rango 0-4 y multiplicar por peso
             $puntajes[$categoria] += (($respuestaNorm - 1) * $peso);
             $conteos[$categoria]++;
         }
 
-        // Calculate percentages and states
+        // Calcular porcentajes y estados (APTO / POTENCIAL / POR REFORZAR)
         $resultados = [];
         foreach (TEST_CATEGORIES as $category) {
             if ($conteos[$category] > 0) {
@@ -122,6 +124,7 @@ class VocationalTest extends BaseModel
         return $resultados;
     }
 
+    // Guardar respuestas detalladas en la tabla `respuestas_detalle`
     private function storeDetailedAnswers($testId, $respuestas)
     {
         $stmt = $this->db->prepare(
@@ -129,10 +132,10 @@ class VocationalTest extends BaseModel
         );
 
         foreach ($respuestas as $preguntaId => $respuesta) {
-            // Normalize to 1-5 range
+            // Normalizar a rango 1-5
             $normalized = $this->normalizeAnswer($respuesta);
 
-            // Execute with explicit integer casting
+            // Ejecutar con casteo a entero
             $stmt->execute([(int) $testId, (int) $preguntaId, (int) $normalized]);
         }
     }
@@ -142,6 +145,7 @@ class VocationalTest extends BaseModel
      * Accepts numeric 1-5 or strings '1'-'5'.
      * Throws Exception on unrecognized or out-of-range values.
      */
+    // Normaliza y valida una respuesta a entero entre 1 y 5
     private function normalizeAnswer($val)
     {
         if (is_numeric($val)) {
