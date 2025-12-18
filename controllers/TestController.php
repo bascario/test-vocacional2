@@ -15,12 +15,23 @@ class TestController
     // Mostrar el flujo principal del test: encuesta -> cuestionario o resultados
     public function index()
     {
-        // Verificar si el usuario ya realizó el test
+        // Verificar si el usuario ya realizó el test (salvo que solicite uno nuevo con ?new=1)
+        $forceNew = false;
+        if (isset($_GET['new']) && ($_GET['new'] === '1' || $_GET['new'] === 'true')) {
+            $forceNew = true;
+        }
+
         $existingResults = $this->testModel->getResultsByUser($_SESSION['user_id']);
-        if (!empty($existingResults)) {
-            // If the student already has results, show the results page instead of the questionnaire
+        if (!empty($existingResults) && !$forceNew) {
+            // Si el estudiante ya tiene resultados y NO pidió iniciar un nuevo test, mostrar resultados
             $this->results();
             return;
+        }
+
+        // Si el usuario pidió un nuevo test, limpiar flags de encuesta previa para reiniciar flujo
+        if ($forceNew) {
+            unset($_SESSION['pre_test_completed']);
+            unset($_SESSION['encuesta_data']);
         }
 
         // Check for survey completion in session

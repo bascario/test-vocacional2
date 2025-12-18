@@ -13,7 +13,7 @@
     <div class="nav-container">
         <div class="nav-brand">Mis Resultados</div>
         <div class="nav-menu">
-            <a href="/test-vocacional/test" class="btn btn-sm btn-outline">Nuevo Test</a>
+            <a href="/test-vocacional/test?new=1" class="btn btn-sm btn-outline">Nuevo Test</a>
             <a href="/test-vocacional/logout" class="btn btn-sm btn-outline">Cerrar Sesión</a>
         </div>
     </div>
@@ -332,7 +332,7 @@
 
     <!-- Acciones -->
     <div class="action-buttons">
-        <a href="/test-vocacional/test" class="btn btn-primary">Realizar Nuevo Test</a>
+        <a href="/test-vocacional/test?new=1" class="btn btn-primary">Realizar Nuevo Test</a>
         <a href="/test-vocacional/admin/reports/individual?student_id=<?= $_SESSION['user_id'] ?>" 
            class="btn btn-secondary" target="_blank">Descargar PDF</a>
     </div>
