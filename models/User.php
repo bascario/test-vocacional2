@@ -81,6 +81,12 @@ class User extends BaseModel
             $insertData['telefono'] = $data['telefono'];
         }
 
+        // Optional fecha de nacimiento
+        if (!empty($data['fecha_nacimiento'])) {
+            // Expecting YYYY-MM-DD, but allow whatever and let DB validate if needed
+            $insertData['fecha_nacimiento'] = $data['fecha_nacimiento'];
+        }
+
         return $this->create($insertData);
     }
 
@@ -200,8 +206,18 @@ class User extends BaseModel
      */
     public function updateZona($userId, $zonaId)
     {
-        $stmt = $this->db->prepare("UPDATE {$this->table} SET zona_id = ? WHERE id = ?");
-        return $stmt->execute([$zonaId, $userId]);
+        try {
+            $stmt = $this->db->prepare("UPDATE {$this->table} SET zona_id = ? WHERE id = ?");
+            return $stmt->execute([$zonaId, $userId]);
+        } catch (PDOException $e) {
+            // If the error is "Column not found" and we are trying to set NULL (clear the field), 
+            // we can safely ignore it because the field essentially doesn't exist, so it's "cleared" by definition.
+            if (strpos($e->getMessage(), 'Column not found') !== false && $zonaId === null) {
+                return true;
+            }
+            // Otherwise, rethrow the exception
+            throw $e;
+        }
     }
 
     /**
@@ -211,5 +227,24 @@ class User extends BaseModel
     {
         $stmt = $this->db->prepare("UPDATE {$this->table} SET institucion_id = ? WHERE id = ?");
         return $stmt->execute([$institucionId, $userId]);
+    }
+
+    /**
+     * Find the DECE professional for a specific institution
+     */
+    public function getDeceByInstitution($institucionId)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE rol = 'dece' AND institucion_id = ? LIMIT 1");
+        $stmt->execute([$institucionId]);
+        return $stmt->fetch();
+    }
+
+    /**
+     * Unassign an institution from any user with the DECE role
+     */
+    public function unassignInstitutionFromDece($institucionId)
+    {
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET institucion_id = NULL WHERE rol = 'dece' AND institucion_id = ?");
+        return $stmt->execute([$institucionId]);
     }
 }

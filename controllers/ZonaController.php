@@ -107,7 +107,32 @@ class ZonaController
     }
 
     /**
-     * Generate zona report PDF
+     * AJAX endpoint to get paralelos for selected institution and course
+     */
+    public function getParalelos()
+    {
+        header('Content-Type: application/json');
+
+        if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'zonal') {
+            echo json_encode(['error' => 'Acceso no autorizado']);
+            exit;
+        }
+
+        $institucionId = $_GET['institucion'] ?? null;
+        $curso = $_GET['curso'] ?? null;
+
+        if (!$institucionId || !$curso) {
+            echo json_encode(['paralelos' => []]);
+            exit;
+        }
+
+        $paralelos = $this->userModel->getParalelosByCourse($institucionId, $curso);
+        echo json_encode(['paralelos' => $paralelos]);
+        exit;
+    }
+
+    /**
+     * Generate zona report (HTML Print View)
      */
     public function generateZonaReport()
     {
@@ -130,37 +155,74 @@ class ZonaController
             $curso = $_GET['curso'] ?? null;
             $paralelo = $_GET['paralelo'] ?? null;
 
-            // Get statistics
-            $stats = $this->testModel->getStatisticsByZona($zona, $institucionId, $curso, $paralelo);
+            // Use unified method for results
+            $filters = [
+                'zona' => $zona,
+                'institucion_id' => $institucionId,
+                'curso' => $curso,
+                'paralelo' => $paralelo
+            ];
+            $results = $this->testModel->getGroupResults($filters);
 
-            // Get performance data
-            $performanceByInstitution = $this->testModel->getPerformanceByInstitution($zona);
+            if (empty($results)) {
+                throw new Exception("No se encontraron resultados para los filtros seleccionados");
+            }
 
-            // Get student results
-            $studentResults = $this->testModel->getStudentResultsByZona($zona, $institucionId, $curso, $paralelo);
+            // Calculate Group Stats
+            $totals = ['Realista' => 0, 'Investigador' => 0, 'Artístico' => 0, 'Social' => 0, 'Emprendedor' => 0, 'Convencional' => 0];
+            $numStudents = count($results);
 
-            // Get institutions
-            $institutions = $this->institucionModel->getByZona($zona);
+            foreach ($results as $row) {
+                $scores = json_decode($row['puntajes_json'], true);
+                if (is_array($scores)) {
+                    foreach ($totals as $cat => $val) {
+                        $pct = isset($scores[$cat]) ? (is_array($scores[$cat]) ? ($scores[$cat]['porcentaje'] ?? 0) : $scores[$cat]) : 0;
+                        $totals[$cat] += $pct;
+                    }
+                }
+            }
 
-            // Generate PDF
-            require_once 'utils/PDFGenerator.php';
-            $pdfGenerator = new PDFGenerator();
-            $pdfContent = $pdfGenerator->generateZonaReport(
-                $zona,
-                $institutions,
-                $stats,
-                $performanceByInstitution,
-                $studentResults,
-                $institucionId,
-                $curso,
-                $paralelo
-            );
+            $groupAverages = [];
+            if ($numStudents > 0) {
+                foreach ($totals as $cat => $sum) {
+                    $groupAverages[$cat] = round($sum / $numStudents, 2);
+                }
+            }
 
-            // Output PDF
-            $filename = 'reporte_zona_' . $zona . '_' . date('Y-m-d') . '.pdf';
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="' . $filename . '"');
-            echo $pdfContent;
+            // Identify Top Area
+            $topAreaName = null;
+            $topAreaScore = -1;
+            foreach ($groupAverages as $cat => $avg) {
+                if ($avg > $topAreaScore) {
+                    $topAreaScore = $avg;
+                    $topAreaName = $cat;
+                }
+            }
+
+            // Prepare View Data
+            // If specific institution selected, get its name, otherwise Generic
+            $instName = 'Todas las Instituciones de la Zona';
+            if ($institucionId) {
+                $inst = $this->institucionModel->find($institucionId);
+                if ($inst)
+                    $instName = $inst['nombre'];
+            }
+
+            $filterInfo = [
+                'institution' => $instName,
+                'zona' => $zona,
+                'distrito' => 'Todos', // Could detect if filtering by institution
+                'course' => ($curso ? $curso . ($paralelo ? ' - ' . $paralelo : '') : 'Todos los cursos')
+            ];
+
+            $deceUser = $currentUser; // Zonal Admin signature
+            // Mock institution object for signature place
+            $institution = ['nombre' => 'Coordinación Zonal ' . $zona];
+
+            $reportTitle = "Reporte Zonal - Zona " . $zona;
+
+            // Render View
+            require 'views/report_group_print.php';
             exit;
 
         } catch (Exception $e) {

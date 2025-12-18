@@ -54,6 +54,12 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento"
+                            max="<?= date('Y-m-d') ?>" placeholder="AAAA-MM-DD">
+                    </div>
+
+                    <div class="form-group">
                         <label for="institucion_id">Nombre del Colegio</label>
                         <select id="institucion_id" name="institucion_id" required style="width: 100%;">
 

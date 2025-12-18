@@ -9,15 +9,15 @@
 function getCategoryLabel($category)
 {
     $labels = [
-        'Realista' => 'REALISTA',
-        'Investigador' => 'INVESTIGADORA',
-        'Artístico' => 'ARTÍSTICA',
-        'Social' => 'SOCIAL',
-        'Emprendedor' => 'EMPRENDEDORA',
-        'Convencional' => 'CONVENCIONAL'
+        'Realista' => 'Realista',
+        'Investigador' => 'Investigador',
+        'Artístico' => 'Artístico',
+        'Social' => 'Social',
+        'Emprendedor' => 'Emprendedor',
+        'Convencional' => 'Convencional'
     ];
 
-    return $labels[$category] ?? strtoupper($category);
+    return $labels[$category] ?? ucfirst($category);
 }
 
 /**
@@ -26,12 +26,12 @@ function getCategoryLabel($category)
 function getRIASECOrder()
 {
     return [
-        'REALISTA',
-        'INVESTIGADORA',
-        'ARTÍSTICA',
-        'SOCIAL',
-        'EMPRENDEDORA',
-        'CONVENCIONAL'
+        'Realista',
+        'Investigador',
+        'Artístico',
+        'Social',
+        'Emprendedor',
+        'Convencional'
     ];
 }
 
@@ -42,28 +42,39 @@ function getRIASECOrder()
 function convertToRIASEC($scores)
 {
     $riasec = [
-        'REALISTA' => 0,
-        'INVESTIGADORA' => 0,
-        'ARTÍSTICA' => 0,
-        'SOCIAL' => 0,
-        'EMPRENDEDORA' => 0,
-        'CONVENCIONAL' => 0
+        'Realista' => 0,
+        'Investigador' => 0,
+        'Artístico' => 0,
+        'Social' => 0,
+        'Emprendedor' => 0,
+        'Convencional' => 0
     ];
 
     $mapping = [
-        'Realista' => 'REALISTA',
-        'Investigador' => 'INVESTIGADORA',
-        'Artístico' => 'ARTÍSTICA',
-        'Social' => 'SOCIAL',
-        'Emprendedor' => 'EMPRENDEDORA',
-        'Convencional' => 'CONVENCIONAL'
+        'Realista' => 'Realista',
+        'Investigador' => 'Investigador',
+        'Artístico' => 'Artístico',
+        'Social' => 'Social',
+        'Emprendedor' => 'Emprendedor',
+        'Convencional' => 'Convencional',
+        // Legacy mappings just in case
+        'ciencias' => 'Investigador',
+        'tecnologia' => 'Realista',
+        'humanidades' => 'Social',
+        'artes' => 'Artístico',
+        'salud' => 'Social',
+        'negocios' => 'Emprendedor'
     ];
 
     foreach ($scores as $category => $data) {
         if (isset($mapping[$category])) {
             $riasecType = $mapping[$category];
             $percentage = is_array($data) ? ($data['porcentaje'] ?? 0) : $data;
-            $riasec[$riasecType] = $percentage;
+            // If mapping maps multiple old keys to same new key (e.g. salud->Social), take max? or average?
+            // Current code just overwrites. Let's take max to be safe if multiple map to one.
+            if ($percentage > $riasec[$riasecType]) {
+                $riasec[$riasecType] = $percentage;
+            }
         }
     }
 
@@ -86,6 +97,13 @@ function getDominantRIASEC($scores)
 function getRIASECColor($type)
 {
     $colors = [
+        'Realista' => '#667EEA',
+        'Investigador' => '#48BB78',
+        'Artístico' => '#ED8936',
+        'Social' => '#F56565',
+        'Emprendedor' => '#9F7AEA',
+        'Convencional' => '#38B2AC',
+        // Legacy uppercase fallback
         'REALISTA' => '#667EEA',
         'INVESTIGADORA' => '#48BB78',
         'ARTÍSTICA' => '#ED8936',

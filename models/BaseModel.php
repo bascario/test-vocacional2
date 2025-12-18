@@ -66,4 +66,3 @@ abstract class BaseModel {
         return $stmt->execute([$id]);
     }
 }
-?>

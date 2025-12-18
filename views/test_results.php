@@ -29,6 +29,40 @@
         <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?></div>
     <?php endif; ?>
 
+    <!-- Perfil - edición rápida -->
+    <div class="category-section" style="margin-bottom:20px;">
+        <h3>Mi Perfil</h3>
+        <form method="POST" action="/test-vocacional/profile/update" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+            <div style="flex:1;min-width:200px;">
+                <label>Nombre</label>
+                <input type="text" name="nombre" value="<?= htmlspecialchars($user['nombre'] ?? '') ?>" class="form-control">
+            </div>
+            <div style="flex:1;min-width:200px;">
+                <label>Apellido</label>
+                <input type="text" name="apellido" value="<?= htmlspecialchars($user['apellido'] ?? '') ?>" class="form-control">
+            </div>
+            <div style="flex:1;min-width:220px;">
+                <label>Email</label>
+                <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" class="form-control">
+            </div>
+            <div style="flex:1;min-width:140px;">
+                <label>Curso</label>
+                <input type="text" name="curso" value="<?= htmlspecialchars($user['curso'] ?? '') ?>" class="form-control">
+            </div>
+            <div style="flex:1;min-width:140px;">
+                <label>Paralelo</label>
+                <input type="text" name="paralelo" value="<?= htmlspecialchars($user['paralelo'] ?? '') ?>" class="form-control">
+            </div>
+            <div style="flex:1;min-width:160px;">
+                <label>Teléfono</label>
+                <input type="text" name="telefono" value="<?= htmlspecialchars($user['telefono'] ?? '') ?>" class="form-control">
+            </div>
+            <div style="flex:0 0 auto;">
+                <button type="submit" class="btn btn-success">Guardar Perfil</button>
+            </div>
+        </form>
+    </div>
+
     <!-- Tarjetas de resultados -->
     <div class="results-grid">
         <?php foreach ($scores as $area => $data): ?>
@@ -46,18 +80,19 @@
                 default => '🔍'
             };
             ?>
-            <div class="result-card <?= $colorClass ?>">
-                <div class="result-header">
-                    <h3><?= ucfirst($area) ?></h3>
-                    <span class="result-icon"><?= $icon ?></span>
-                </div>
-                <div class="result-score">
-                    <span class="score-percentage"><?= $data['porcentaje'] ?>%</span>
-                    <span class="score-label"><?= $data['estado'] ?></span>
-                </div>
-                <div class="result-details">
-                    <p>Promedio: <?= round($data['promedio'], 2) ?>/5</p>
-                    <p>Preguntas: <?= $data['conteo'] ?></p>
+            <div class="public-career-card result-card <?= $colorClass ?>">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                    <div>
+                        <h4 style="margin:0 0 6px 0;"><?= ucfirst($area) ?></h4>
+                        <p style="margin:0;color:#666;">Promedio: <?= round($data['promedio'], 2) ?>/5 • Preguntas: <?= $data['conteo'] ?></p>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="result-icon" style="font-size:1.6rem;"><?= $icon ?></div>
+                        <div style="margin-top:8px;">
+                            <span class="score-percentage" style="font-size:1.4rem;color:var(--primary-color);font-weight:700;"><?= $data['porcentaje'] ?>%</span>
+                            <div class="score-label" style="font-weight:700;margin-top:4px;color:#555;"><?= $data['estado'] ?></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -88,8 +123,80 @@
         </div>
     </div>
 
+    <!-- Carreras en Universidades Públicas (CES) -->
+    <div class="public-careers-section">
+        <h2>Carreras Sugeridas en Universidades Públicas</h2>
+        <p>Basado en tu perfil, estas son algunas opciones en universidades públicas del país (Fuente: CES - Oferta Académica Vigente):</p>
+        
+        <?php
+        $publicUniversityMap = [
+            'Realista' => [
+                ['name' => 'Ingeniería Civil', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Ingeniería Agronómica', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Ingeniería Ambiental', 'university' => 'Univ. Nacional de Chimborazo (UNACH)'],
+                ['name' => 'Ing. en Manejo y Conservación del Medio Ambiente', 'university' => 'Univ. Nacional de Loja (UNL)']
+            ],
+            'Investigador' => [
+                ['name' => 'Medicina', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Biología', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Física', 'university' => 'Escuela Politécnica Nacional (EPN)'],
+                ['name' => 'Psicología Clínica', 'university' => 'Universidad Central del Ecuador (UCE)']
+            ],
+            'Artístico' => [
+                ['name' => 'Artes Plásticas', 'university' => 'Universidad Nacional de Loja (UNL)'],
+                ['name' => 'Música', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Artes Escénicas', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Diseño Gráfico', 'university' => 'Universidad Técnica de Ambato (UTA)']
+            ],
+            'Social' => [
+                ['name' => 'Psicología Infantil y Psicorrehabilitación', 'university' => 'Univ. Central del Ecuador (UCE)'],
+                ['name' => 'Psicología Educativa y Orientación', 'university' => 'Univ. Central del Ecuador (UCE)'],
+                ['name' => 'Trabajo Social', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Enfermería', 'university' => 'Universidad Central del Ecuador (UCE)']
+            ],
+            'Emprendedor' => [
+                ['name' => 'Derecho', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Administración de Empresas', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Comunicación', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Turismo', 'university' => 'Universidad Central del Ecuador (UCE)']
+            ],
+            'Convencional' => [
+                ['name' => 'Contabilidad y Auditoría', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Finanzas', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Economía', 'university' => 'Universidad Central del Ecuador (UCE)'],
+                ['name' => 'Bibliotecología', 'university' => 'Universidad Nacional de Loja (UNL)']
+            ]
+        ];
+
+        // Obtener las 2 áreas principales del estudiante
+        $userScores = [];
+        foreach ($scores as $area => $data) {
+            $userScores[$area] = (float)$data['porcentaje'];
+        }
+        arsort($userScores);
+        $topTwoAreas = array_slice(array_keys($userScores), 0, 2);
+
+        echo '<div class="public-careers-grid">';
+        foreach ($topTwoAreas as $area) {
+            $areaKey = ucfirst(strtolower($area));
+            if (isset($publicUniversityMap[$areaKey])) {
+                foreach ($publicUniversityMap[$areaKey] as $career) {
+                    echo '<div class="public-career-card">';
+                    echo '<div>';
+                    echo '<h4>' . htmlspecialchars($career['name']) . '</h4>';
+                    echo '<p class="university">' . htmlspecialchars($career['university']) . '</p>';
+                    echo '</div>';
+                    echo '<span class="area-tag">' . htmlspecialchars($areaKey) . '</span>';
+                    echo '</div>';
+                }
+            }
+        }
+        echo '</div>';
+        ?>
+    </div>
+
     <!-- Carreras del Tecnológico Vida Nueva (filtradas por perfil) -->
-    <div class="careers-section">
+    <div class="public-careers-section">
         <h2>Carreras Ofertadas - Tecnológico Universitario Vida Nueva</h2>
         <p class="careers-intro">Explora las carreras disponibles en el Tecnológico Universitario Vida Nueva que podrían ser de tu interés según tu perfil vocacional.</p>
 
@@ -186,22 +293,26 @@
             }
         }
 
-        // Renderizar las categorías coincidentes
+        // Renderizar las categorías coincidentes como tarjetas (reutiliza estilos de public-career-card)
         $anyShown = false;
-        echo '<div class="careers-grid">';
+        echo '<div class="public-careers-grid">';
         foreach ($careerMap as $key => $cat) {
             if (!empty($matchedCategories) && empty($matchedCategories[$key])) continue;
             $anyShown = true;
-            echo '<div class="career-category">';
-            echo '<h3>' . htmlspecialchars($cat['title']) . '</h3>';
-            echo '<ul>';
             foreach ($cat['items'] as $item) {
-                echo '<li><a href="' . htmlspecialchars($item['url']) . '" target="_blank">' . htmlspecialchars($item['label']) . '</a></li>';
+                $url = !empty($item['url']) ? $item['url'] : '#';
+                echo '<a href="' . htmlspecialchars($url) . '" target="_blank" style="display:block;color:inherit;text-decoration:none;">';
+                echo '<div class="public-career-card">';
+                echo '<div>';
+                echo '<h4>' . htmlspecialchars($item['label']) . '</h4>';
+                echo '<p class="university">' . htmlspecialchars($cat['title']) . '</p>';
+                echo '</div>';
+                echo '<span class="area-tag">' . htmlspecialchars(strtoupper($key)) . '</span>';
+                echo '</div>';
+                echo '</a>';
             }
-            echo '</ul>';
-            echo '</div>';
         }
-        echo '</div>'; // end careers-grid
+        echo '</div>'; // end public-careers-grid
 
         if (!$anyShown) {
             echo '<p><em>No se encontraron coincidencias claras con tu perfil. Aquí tienes la oferta completa en el sitio del Tecnológico Vida Nueva:</em> <a href="https://vidanueva.edu.ec/oferta-academica/" target="_blank">Ver oferta académica completa</a></p>';

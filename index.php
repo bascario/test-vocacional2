@@ -63,6 +63,14 @@ switch ($request) {
         $controller->submit();
         break;
 
+    case '/test/survey':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        require_once 'controllers/TestController.php';
+        $controller = new TestController();
+        $controller->submitSurvey();
+        break;
+
     case '/results':
         require_once 'middleware/AuthMiddleware.php';
         AuthMiddleware::checkAuth();
@@ -71,13 +79,38 @@ switch ($request) {
         $controller->results();
         break;
 
+    case '/profile':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        require_once 'controllers/AuthController.php';
+        $controller = new AuthController();
+        $controller->profile();
+        break;
+
+    case '/profile/update':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        require_once 'controllers/AuthController.php';
+        $controller = new AuthController();
+        $controller->updateProfile();
+        break;
+
+    case '/politica-datos':
+        // Public page with data policy
+        require_once 'views/politica_datos.php';
+        break;
+
     case '/admin':
         require_once 'middleware/AuthMiddleware.php';
         AuthMiddleware::checkAuth();
 
-        // Redirect DECE users to their specialized dashboard BEFORE role check
         if (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'dece') {
             header('Location: /test-vocacional/admin/dece');
+            exit;
+        }
+
+        if (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'zonal') {
+            header('Location: /test-vocacional/admin/zona');
             exit;
         }
 
@@ -105,6 +138,15 @@ switch ($request) {
         require_once 'controllers/ZonaController.php';
         $controller = new ZonaController();
         $controller->getCourses();
+        break;
+
+    case '/admin/zona/paralelos':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        AuthMiddleware::checkRole(['zonal']);
+        require_once 'controllers/ZonaController.php';
+        $controller = new ZonaController();
+        $controller->getParalelos();
         break;
 
     case '/admin/zona/reports/zona':

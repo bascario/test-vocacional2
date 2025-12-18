@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="/test-vocacional/assets/css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <nav class="navbar">
         <div class="nav-container">
@@ -25,7 +27,9 @@
             <h1>Test de Orientación Vocacional</h1>
             <p>Responde cada pregunta según tus intereses, habilidades y valores personales</p>
             <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-error"><?= htmlspecialchars($_SESSION['error']) ?><?php unset($_SESSION['error']); ?></div>
+                <div class="alert alert-error">
+                    <?= htmlspecialchars($_SESSION['error']) ?>     <?php unset($_SESSION['error']); ?>
+                </div>
             <?php endif; ?>
         </div>
 
@@ -38,8 +42,8 @@
 
         <form method="POST" action="/test-vocacional/test/submit" id="testForm">
             <?php
-                // $questions is a flattened list provided by the controller
-                $totalQuestions = count($questions);
+            // $questions is a flattened list provided by the controller
+            $totalQuestions = count($questions);
             ?>
 
             <div class="book-container" id="bookContainer">
@@ -56,23 +60,133 @@
             </div>
 
             <div style="margin-top:18px; text-align:center;">
-                <button type="submit" class="btn btn-success btn-lg" id="submitBtn" style="display:none">Finalizar y Ver Resultados</button>
+                <button type="submit" class="btn btn-success btn-lg" id="submitBtn" style="display:none">Finalizar y Ver
+                    Resultados</button>
             </div>
         </form>
     </div>
 
     <style>
         /* Simple 3D page flip book effect */
-        .book-container { perspective: 1200px; margin: 30px auto; max-width: 800px; }
-        .page { background: #fff; padding: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); border-radius: 6px; min-height: 220px; transition: transform 600ms ease, opacity 300ms ease; transform-origin: left center; }
-        .page.flip-out { transform: rotateY(-90deg); opacity: 0; }
-        .page.flip-in { transform: rotateY(90deg); opacity: 0; }
-        .page.show { transform: rotateY(0deg); opacity: 1; }
-        .question-text { font-size: 1.05rem; margin-bottom: 18px; }
-        .likert-scale { display:flex; gap:10px; justify-content:flex-start; flex-wrap: wrap; }
-        .likert-option { display:inline-flex; align-items:center; gap:6px; font-size: 0.9rem; }
-        .page-controls { display:flex; justify-content:space-between; align-items:center; margin-top:12px; max-width:800px; margin-left:auto; margin-right:auto; }
-        #username-suggestions .btn { cursor:pointer; }
+        .book-container {
+            perspective: 1200px;
+            margin: 30px auto;
+            max-width: 800px;
+        }
+
+        .page {
+            background: #fff;
+            padding: 28px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
+            min-height: 220px;
+            transition: transform 600ms ease, opacity 300ms ease;
+            transform-origin: left center;
+        }
+
+        .page.flip-out {
+            transform: rotateY(-90deg);
+            opacity: 0;
+        }
+
+        .page.flip-in {
+            transform: rotateY(90deg);
+            opacity: 0;
+        }
+
+        .page.show {
+            transform: rotateY(0deg);
+            opacity: 1;
+        }
+
+        .page.show {
+            transform: rotateY(0deg);
+            opacity: 1;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .likert-scale-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .likert-options {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .likert-btn {
+            flex: 1;
+            padding: 15px 5px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-weight: 600;
+            color: #555;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .likert-btn:hover {
+            border-color: #3498db;
+            background: #f7fbff;
+        }
+
+        .likert-btn.selected {
+            border-color: #3498db;
+            background: #3498db;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .likert-btn .val-num {
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .likert-btn .val-text {
+            font-size: 0.8rem;
+            font-weight: normal;
+        }
+
+        .likert-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            padding: 0 5px;
+        }
+
+        .page-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #username-suggestions .btn {
+            cursor: pointer;
+        }
     </style>
 
     <script>
@@ -93,27 +207,32 @@
             pageEl.innerHTML = `
                 <div class="question-card">
                     <p class="question-text">${escapeHtml(q.pregunta)}</p>
-                    <div class="likert-scale">
-                        <label class="likert-option">
-                            <input type="radio" name="respuestas[${q.id}]" value="1" ${existingVal === '1' ? 'checked' : ''}>
-                            <span>1. Totalmente en desacuerdo</span>
-                        </label>
-                        <label class="likert-option">
-                            <input type="radio" name="respuestas[${q.id}]" value="2" ${existingVal === '2' ? 'checked' : ''}>
-                            <span>2. En desacuerdo</span>
-                        </label>
-                        <label class="likert-option">
-                            <input type="radio" name="respuestas[${q.id}]" value="3" ${existingVal === '3' ? 'checked' : ''}>
-                            <span>3. Es difícil decidir</span>
-                        </label>
-                        <label class="likert-option">
-                            <input type="radio" name="respuestas[${q.id}]" value="4" ${existingVal === '4' ? 'checked' : ''}>
-                            <span>4. De acuerdo</span>
-                        </label>
-                        <label class="likert-option">
-                            <input type="radio" name="respuestas[${q.id}]" value="5" ${existingVal === '5' ? 'checked' : ''}>
-                            <span>5. Totalmente de acuerdo</span>
-                        </label>
+                    
+                    <div class="likert-scale-container">
+                        <div class="likert-labels">
+                            <span>Totalmente en desacuerdo</span>
+                            <span>Totalmente de acuerdo</span>
+                        </div>
+                        
+                        <div class="likert-options">
+                            ${[1, 2, 3, 4, 5].map(val => {
+                const isSelected = existingVal == val;
+                const labels = {
+                    1: 'Totalmente en desacuerdo',
+                    2: 'En desacuerdo',
+                    3: 'Difícil decidir',
+                    4: 'De acuerdo',
+                    5: 'Totalmente de acuerdo'
+                };
+                return `
+                                <div class="likert-btn ${isSelected ? 'selected' : ''}" onclick="selectOption(${q.id}, ${val})">
+                                    <span class="val-num">${val}</span>
+                                    <span class="val-text">${labels[val]}</span>
+                                    <input type="radio" name="respuestas[${q.id}]" value="${val}" ${isSelected ? 'checked' : ''} style="display:none">
+                                </div>
+                                `;
+            }).join('')}
+                        </div>
                     </div>
                 </div>
             `;
@@ -124,8 +243,29 @@
             updateControls();
         }
 
+        // Expose function to global scope for onclick handler
+        window.selectOption = function (qId, val) {
+            // Unselect others
+            document.querySelectorAll(`.likert-btn`).forEach(el => el.classList.remove('selected'));
+
+            // Select clicked (re-find it specifically to be safe, though event handling is simplified here)
+            // Actually, we just re-render or update DOM. simplest is update DOM class
+            const btns = document.querySelectorAll(`.likert-btn`);
+            btns.forEach(btn => {
+                const input = btn.querySelector('input');
+                if (input && input.value == val) {
+                    btn.classList.add('selected');
+                    input.checked = true;
+                    // Trigger change event manually so save logic works
+                    const event = new Event('change', { bubbles: true });
+                    document.getElementById('testForm').dispatchEvent(event);
+                }
+            });
+            // Auto advance after short delay? Optional. Let's stick to manual next for now to be safe.
+        };
+
         function escapeHtml(str) {
-            return String(str).replace(/[&<>"']/g, function(s) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[s]; });
+            return String(str).replace(/[&<>"']/g, function (s) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" })[s]; });
         }
 
         function updateProgressBar() {
@@ -206,11 +346,11 @@
             });
         }
 
-        prevBtn.addEventListener('click', function(){ goTo(currentIndex - 1); });
-        nextBtn.addEventListener('click', function(){ goTo(currentIndex + 1); });
+        prevBtn.addEventListener('click', function () { goTo(currentIndex - 1); });
+        nextBtn.addEventListener('click', function () { goTo(currentIndex + 1); });
 
         // When user interacts with page (click an option), save and update progress
-        document.getElementById('testForm').addEventListener('change', function(e){
+        document.getElementById('testForm').addEventListener('change', function (e) {
             if (e.target && e.target.name && e.target.name.startsWith('respuestas')) {
                 saveCurrentAnswer();
                 updateProgressBar();
@@ -218,7 +358,7 @@
         });
 
         // On submit, ensure all answered — count saved responses in localStorage (all pages)
-        document.getElementById('testForm').addEventListener('submit', function(e){
+        document.getElementById('testForm').addEventListener('submit', function (e) {
             // Count responses stored in localStorage
             let saved = {};
             try { saved = JSON.parse(localStorage.getItem('testProgress') || '{}'); } catch (ex) { saved = {}; }
@@ -273,5 +413,7 @@
         renderQuestion(0);
 
     </script>
+        <?php require 'views/layout/footer.php'; ?>
 </body>
+
 </html>

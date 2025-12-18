@@ -1,9 +1,10 @@
 <?php
 // Database configuration
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'test_vocacional');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_NAME', 'desarro2_test_vocacional');
+define('DB_USER', 'desarro2_admin');
+define('DB_PASS', 'VidaNueva2025');
+
 
 // Application settings
 define('APP_NAME', 'Sistema de Test Vocacional');

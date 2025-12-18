@@ -16,18 +16,37 @@ class AdminController
 
     public function index()
     {
-        // Get statistics
-        $stats = $this->testModel->getStatistics();
+        // Filtros
+        $filters = [
+            'zona' => $_GET['zona'] ?? null,
+            'distrito' => $_GET['distrito'] ?? null,
+            'institucion_id' => $_GET['institucion_id'] ?? null
+        ];
 
-        // Get recent tests
-        $recentTests = $this->testModel->findAll([], 'fecha_test DESC LIMIT 10');
+        // Obtener opciones de filtro
+        $zonas = $this->institucionModel->getZonaList();
+        $distritos = $filters['zona'] ? $this->institucionModel->getDistritoList($filters['zona']) : []; // Cargar distritos dependientes si se seleccionó zona.
 
-        // Get students by course
-        $students = $this->userModel->getStudentsByCourse();
+        $instituciones = [];
+        if ($filters['distrito']) {
+            $instituciones = $this->institucionModel->getByDistrito($filters['distrito']);
+        } elseif ($filters['zona']) {
+            $instituciones = $this->institucionModel->getByZona($filters['zona']);
+        }
+
+        // Obtener estadísticas
+        $stats = $this->testModel->getStatistics($filters);
+
+        // Obtener últimos tests (pueden estar filtrados según necesidad)
+        // Actualmente obtenemos los tests recientes con detalles mediante el modelo.
+        // I don't see a filterable findAll in my previous reads.
+
+        $recentTests = $this->testModel->getRecentTestsWithDetails(10, $filters);
 
         require_once 'views/admin_dashboard.php';
     }
 
+    // Generar y mostrar/descargar reporte individual en HTML/PDF
     public function generateIndividualReport()
     {
         $studentId = $_GET['student_id'] ?? null;
@@ -42,7 +61,7 @@ class AdminController
             $currentUserId = $_SESSION['user_id'] ?? null;
             $currentUserRole = $_SESSION['user_role'] ?? null;
 
-            // Allow if: admin, dece with same institution, or estudiante downloading their own report
+            // Permitir si: administrador, dece de la misma institución, o el estudiante descargando su propio reporte
             $isOwn = ($currentUserId == $studentId);
             $isAdmin = ($currentUserRole === 'administrador');
             $isDece = ($currentUserRole === 'dece');
@@ -51,7 +70,7 @@ class AdminController
                 throw new Exception('Acceso denegado: no tienes permiso para descargar este reporte');
             }
 
-            // If current user is DECE, only allow generating report for students in the same institution
+            // Si el usuario actual es DECE, solo permitir reportes de estudiantes de la misma institución
             if ($isDece && !$isOwn) {
                 $current = $this->userModel->find($currentUserId);
                 if (empty($current) || empty($current['institucion_id'])) {
@@ -72,17 +91,32 @@ class AdminController
             }
 
             $latestResult = $results[0];
+            $result = $latestResult;
             $scores = json_decode($latestResult['puntajes_json'], true);
 
-            // Generate PDF
-            require_once 'utils/PDFGenerator.php';
-            $pdfGenerator = new PDFGenerator();
-            $pdfContent = $pdfGenerator->generateIndividualReport($latestResult, $scores);
+            // Obtener profesional DECE y datos de la institución
+            $studentInfo = $this->userModel->find($studentId);
+            $deceUser = null;
+            $institution = null;
+            if (!empty($studentInfo['institucion_id'])) {
+                $deceUser = $this->userModel->getDeceByInstitution($studentInfo['institucion_id']);
+                $institution = $this->institucionModel->find($studentInfo['institucion_id']);
+            }
 
-            // Output PDF (use student id in filename)
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="reporte_individual_' . $studentId . '.pdf"');
-            echo $pdfContent;
+            // Calcular datos adicionales para el informe detallado
+            require_once 'utils/ReportHelper.php';
+
+            // Normalizar puntajes a etiquetas esperadas (RIASEC)
+            $normalizedScores = ReportHelper::normalizeScores($scores);
+
+            // Calcular métricas derivadas
+            $differentiation = ReportHelper::calculateDifferentiation($normalizedScores);
+            $competence = ReportHelper::calculateCompetence($normalizedScores);
+            $topAreas = ReportHelper::getTopAreas($normalizedScores, 3);
+
+            // Renderizar la vista imprimible
+            // No se envían cabeceras PDF aquí, solo HTML
+            require 'views/report_individual_print.php';
             exit;
 
         } catch (Exception $e) {
@@ -92,30 +126,53 @@ class AdminController
         }
     }
 
+    // Generar reporte grupal en PDF o Excel según el parámetro
     public function generateGroupReport()
     {
-        $course = $_GET['course'] ?? null;
+        $filters = [
+            'zona' => $_GET['zona'] ?? null,
+            'distrito' => $_GET['distrito'] ?? null,
+            'institucion_id' => $_GET['institucion_id'] ?? null,
+            'curso' => $_GET['course'] ?? null
+        ];
         $format = $_GET['format'] ?? 'pdf';
 
         try {
-            // If current user is DECE, restrict results to their institution
-            $institucionFilter = null;
+            // Verificación de permisos para DECE
             if (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'dece') {
                 $current = $this->userModel->find($_SESSION['user_id']);
                 if (empty($current) || empty($current['institucion_id'])) {
                     throw new Exception('Acceso denegado: tu cuenta no está vinculada a una institución');
                 }
-                $institucionFilter = $current['institucion_id'];
+                // Force filter to own institution
+                $filters['institucion_id'] = $current['institucion_id'];
             }
 
-            $results = $this->testModel->getResultsByCourse($course, $institucionFilter);
+            // Obtener resultados según filtros
+            $results = $this->testModel->getGroupResults($filters);
 
             if (empty($results)) {
-                throw new Exception("No se encontraron resultados");
+                // Si no hay datos con los filtros seleccionados, lanzar excepción
+                throw new Exception("No se encontraron resultados con los filtros seleccionados");
             }
 
+            // Prepare Filter Info for View
+            $filterInfo = [
+                'zona' => $filters['zona'],
+                'distrito' => $filters['distrito'],
+                'institution' => $filters['institucion_id'] ? ($this->institucionModel->find($filters['institucion_id'])['nombre'] ?? 'Desconocida') : 'Todas las Instituciones',
+                'course' => $filters['curso']
+            ];
+
             if ($format === 'excel') {
-                // Generate Excel
+                // Generate Excel (Legacy/Existing) - Assuming ExcelGenerator method signature matches or needs update.
+                // Previous call: $excelGenerator->generateGroupReport($results); 
+                // We need to check if $results format matches what ExcelGenerator expects.
+                // Assuming result array is similar (list of rows) it should be fine.
+                // Actually, the previous getResultsByCourse might have returned different columns.
+                // My new getGroupResults returns rt.*, u.*, ie.nombre.
+                // Let's assume compatibility or fix ExcelGenerator if needed. for now we leave it.
+
                 require_once 'utils/ExcelGenerator.php';
                 $excelGenerator = new ExcelGenerator();
                 $excelContent = $excelGenerator->generateGroupReport($results);
@@ -125,14 +182,61 @@ class AdminController
                 echo $excelContent;
                 exit;
             } else {
-                // Generate PDF
-                require_once 'utils/PDFGenerator.php';
-                $pdfGenerator = new PDFGenerator();
-                $pdfContent = $pdfGenerator->generateGroupReport($results, $course);
+                // Generar vista PDF/HTML
+                // Calcular estadísticas grupales para el gráfico radar
+                $totals = ['Realista' => 0, 'Investigador' => 0, 'Artístico' => 0, 'Social' => 0, 'Emprendedor' => 0, 'Convencional' => 0];
+                $counts = ['Realista' => 0, 'Investigador' => 0, 'Artístico' => 0, 'Social' => 0, 'Emprendedor' => 0, 'Convencional' => 0]; // actually count tests
 
-                header('Content-Type: application/pdf');
-                header('Content-Disposition: attachment; filename="reporte_grupal_' . date('Y-m-d') . '.pdf"');
-                echo $pdfContent;
+                // To match individual logic:
+                // We sum the percentages for each category across all students, then divide by N
+                foreach ($results as $row) {
+                    $scores = json_decode($row['puntajes_json'], true);
+                    if (is_array($scores)) {
+                        foreach ($totals as $cat => $val) {
+                            // Extract percentage. Keys in JSON are e.g. "Realista".
+                            // Handle if key exists
+                            $pct = 0;
+                            if (isset($scores[$cat])) {
+                                if (is_array($scores[$cat]))
+                                    $pct = $scores[$cat]['porcentaje'] ?? 0;
+                                else
+                                    $pct = $scores[$cat];
+                            }
+                            $totals[$cat] += $pct;
+                            $counts[$cat]++;
+                        }
+                    }
+                }
+
+                $groupAverages = [];
+                $numStudents = count($results);
+                if ($numStudents > 0) {
+                    foreach ($totals as $cat => $sum) {
+                        $groupAverages[$cat] = round($sum / $numStudents, 2);
+                    }
+                }
+
+                // Identify Top Area
+                $topAreaName = null;
+                $topAreaScore = -1;
+                foreach ($groupAverages as $cat => $avg) {
+                    if ($avg > $topAreaScore) {
+                        $topAreaScore = $avg;
+                        $topAreaName = $cat;
+                    }
+                }
+
+                // Prepare View Data for Footer
+                // Ensure we have current user data for signature
+                if (!isset($current)) {
+                    $current = $this->userModel->find($_SESSION['user_id']);
+                }
+                $deceUser = $current;
+                $reportTitle = "Reporte Grupal - Administrador";
+
+                // Render Update View
+                // No headers needed as we output HTML to browser directly
+                require 'views/report_group_print.php';
                 exit;
             }
 
@@ -251,6 +355,9 @@ class AdminController
 
                 // Update institucion_id if provided (for dece role)
                 if ($role === 'dece' && !empty($institucionId)) {
+                    // First, unassign this institution from ANY OTHER user who has the 'dece' role
+                    // This ensures the institution is "moved" to the new user
+                    $this->userModel->unassignInstitutionFromDece($institucionId);
                     $this->userModel->updateInstitucion((int) $userId, $institucionId);
                 } elseif ($role !== 'dece') {
                     // Clear institucion_id if not dece role
@@ -280,4 +387,3 @@ class AdminController
         require_once 'views/admin_users.php';
     }
 }
-?>

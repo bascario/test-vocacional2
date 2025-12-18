@@ -95,16 +95,52 @@ class Institucion extends BaseModel
     }
 
     /**
-     * Update zona for an institution
+     * Get list of unique distritos
      */
-    public function updateZona($id, $zona)
+    public function getDistritoList($zona = null)
+    {
+        $sql = "SELECT DISTINCT distrito FROM {$this->table} WHERE distrito IS NOT NULL AND distrito != ''";
+        $params = [];
+
+        if ($zona) {
+            $sql .= " AND zona = ?";
+            $params[] = $zona;
+        }
+
+        $sql .= " ORDER BY distrito";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * Get institutions by distrito
+     */
+    public function getByDistrito($distrito)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE distrito = ? ORDER BY nombre");
+        $stmt->execute([$distrito]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Update zona and distrito for an institution
+     */
+    public function updateLocationConfig($id, $zona, $distrito)
     {
         $stmt = $this->db->prepare("
             UPDATE {$this->table} 
-            SET zona = ? 
+            SET zona = ?, distrito = ?
             WHERE id = ?
         ");
+        return $stmt->execute([$zona, $distrito, $id]);
+    }
+
+    // Keep legacy updateZona for compatibility if needed
+    public function updateZona($id, $zona)
+    {
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET zona = ? WHERE id = ?");
         return $stmt->execute([$zona, $id]);
     }
 }
-?>

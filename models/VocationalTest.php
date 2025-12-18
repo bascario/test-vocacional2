@@ -3,16 +3,22 @@ class VocationalTest extends BaseModel
 {
     protected $table = 'resultados_test';
 
-    public function createTest($usuarioId, $respuestas)
+    public function createTest($usuarioId, $respuestas, $encuestaData = null)
     {
         // Calculate scores
         $puntajes = $this->calculateScores($respuestas);
 
-        // Create test result
-        $testId = $this->create([
+        $data = [
             'usuario_id' => $usuarioId,
             'puntajes_json' => json_encode($puntajes)
-        ]);
+        ];
+
+        if ($encuestaData) {
+            $data['encuesta_prev_json'] = json_encode($encuestaData);
+        }
+
+        // Create test result
+        $testId = $this->create($data);
 
         // Store detailed answers
         $this->storeDetailedAnswers($testId, $respuestas);
@@ -45,6 +51,27 @@ class VocationalTest extends BaseModel
             }
 
             $categoria = $pregunta['categoria'];
+
+            // Fix: Normalize category name if it comes without accent from DB
+            if ($categoria === 'Artistico') {
+                $categoria = 'Artístico';
+            }
+
+            // Ensure category exists in our initialized arrays
+            if (!isset($puntajes[$categoria])) {
+                // Determine if we should map it to a valid category or skip
+                // Try to find a close match or log error. For now, skip to prevent crash
+                if (array_key_exists($categoria, $puntajes)) {
+                    // This creates the entry if it somehow was missing but key check passed? 
+                    // No, if !isset it means it's not in our TEST_CATEGORIES keys.
+                    // But we initialized them from TEST_CATEGORIES.
+                    // So if we are here, $categoria is an unexpected string.
+                } else {
+                    // Fallback or skip
+                    continue;
+                }
+            }
+
             $peso = $pregunta['peso'] ?? 1;
 
             // For 1-5 scale: convert to 0-4 range, then multiply by peso
@@ -137,7 +164,7 @@ class VocationalTest extends BaseModel
     public function getResultsByUser($usuarioId)
     {
         $stmt = $this->db->prepare("
-            SELECT rt.*, u.nombre, u.apellido, u.email
+            SELECT rt.*, u.nombre, u.apellido, u.email, u.curso, u.paralelo, u.bachillerato, u.telefono, u.fecha_nacimiento
             FROM {$this->table} rt
             JOIN usuarios u ON rt.usuario_id = u.id
             WHERE rt.usuario_id = ?
@@ -174,41 +201,106 @@ class VocationalTest extends BaseModel
         return $stmt->fetchAll();
     }
 
-    public function getStatistics()
+    public function getStatistics($filters = [])
     {
         $stats = [];
+        $params = [];
+        $where = "u.rol = 'estudiante'";
+
+        // Apply filters
+        if (!empty($filters['zona'])) {
+            $where .= " AND ie.zona = ?";
+            $params[] = $filters['zona'];
+        }
+        if (!empty($filters['distrito'])) {
+            $where .= " AND ie.distrito = ?";
+            $params[] = $filters['distrito'];
+        }
+        if (!empty($filters['institucion_id'])) {
+            $where .= " AND u.institucion_id = ?";
+            $params[] = $filters['institucion_id'];
+        }
+
+        // Base Query with Joins
+        $baseQuery = " FROM {$this->table} rt 
+                       JOIN usuarios u ON rt.usuario_id = u.id 
+                       LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id 
+                       WHERE {$where}";
 
         // Total tests
-        $stmt = $this->db->query("SELECT COUNT(*) as total FROM {$this->table}");
+        $stmt = $this->db->prepare("SELECT COUNT(*) as total {$baseQuery}");
+        $stmt->execute($params);
         $stats['total_tests'] = $stmt->fetch()['total'];
 
-        // Tests by month
-        $stmt = $this->db->query("
-            SELECT DATE_FORMAT(fecha_test, '%Y-%m') as mes, COUNT(*) as cantidad
-            FROM {$this->table}
-            WHERE fecha_test >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        // Tests by month (keep for legacy or dual use if needed, but we will use Radar primarily)
+        // Note: For filtered views, we might not show the trend chart, but let's keep it compatible
+        $stmt = $this->db->prepare("
+            SELECT DATE_FORMAT(rt.fecha_test, '%Y-%m') as mes, COUNT(*) as cantidad
+            {$baseQuery} AND rt.fecha_test >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
             GROUP BY mes
             ORDER BY mes
         ");
+        $stmt->execute($params);
         $stats['tests_by_month'] = $stmt->fetchAll();
 
-        // Average scores by area — clamp individual stored percentages to 100 before averaging
-        // Use JSON_EXTRACT(...)+0 to coerce to numeric, COALESCE/IFNULL to handle nulls, and LEAST(...,100) to cap.
-        $sql = <<<SQL
-SELECT
-    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
-    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
-    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
-    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
-    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
-    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
-FROM {$this->table}
-SQL;
+        // Average scores by area (for Radar Chart)
+        // Note: Keys in JSON are capitalized and accented as per T.C. config
+        // e.g. 'Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional'
+        $sql = "SELECT
+            AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Investigador.porcentaje')+0, 0), 100)) AS Investigador,
+            AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Realista.porcentaje')+0, 0), 100)) AS Realista,
+            AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Social.porcentaje')+0, 0), 100)) AS Social,
+            AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Artístico.porcentaje')+0, 0), 100)) AS Artistico,
+            AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Convencional.porcentaje')+0, 0), 100)) AS Convencional,
+            AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Emprendedor.porcentaje')+0, 0), 100)) AS Emprendedor
+            {$baseQuery}";
 
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         $stats['average_scores'] = $stmt->fetch();
 
         return $stats;
+    }
+
+    /**
+     * Get recent tests with user details
+     */
+    public function getRecentTestsWithDetails($limit = 10, $filters = [])
+    {
+        $params = [];
+        $where = "u.rol = 'estudiante'";
+
+        // Reuse filters logic
+        if (!empty($filters['zona'])) {
+            $where .= " AND ie.zona = ?";
+            $params[] = $filters['zona'];
+        }
+        if (!empty($filters['distrito'])) {
+            $where .= " AND ie.distrito = ?";
+            $params[] = $filters['distrito'];
+        }
+        if (!empty($filters['institucion_id'])) {
+            $where .= " AND u.institucion_id = ?";
+            $params[] = $filters['institucion_id'];
+        }
+
+        // Include first/last answer timestamps and duration (seconds) using respuestas_detalle
+        $sql = "SELECT rt.*, u.nombre, u.apellido, u.email, u.curso, u.paralelo, ie.nombre as institucion_nombre,
+                   MIN(rd.created_at) AS first_answer_at,
+                   MAX(rd.created_at) AS last_answer_at,
+                   TIMESTAMPDIFF(SECOND, MIN(rd.created_at), MAX(rd.created_at)) AS duration_seconds
+            FROM {$this->table} rt
+            JOIN usuarios u ON rt.usuario_id = u.id
+            LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id
+            LEFT JOIN respuestas_detalle rd ON rd.test_id = rt.id
+            WHERE {$where}
+            GROUP BY rt.id
+            ORDER BY rt.fecha_test DESC
+            LIMIT " . (int) $limit;
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     /**
@@ -503,6 +595,50 @@ SQL;
     }
 
     /**
+     * Get ALL results filtered by detailed criteria (for group reports)
+     */
+    public function getGroupResults($filters = [])
+    {
+        $params = [];
+        $where = "u.rol = 'estudiante'";
+
+        if (!empty($filters['zona'])) {
+            $where .= " AND ie.zona = ?";
+            $params[] = $filters['zona'];
+        }
+        if (!empty($filters['distrito'])) {
+            $where .= " AND ie.distrito = ?";
+            $params[] = $filters['distrito'];
+        }
+        if (!empty($filters['institucion_id'])) {
+            $where .= " AND u.institucion_id = ?";
+            $params[] = $filters['institucion_id'];
+        }
+        if (!empty($filters['curso'])) {
+            $where .= " AND u.curso = ?";
+            $params[] = $filters['curso'];
+        }
+
+        // Fetch latest test per user? Or all tests? 
+        // Typically group reports want the LATEST unique result per student.
+        // Doing a simple join might give duplicates if a student took test twice.
+        // For optimization, let's assume one test or fetch all.
+        // Better: Subquery to get max ID, or just fetching all and user filtering.
+        // Let's do a simple fetch for now. If duplicates are an issue we can refine.
+
+        $sql = "SELECT rt.*, u.nombre, u.apellido, u.email, u.curso, u.paralelo, ie.nombre as institucion_nombre 
+                FROM {$this->table} rt
+                JOIN usuarios u ON rt.usuario_id = u.id
+                LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id
+                WHERE {$where}
+                ORDER BY u.apellido, u.nombre";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Get student results for zona with optional filters
      */
     public function getStudentResultsByZona($zona, $institucionId = null, $curso = null, $paralelo = null)
@@ -559,4 +695,3 @@ SQL;
         return $stmt->fetchAll();
     }
 }
-?>

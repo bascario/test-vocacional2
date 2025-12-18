@@ -1,4 +1,5 @@
 <?php require 'views/layout/header.php'; ?>
+<!-- Choices.js is now global in header.php -->
 
 <style>
 .assignment-fields {
@@ -16,37 +17,30 @@
 .assignment-fields.show {
     display: block;
 }
+/* Choices.js custom styling to fit in table */
+.choices {
+    margin-bottom: 0;
+    font-size: 13px;
+}
+.choices__inner {
+    min-height: 35px;
+    padding: 2px 5px;
+    background-color: white;
+}
+.choices__list--dropdown {
+    z-index: 1000;
+}
 </style>
 
 <div class="admin-container">
-    <aside class="admin-sidebar">
-        <ul class="sidebar-menu">
-            <li><a href="/test-vocacional/admin">📊 Dashboard</a></li>
-            <li><a href="/test-vocacional/admin/questions">❓ Gestión de Preguntas</a></li>
-            <li><a href="/test-vocacional/admin/users" class="active">👥 Usuarios</a></li>
-            <li><a href="/test-vocacional/admin/institutions">🏫 Instituciones</a></li>
-        </ul>
-    </aside>
-
+    <?php require 'views/layout/sidebar.php'; ?>
     <main class="admin-main">
         <div class="admin-header">
             <h1>Gestión de Usuarios</h1>
             <p>Listado de usuarios y asignación de roles</p>
         </div>
 
-        <?php
-            $success = $_SESSION['success'] ?? null;
-            $error = $_SESSION['error'] ?? null;
-            if ($success) unset($_SESSION['success']);
-            if ($error) unset($_SESSION['error']);
-        ?>
-
-        <?php if ($success): ?>
-            <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
-        <?php endif; ?>
-        <?php if ($error): ?>
-            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
-        <?php endif; ?>
+        
 
         <div class="table-container">
             <table class="admin-table">
@@ -63,15 +57,15 @@
                 </thead>
                 <tbody>
                     <?php foreach ($users as $u): ?>
+                        <form id="user-form-<?= $u['id'] ?>" method="POST" action="/test-vocacional/admin/users" style="display:none;"></form>
                         <tr>
                             <td><?= $u['id'] ?></td>
                             <td><?= htmlspecialchars($u['username']) ?></td>
                             <td><?= htmlspecialchars($u['nombre'] . ' ' . $u['apellido']) ?></td>
                             <td><?= htmlspecialchars($u['email']) ?></td>
                             <td>
-                                <form method="POST" action="/test-vocacional/admin/users" style="display:inline" class="user-form">
-                                    <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                    <select name="role" class="role-select" data-user-id="<?= $u['id'] ?>">
+                                    <input type="hidden" name="user_id" value="<?= $u['id'] ?>" form="user-form-<?= $u['id'] ?>">
+                                    <select name="role" class="role-select" data-user-id="<?= $u['id'] ?>" form="user-form-<?= $u['id'] ?>">
                                         <option value="estudiante" <?= $u['rol'] === 'estudiante' ? 'selected' : '' ?>>Estudiante</option>
                                         <option value="dece" <?= $u['rol'] === 'dece' ? 'selected' : '' ?>>DECE</option>
                                         <option value="zonal" <?= $u['rol'] === 'zonal' ? 'selected' : '' ?>>Zonal</option>
@@ -81,7 +75,7 @@
                             <td>
                                     <!-- DECE Institution Assignment -->
                                     <div class="assignment-fields dece-assignment-<?= $u['id'] ?> <?= $u['rol'] === 'dece' ? 'show' : '' ?>">
-                                        <select name="institucion_id">
+                                        <select name="institucion_id" class="searchable-select" form="user-form-<?= $u['id'] ?>">
                                             <option value="">Seleccionar Institución</option>
                                             <?php foreach ($institutions as $inst): ?>
                                                 <option value="<?= $inst['id'] ?>" 
@@ -94,7 +88,7 @@
 
                                     <!-- Zonal Zone Assignment -->
                                     <div class="assignment-fields zonal-assignment-<?= $u['id'] ?> <?= $u['rol'] === 'zonal' ? 'show' : '' ?>">
-                                        <select name="zona_id">
+                                        <select name="zona_id" form="user-form-<?= $u['id'] ?>">
                                             <option value="">Seleccionar Zona</option>
                                             <?php foreach ($zonas as $zona): ?>
                                                 <option value="<?= htmlspecialchars($zona) ?>" 
@@ -110,8 +104,7 @@
                                     <?php endif; ?>
                             </td>
                             <td>
-                                    <button type="submit" class="btn btn-sm btn-primary">Guardar</button>
-                                </form>
+                                    <button type="submit" class="btn btn-sm btn-primary" form="user-form-<?= $u['id'] ?>">Guardar</button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -141,8 +134,18 @@ document.querySelectorAll('.role-select').forEach(select => {
         }
     });
 });
+// Initialize Choices.js for institution dropdowns
+document.querySelectorAll('.searchable-select').forEach(el => {
+    new Choices(el, {
+        searchEnabled: true,
+        itemSelectText: '',
+        noResultsText: 'No se encontraron resultados',
+        noChoicesText: 'No hay opciones disponibles',
+        placeholder: true,
+        placeholderValue: 'Buscar institución...'
+    });
+});
 </script>
 
 <?php require 'views/layout/footer.php'; ?>
-</body>
-</html>
+

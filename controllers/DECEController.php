@@ -98,7 +98,7 @@ class DECEController
     }
 
     /**
-     * Generate institution report PDF
+     * Generate institution report (HTML Print View)
      */
     public function generateInstitutionReport()
     {
@@ -122,37 +122,62 @@ class DECEController
             // Get institution details
             $institucion = $this->institucionModel->find($institucionId);
 
-            // Get statistics
-            $stats = $this->testModel->getStatisticsByInstitution($institucionId, $curso, $paralelo);
+            // Use unified method for results to be consistent with Admin
+            $filters = [
+                'institucion_id' => $institucionId,
+                'curso' => $curso,
+                'paralelo' => $paralelo
+            ];
+            $results = $this->testModel->getGroupResults($filters);
 
-            // Get performance data
-            $performanceByCourse = $this->testModel->getPerformanceByCourse($institucionId);
-            $performanceByParalelo = [];
-            if ($curso) {
-                $performanceByParalelo = $this->testModel->getPerformanceByParalelo($institucionId, $curso);
+            if (empty($results)) {
+                throw new Exception("No se encontraron resultados para los filtros seleccionados");
             }
 
-            // Get student results
-            $studentResults = $this->testModel->getStudentResultsByInstitution($institucionId, $curso, $paralelo);
+            // Calculate Group Stats
+            $totals = ['Realista' => 0, 'Investigador' => 0, 'Artístico' => 0, 'Social' => 0, 'Emprendedor' => 0, 'Convencional' => 0];
+            $numStudents = count($results);
 
-            // Generate PDF
-            require_once 'utils/PDFGenerator.php';
-            $pdfGenerator = new PDFGenerator();
-            $pdfContent = $pdfGenerator->generateDECEReport(
-                $institucion,
-                $stats,
-                $performanceByCourse,
-                $performanceByParalelo,
-                $studentResults,
-                $curso,
-                $paralelo
-            );
+            foreach ($results as $row) {
+                $scores = json_decode($row['puntajes_json'], true);
+                if (is_array($scores)) {
+                    foreach ($totals as $cat => $val) {
+                        $pct = isset($scores[$cat]) ? (is_array($scores[$cat]) ? ($scores[$cat]['porcentaje'] ?? 0) : $scores[$cat]) : 0;
+                        $totals[$cat] += $pct;
+                    }
+                }
+            }
 
-            // Output PDF
-            $filename = 'reporte_dece_' . $institucion['codigo'] . '_' . date('Y-m-d') . '.pdf';
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="' . $filename . '"');
-            echo $pdfContent;
+            $groupAverages = [];
+            if ($numStudents > 0) {
+                foreach ($totals as $cat => $sum) {
+                    $groupAverages[$cat] = round($sum / $numStudents, 2);
+                }
+            }
+
+            // Identify Top Area
+            $topAreaName = null;
+            $topAreaScore = -1;
+            foreach ($groupAverages as $cat => $avg) {
+                if ($avg > $topAreaScore) {
+                    $topAreaScore = $avg;
+                    $topAreaName = $cat;
+                }
+            }
+
+            // Prepare View Data
+            $filterInfo = [
+                'institution' => $institucion['nombre'],
+                'zona' => $institucion['zona'] ?? '',
+                'distrito' => $institucion['distrito'] ?? '',
+                'course' => ($curso ? $curso . ($paralelo ? ' - ' . $paralelo : '') : 'Todos los cursos')
+            ];
+
+            $deceUser = $currentUser; // For signature
+            $reportTitle = "Reporte Institucional - " . $institucion['nombre'];
+
+            // Render View
+            require 'views/report_group_print.php';
             exit;
 
         } catch (Exception $e) {
@@ -208,4 +233,3 @@ class DECEController
         }
     }
 }
-?>

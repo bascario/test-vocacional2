@@ -20,7 +20,9 @@ class PDFGenerator
         $this->pdf->SetSubject('Resultados del Test Vocacional');
 
         // Set default header data
-        $this->pdf->SetHeaderData('', 0, 'Sistema de Test Vocacional', 'Reporte de Resultados');
+        // Use absolute path for the logo
+        $logoPath = 'c:/laragon/www/test-vocacional/assets/img/mined.png';
+        $this->pdf->SetHeaderData($logoPath, 30, 'Sistema de Test Vocacional', 'Reporte de Resultados');
 
         // Set header and footer fonts
         $this->pdf->setHeaderFont(array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
@@ -92,11 +94,28 @@ class PDFGenerator
             <tbody>
         ';
 
+        // Helper mapping
+        $labelMap = [
+            'ciencias' => 'Investigador',
+            'tecnologia' => 'Realista',
+            'humanidades' => 'Social',
+            'artes' => 'Artístico',
+            'salud' => 'Social (Salud)',
+            'negocios' => 'Emprendedor',
+            'Realista' => 'Realista',
+            'Investigador' => 'Investigador',
+            'Artístico' => 'Artístico',
+            'Social' => 'Social',
+            'Emprendedor' => 'Emprendedor',
+            'Convencional' => 'Convencional'
+        ];
+
         foreach ($scores as $area => $data) {
             $color = $this->getStateColor($data['estado']);
+            $label = $labelMap[$area] ?? ucfirst($area);
             $html .= '
                 <tr>
-                    <td>' . ucfirst($area) . '</td>
+                    <td>' . $label . '</td>
                     <td>' . round($data['promedio'], 2) . '/5</td>
                     <td>' . $data['porcentaje'] . '%</td>
                     <td style="color: ' . $color . '; font-weight: bold;">' . $data['estado'] . '</td>
@@ -158,12 +177,12 @@ class PDFGenerator
                 <tr style="background-color: #f0f0f0;">
                     <th><strong>Estudiante</strong></th>
                     <th><strong>Curso</strong></th>
-                    <th><strong>Ciencias</strong></th>
-                    <th><strong>Tecnología</strong></th>
-                    <th><strong>Humanidades</strong></th>
-                    <th><strong>Artes</strong></th>
-                    <th><strong>Salud</strong></th>
-                    <th><strong>Negocios</strong></th>
+                    <th><strong>Investigador</strong></th>
+                    <th><strong>Realista</strong></th>
+                    <th><strong>Social</strong></th>
+                    <th><strong>Artístico</strong></th>
+                    <th><strong>Social (Salud)</strong></th>
+                    <th><strong>Emprendedor</strong></th>
                 </tr>
             </thead>
             <tbody>
@@ -177,10 +196,17 @@ class PDFGenerator
                     <td>' . htmlspecialchars($result['curso'] ?? '') . '</td>
             ';
 
-            foreach (TEST_CATEGORIES as $category) {
-                $percentage = $scores[$category]['porcentaje'] ?? 0;
-                $color = $this->getStateColor($scores[$category]['estado'] ?? 'POR REFORZAR');
-                $html .= '<td style="color: ' . $color . ';">' . round($percentage, 1) . '%</td>';
+            // Direct mapping to ensure order matches headers:
+            // Investigador, Realista, Social, Artístico, Social (Salud), Emprendedor
+            $orderedKeys = ['ciencias', 'tecnologia', 'humanidades', 'artes', 'salud', 'negocios'];
+            foreach ($orderedKeys as $key) {
+                // Handle both legacy and new keys if possible, but prioritize legacy for now based on what we see
+                // Fallback to title case key if legacy fails
+                $val = $scores[$key]['porcentaje'] ?? $scores[ucfirst($key)]['porcentaje'] ?? 0;
+                $st = $scores[$key]['estado'] ?? $scores[ucfirst($key)]['estado'] ?? 'POR REFORZAR';
+
+                $color = $this->getStateColor($st);
+                $html .= '<td style="color: ' . $color . ';">' . round($val, 1) . '%</td>';
             }
 
             $html .= '</tr>';
@@ -347,14 +373,24 @@ class PDFGenerator
             <tbody>
         ';
 
-        foreach (TEST_CATEGORIES as $category) {
-            $score = isset($avgScores[$category]) ? round((float) $avgScores[$category], 1) : 0;
+        // Map keys to the display labels used in headers
+        $map = [
+            'ciencias' => 'Investigador',
+            'tecnologia' => 'Realista',
+            'humanidades' => 'Social',
+            'artes' => 'Artístico',
+            'salud' => 'Social (Salud)',
+            'negocios' => 'Emprendedor'
+        ];
+
+        foreach ($map as $key => $label) {
+            $score = isset($avgScores[$key]) ? round((float) $avgScores[$key], 1) : 0;
             $estado = $score >= 70 ? 'APTO' : ($score >= 50 ? 'POTENCIAL' : 'POR REFORZAR');
             $color = $this->getStateColor($estado);
 
             $html .= '
                 <tr>
-                    <td>' . ucfirst($category) . '</td>
+                    <td>' . $label . '</td>
                     <td>' . $score . '%</td>
                     <td style="color: ' . $color . '; font-weight: bold;">' . $estado . '</td>
                 </tr>
@@ -376,12 +412,12 @@ class PDFGenerator
                     <tr style="background-color: #f0f0f0;">
                         <th><strong>Curso</strong></th>
                         <th><strong>Tests</strong></th>
-                        <th><strong>Ciencias</strong></th>
-                        <th><strong>Tecnología</strong></th>
-                        <th><strong>Humanidades</strong></th>
-                        <th><strong>Artes</strong></th>
-                        <th><strong>Salud</strong></th>
-                        <th><strong>Negocios</strong></th>
+                        <th><strong>Investigador</strong></th>
+                        <th><strong>Realista</strong></th>
+                        <th><strong>Social</strong></th>
+                        <th><strong>Artístico</strong></th>
+                        <th><strong>Social (Salud)</strong></th>
+                        <th><strong>Emprendedor</strong></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -418,12 +454,12 @@ class PDFGenerator
                     <tr style="background-color: #f0f0f0;">
                         <th><strong>Paralelo</strong></th>
                         <th><strong>Tests</strong></th>
-                        <th><strong>Ciencias</strong></th>
-                        <th><strong>Tecnología</strong></th>
-                        <th><strong>Humanidades</strong></th>
-                        <th><strong>Artes</strong></th>
-                        <th><strong>Salud</strong></th>
-                        <th><strong>Negocios</strong></th>
+                        <th><strong>Investigador</strong></th>
+                        <th><strong>Realista</strong></th>
+                        <th><strong>Social</strong></th>
+                        <th><strong>Artístico</strong></th>
+                        <th><strong>Social (Salud)</strong></th>
+                        <th><strong>Emprendedor</strong></th>
                     </tr>
                 </thead>
                 <tbody>
