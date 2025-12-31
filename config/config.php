@@ -19,6 +19,21 @@ define('ALLOWED_WORD_TYPES', ['application/msword', 'application/vnd.openxmlform
 define('SESSION_LIFETIME', 3600); // 1 hour
 define('PASSWORD_MIN_LENGTH', 6);
 
+// Email/SMTP configuration
+// Para usar SMTP, configura los siguientes valores:
+// Ejemplo con Gmail:
+// 1. Habilitar "Contraseñas de aplicación" en Google Account
+// 2. Usar la contraseña de aplicación en SMTP_PASS
+
+define('SMTP_HOST', 'smtp.gmail.com');        // Servidor SMTP
+define('SMTP_PORT', 587);                      // Puerto SMTP (587 para TLS, 465 para SSL)
+define('SMTP_USER', '');                       // Tu email SMTP
+define('SMTP_PASS', '');                       // Contraseña SMTP o app password
+define('SMTP_FROM_NAME', 'Test Vocacional');   // Nombre remitente
+define('SMTP_FROM_EMAIL', 'noreply@test-vocacional.com');  // Email remitente
+
+// Si los valores de SMTP están vacíos, se usará la función mail() de PHP
+
 // Test settings - RIASEC Model (Holland)
 // Categorías usando el modelo RIASEC directamente
 define('TEST_CATEGORIES', ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional']);

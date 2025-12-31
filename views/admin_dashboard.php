@@ -61,6 +61,12 @@ require 'views/layout/header.php';
                     </div>
                 <?php endif; ?>
 
+                <div class="filter-group">
+                    <label for="amie">Código AMIE</label>
+                    <input type="text" name="amie" id="amie" class="form-control" placeholder="Buscar por AMIE..." 
+                           value="<?= htmlspecialchars($filters['amie'] ?? '') ?>" onchange="this.form.submit()">
+                </div>
+
                 <div class="filter-group actions">
                     <a href="/test-vocacional/admin" class="btn btn-sm btn-secondary">Limpiar</a>
                 </div>

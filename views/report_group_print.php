@@ -57,6 +57,97 @@
             }
         }
 
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            .report-page {
+                width: 100%;
+                margin: 0;
+                box-shadow: none;
+                border: none;
+                page-break-after: always;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            /* Force background colors */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            @page {
+                size: portrait;
+                margin: 15mm;
+            }
+
+            .print-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 10mm;
+                display: block !important;
+                text-align: center;
+                font-size: 10px;
+                color: #666;
+            }
+
+            .print-footer::after {
+                content: "Página " counter(page);
+            }
+
+            .qr-code-print {
+                position: fixed;
+                bottom: 10mm;
+                right: 15mm;
+                display: block !important;
+            }
+
+            .qr-code-print img {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        .qr-code-print {
+            display: none;
+        }
+
+        .print-footer {
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .qr-code-print {
+            text-align: center;
+            margin: 10px auto;
+            padding: 5px;
+            background: #fff;
+            border: 1px dashed #00aeef;
+            width: fit-content;
+        }
+
+        .qr-code-print img {
+            width: 80px;
+            height: 80px;
+        }
+
+        .qr-label {
+            font-size: 8px;
+            color: #00aeef;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
         /* Header and report title bar */
         .header {
             display: flex;
@@ -66,7 +157,7 @@
         }
 
         .report-title-bar {
-            background: linear-gradient(90deg,#00aeea,#8fd8ff);
+            background: linear-gradient(90deg, #00aeea, #8fd8ff);
             color: #fff;
             text-align: center;
             padding: 10px 12px;
@@ -150,16 +241,51 @@
             text-transform: uppercase;
         }
 
-        .small-table table { width: 100%; border-collapse: collapse; }
-        .small-table td, .nsmall-table th, .small-table th { padding: 6px; border-bottom: 1px solid #d7f0fa; font-size: 11pt; }
-        .small-table .label { color: #004b59; font-weight: 600; width: 65%; }
-        .small-table .val { text-align: right; font-weight: 700; color: #003644; }
+        .small-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-        .right-panel { display:flex; flex-direction:column; gap:12px; }
+        .small-table td,
+        .nsmall-table th,
+        .small-table th {
+            padding: 6px;
+            border-bottom: 1px solid #d7f0fa;
+            font-size: 11pt;
+        }
 
-        .results-chart-box { background: #fff; padding: 10px; border: 1px solid #cfeefc; border-radius:4px; }
+        .small-table .label {
+            color: #004b59;
+            font-weight: 600;
+            width: 65%;
+        }
 
-        .recommendations { background: #fff; border: 1px solid #e6eef6; padding: 12px; border-radius:4px; min-height:140px; }
+        .small-table .val {
+            text-align: right;
+            font-weight: 700;
+            color: #003644;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .results-chart-box {
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #cfeefc;
+            border-radius: 4px;
+        }
+
+        .recommendations {
+            background: #fff;
+            border: 1px solid #e6eef6;
+            padding: 12px;
+            border-radius: 4px;
+            min-height: 140px;
+        }
 
         /* Students Table */
         .students-table {
@@ -315,7 +441,9 @@
                 <img src="/test-vocacional/assets/img/logoTUVN.png" alt="Logo TUVN" style="height:64px;">
             </div>
             <div style="flex:1; text-align:center;">
-                <div class="report-title-bar"><h1>RESULTADOS</h1></div>
+                <div class="report-title-bar">
+                    <h1>RESULTADOS</h1>
+                </div>
                 <div class="report-subtitle">I. DATOS PERSONALES</div>
             </div>
             <div style="width:120px; text-align:right; font-size:12px; color:#004b59;">
@@ -343,12 +471,30 @@
                     <h4>PUNTAJE</h4>
                     <table>
                         <tbody>
-                            <tr><td class="label">REALISTA</td><td class="val"><?= round($groupAverages['Realista'] ?? 0,1) ?></td></tr>
-                            <tr><td class="label">INVESTIGADORA</td><td class="val"><?= round($groupAverages['Investigador'] ?? 0,1) ?></td></tr>
-                            <tr><td class="label">ARTÍSTICA</td><td class="val"><?= round($groupAverages['Artístico'] ?? 0,1) ?></td></tr>
-                            <tr><td class="label">SOCIAL</td><td class="val"><?= round($groupAverages['Social'] ?? 0,1) ?></td></tr>
-                            <tr><td class="label">EMPRENDEDORA</td><td class="val"><?= round($groupAverages['Emprendedor'] ?? 0,1) ?></td></tr>
-                            <tr><td class="label">CONVENCIONAL</td><td class="val"><?= round($groupAverages['Convencional'] ?? 0,1) ?></td></tr>
+                            <tr>
+                                <td class="label">REALISTA</td>
+                                <td class="val"><?= round($groupAverages['Realista'] ?? 0, 1) ?></td>
+                            </tr>
+                            <tr>
+                                <td class="label">INVESTIGADORA</td>
+                                <td class="val"><?= round($groupAverages['Investigador'] ?? 0, 1) ?></td>
+                            </tr>
+                            <tr>
+                                <td class="label">ARTÍSTICA</td>
+                                <td class="val"><?= round($groupAverages['Artístico'] ?? 0, 1) ?></td>
+                            </tr>
+                            <tr>
+                                <td class="label">SOCIAL</td>
+                                <td class="val"><?= round($groupAverages['Social'] ?? 0, 1) ?></td>
+                            </tr>
+                            <tr>
+                                <td class="label">EMPRENDEDORA</td>
+                                <td class="val"><?= round($groupAverages['Emprendedor'] ?? 0, 1) ?></td>
+                            </tr>
+                            <tr>
+                                <td class="label">CONVENCIONAL</td>
+                                <td class="val"><?= round($groupAverages['Convencional'] ?? 0, 1) ?></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -358,10 +504,17 @@
                     <table>
                         <tbody>
                             <?php
-                            $max = 0; foreach($groupAverages as $v){ if($v>$max) $max=$v; }
+                            $max = 0;
+                            foreach ($groupAverages as $v) {
+                                if ($v > $max)
+                                    $max = $v;
+                            }
                             $nivel = $max >= 60 ? 'Alta' : ($max >= 40 ? 'Media' : 'Baja');
                             ?>
-                            <tr><td class="label">NIVEL</td><td class="val"><?= $nivel ?></td></tr>
+                            <tr>
+                                <td class="label">NIVEL</td>
+                                <td class="val"><?= $nivel ?></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -375,11 +528,17 @@
                             $copies = $groupAverages;
                             arsort($copies);
                             $keys = array_keys($copies);
-                            $first = $keys[0] ?? null; $second = $keys[1] ?? null;
+                            $first = $keys[0] ?? null;
+                            $second = $keys[1] ?? null;
                             $diff = ($copies[$first] ?? 0) - ($copies[$second] ?? 0);
                             $cons = abs($diff) <= 10 ? 'Alta' : 'Media';
                             ?>
-                            <tr><td class="label"><?= htmlspecialchars(($first ? strtoupper($first) : '-')) ?> - <?= htmlspecialchars(($second? strtoupper($second) : '-')) ?></td><td class="val"><?= $cons ?></td></tr>
+                            <tr>
+                                <td class="label"><?= htmlspecialchars(($first ? strtoupper($first) : '-')) ?> -
+                                    <?= htmlspecialchars(($second ? strtoupper($second) : '-')) ?>
+                                </td>
+                                <td class="val"><?= $cons ?></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -475,6 +634,13 @@
             <p>© Tecnológico Universitario Vida Nueva<br>
                 www.vidanueva.edu.ec | admisiones@istvidanueva.edu.ec</p>
         </div>
+
+        <?php if (isset($qrCodeBase64) && !empty($qrCodeBase64)): ?>
+            <div class="qr-code-print">
+                <img src="<?= $qrCodeBase64 ?>" alt="QR Validación">
+                <div class="qr-label">VALIDACIÓN QR</div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <script>
@@ -520,6 +686,7 @@
             }
         });
     </script>
+    <div class="print-footer"></div>
 </body>
 
 </html>

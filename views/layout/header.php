@@ -29,7 +29,8 @@ if (!isset($_SESSION['user_id'])) {
     <nav class="navbar">
         <div class="nav-container">
             <div style="display:flex; align-items:center; gap:12px;">
-                <button id="mobileMenuBtn" class="sidebar-toggle-btn" aria-label="Abrir menú" title="Abrir menú" style="display:none;">☰</button>
+                <button id="mobileMenuBtn" class="sidebar-toggle-btn" aria-label="Abrir menú" title="Abrir menú"
+                    style="display:none;">☰</button>
                 <div class="nav-brand">
                     <img src="/test-vocacional/assets/img/logoTUVN.png" alt="Logo TUVN"
                         style="height: 40px; margin-right: 10px; vertical-align: middle;">
@@ -39,6 +40,7 @@ if (!isset($_SESSION['user_id'])) {
             <div class="nav-menu">
                 <span><?= htmlspecialchars($_SESSION['user_name'] ?? 'Usuario') ?>
                     (<?= $_SESSION['user_role'] ?? 'Rol' ?>)</span>
+                <a href="/test-vocacional/auth/changePassword" class="btn btn-sm btn-outline">Cambiar Contraseña</a>
                 <a href="/test-vocacional/logout" class="btn btn-sm btn-outline">Cerrar Sesión</a>
             </div>
         </div>

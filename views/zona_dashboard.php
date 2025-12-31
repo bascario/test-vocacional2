@@ -52,6 +52,11 @@ require 'views/layout/header.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div class="filter-group">
+                    <label for="amie">Código AMIE</label>
+                    <input type="text" name="amie" id="amie" value="<?= htmlspecialchars($amie ?? '') ?>" 
+                           placeholder="AMIE..." onchange="this.form.submit()">
+                </div>
                 <div class="filter-group actions">
                     <a href="/test-vocacional/admin/zona" class="btn btn-sm btn-secondary">Limpiar</a>
                 </div>
@@ -216,6 +221,8 @@ require 'views/layout/header.php';
                 $queryParams[] = 'curso=' . urlencode($curso);
             if ($paralelo)
                 $queryParams[] = 'paralelo=' . urlencode($paralelo);
+            if (!empty($amie))
+                $queryParams[] = 'amie=' . urlencode($amie);
 
             if (!empty($queryParams)) {
                 $queryString = '?' . implode('&', $queryParams);

@@ -8,12 +8,13 @@
     <link rel="stylesheet" href="/test-vocacional/assets/css/styles.css">
 </head>
 
-<body>
+<body class="auth-page">
     <div class="container">
         <div class="login-container">
             <div class="login-card">
                 <div class="login-header">
-                    <h1>Test Vocacional</h1>
+                    <div class="login-logo" aria-hidden="true"><span class="logo-mark">🎯</span></div>
+                    <h1 class="brand-title">Test Vocacional</h1>
                     <p>Sistema de Orientación Vocacional</p>
                 </div>
 
@@ -28,6 +29,13 @@
                     <div class="alert alert-success">
                         <?= htmlspecialchars($_SESSION['success']) ?>
                         <?php unset($_SESSION['success']); ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['info'])): ?>
+                    <div class="alert alert-info">
+                        <?= htmlspecialchars($_SESSION['info']) ?>
+                        <?php unset($_SESSION['info']); ?>
                     </div>
                 <?php endif; ?>
 
@@ -50,6 +58,7 @@
 
                 <div class="login-footer">
                     <p>¿No tienes cuenta? <a href="/test-vocacional/register">Regístrate aquí</a></p>
+                    <p><a href="/test-vocacional/recover-password" style="color: #3498db;">Recuperar contraseña</a></p>
                     <p class="text-small">
                         &copy; 2024 Derechos reservados Instituto Tecnológico Superior Vida nueva
                     </p>

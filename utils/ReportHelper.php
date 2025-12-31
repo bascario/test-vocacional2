@@ -238,5 +238,44 @@ class ReportHelper
 
         return "Perfil en desarrollo. Te recomendamos explorar diferentes áreas de interés.";
     }
+
+    /**
+     * Genera un código QR en base64 para incrustar en HTML
+     */
+    public static function generateQRCodeBase64($data)
+    {
+        try {
+            if (!class_exists('TCPDF2DBarcode')) {
+                $barcodeFile = __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf_barcodes_2d.php';
+                if (file_exists($barcodeFile)) {
+                    require_once $barcodeFile;
+                }
+            }
+
+            if (!class_exists('TCPDF2DBarcode')) {
+                return null;
+            }
+            $barcode = new TCPDF2DBarcode($data, 'QRCODE,H');
+            $pngData = $barcode->getBarcodePngData(4, 4);
+            return 'data:image/png;base64,' . base64_encode($pngData);
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Genera la URL de validación para un test específico
+     */
+    public static function getValidationUrl($testId)
+    {
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+        $host = $_SERVER['HTTP_HOST'];
+        $base = "/test-vocacional"; // Adjust if necessary
+
+        // Generate a secure hash
+        $hash = hash_hmac('sha256', $testId, 'secret_salt_v1');
+
+        return $protocol . $host . $base . "/verify-report?id=" . $testId . "&h=" . $hash;
+    }
 }
 ?>

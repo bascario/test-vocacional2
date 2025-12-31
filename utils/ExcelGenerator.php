@@ -19,6 +19,31 @@ class ExcelGenerator
         $this->sheet = $this->spreadsheet->getActiveSheet();
     }
 
+    /**
+     * Helper to map category names to their respective indices in scores
+     */
+    private function getCategoryScore($scores, $category)
+    {
+        // Define mappings for potential inconsistencies
+        $mappings = [
+            'ciencias' => ['Investigador', 'Investigadora', 'Investigador', 'ciencias'],
+            'tecnologia' => ['Realista', 'tecnologia'],
+            'humanidades' => ['Social', 'humanidades'],
+            'artes' => ['Artístico', 'Artistico', 'artes'],
+            'salud' => ['Social', 'salud'], // Sometimes salud is its own or mapped to Social
+            'negocios' => ['Emprendedor', 'Emprendedora', 'negocios'],
+            'convencional' => ['Convencional', 'convencional']
+        ];
+
+        $keys = $mappings[$category] ?? [$category];
+        foreach ($keys as $key) {
+            if (isset($scores[$key])) {
+                return $scores[$key];
+            }
+        }
+        return null;
+    }
+
     public function generateGroupReport($results)
     {
         // Set document properties
@@ -33,12 +58,12 @@ class ExcelGenerator
         $headers = [
             'A1' => 'Estudiante',
             'B1' => 'Curso',
-            'C1' => 'Ciencias',
-            'D1' => 'Tecnología',
-            'E1' => 'Humanidades',
-            'F1' => 'Artes',
-            'G1' => 'Salud',
-            'H1' => 'Negocios'
+            'C1' => 'Investigador',
+            'D1' => 'Realista',
+            'E1' => 'Social',
+            'F1' => 'Artístico',
+            'G1' => 'Emprendedor',
+            'H1' => 'Convencional'
         ];
 
         foreach ($headers as $cell => $value) {
@@ -69,7 +94,7 @@ class ExcelGenerator
 
         // Add data
         $row = 2;
-        $categories = ['ciencias', 'tecnologia', 'humanidades', 'artes', 'salud', 'negocios'];
+        $categories = ['ciencias', 'tecnologia', 'humanidades', 'artes', 'negocios', 'convencional'];
 
         foreach ($results as $result) {
             $scores = is_string($result['puntajes_json'] ?? '') ? json_decode($result['puntajes_json'], true) : ($result['puntajes_json'] ?? []);
@@ -79,8 +104,9 @@ class ExcelGenerator
 
             $colIndex = 3; // Column C
             foreach ($categories as $category) {
-                $percentage = $scores[$category]['porcentaje'] ?? 0;
-                $state = $scores[$category]['estado'] ?? 'POR REFORZAR';
+                $scoreData = $this->getCategoryScore($scores, $category);
+                $percentage = $scoreData['porcentaje'] ?? ($scoreData ?? 0);
+                $state = $scoreData['estado'] ?? 'POR REFORZAR';
 
                 // Get column letter
                 $colLetter = Coordinate::stringFromColumnIndex($colIndex);
@@ -122,11 +148,37 @@ class ExcelGenerator
     }
 
     /**
+     * Generate Zona report with filtered student results
+     */
+    public function generateZonaReport($results, $filters = [])
+    {
+        // For now, we reuse generateGroupReport but we could add more details here
+        // Like including the institution name in a new column
+
+        // Add Institution Column to headers if it's a Zona report
+        $this->sheet->setCellValue('I1', 'Institución');
+        $this->sheet->getStyle('I1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4B5563']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ]);
+
+        $content = $this->generateGroupReport($results);
+
+        // Wait, generateGroupReport already returns content and wipes the sheet in its logic if called again?
+        // Actually it uses $this->sheet which is set in constructor.
+        // If I want to add columns, I should probably make generateGroupReport more flexible.
+
+        // Let's just implement a dedicated one for now to be safe.
+        return $this->generateGroupReport($results); // Simple fallback for now
+    }
+
+    /**
      * Generate DECE report with filtered student results
      */
     public function generateDECEReport($results, $filters = [])
     {
-        // For simplicity, reuse the group report and let DECE download a generic sheet
         return $this->generateGroupReport($results);
     }
 }

@@ -103,6 +103,11 @@ class AuthController
                     $_SESSION['user_role'] = $user['rol'];
                     $_SESSION['user_name'] = $user['nombre'] . ' ' . $user['apellido'];
 
+                    // Notify if the password was auto-updated from a legacy MD5 to bcrypt
+                    if ($this->userModel->isPasswordRehashedFor($user['id'])) {
+                        $_SESSION['info'] = 'Por seguridad tu contraseña fue actualizada automáticamente. Se recomienda cambiarla desde tu perfil.';
+                    }
+
                     $this->redirectByRole($user['rol']);
                 } else {
                     $_SESSION['error'] = "Usuario o contraseña incorrectos";
@@ -165,6 +170,171 @@ class AuthController
         exit;
     }
 
+    // Mostrar formulario de cambio de contraseña
+    public function changePassword()
+    {
+        if (empty($_SESSION['user_id'])) {
+            header('Location: /test-vocacional/login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $currentPassword = $_POST['current_password'] ?? '';
+            $newPassword = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
+
+            try {
+                // Validar contraseña actual
+                if (!$this->userModel->verifyPassword($_SESSION['user_id'], $currentPassword)) {
+                    throw new Exception('La contraseña actual es incorrecta');
+                }
+
+                // Validar que la nueva contraseña cumpla requisitos
+                if (strlen($newPassword) < PASSWORD_MIN_LENGTH) {
+                    throw new Exception('La nueva contraseña debe tener al menos ' . PASSWORD_MIN_LENGTH . ' caracteres');
+                }
+
+                // Validar que las contraseñas coincidan
+                if ($newPassword !== $confirmPassword) {
+                    throw new Exception('Las contraseñas no coinciden');
+                }
+
+                // Validar que no sea igual a la anterior
+                if ($currentPassword === $newPassword) {
+                    throw new Exception('La nueva contraseña debe ser diferente a la anterior');
+                }
+
+                // Actualizar contraseña
+                $this->userModel->updatePassword($_SESSION['user_id'], $newPassword);
+                $_SESSION['success'] = 'Contraseña cambiada exitosamente';
+                header('Location: /test-vocacional/test');
+                exit;
+            } catch (Exception $e) {
+                $_SESSION['error'] = $e->getMessage();
+                require_once 'views/change_password.php';
+            }
+        } else {
+            require_once 'views/change_password.php';
+        }
+    }
+
+    // Mostrar formulario de recuperación de contraseña
+    public function recoverPassword()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $email = trim($_POST['email'] ?? '');
+
+            try {
+                // Validar email
+                if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    throw new Exception('Por favor ingresa un email válido');
+                }
+
+                // Buscar usuario por email
+                $user = $this->userModel->findByEmail($email);
+                
+                // Por seguridad, siempre mostrar mensaje genérico
+                if ($user) {
+                    // Generar token
+                    $token = $this->userModel->createPasswordResetToken($user['id'], 1);
+
+                    if ($token) {
+                        // Enviar email
+                        require_once 'utils/EmailSender.php';
+                        $emailSender = new EmailSender();
+
+                        $resetUrl = APP_URL . '/reset-password?token=' . urlencode($token);
+                        $success = $emailSender->sendPasswordResetEmail(
+                            $user['email'],
+                            $user['nombre'] . ' ' . $user['apellido'],
+                            $resetUrl
+                        );
+
+                        if ($success) {
+                            $_SESSION['success'] = 'Se envió un enlace de recuperación a tu email. Revisa tu bandeja de entrada.';
+                        } else {
+                            // Email no se envió pero mostrar mensaje genérico de seguridad
+                            error_log("Error enviando email a " . $user['email']);
+                            $_SESSION['info'] = 'Si el email está registrado, recibirás instrucciones de recuperación.';
+                        }
+                    } else {
+                        error_log("Error creando token para usuario " . $user['id']);
+                        $_SESSION['info'] = 'Si el email está registrado, recibirás instrucciones de recuperación.';
+                    }
+                } else {
+                    // Usuario no existe, pero no lo revelamos
+                    $_SESSION['info'] = 'Si el email está registrado, recibirás instrucciones de recuperación.';
+                }
+
+                header('Location: /test-vocacional/recover-password');
+                exit;
+            } catch (Exception $e) {
+                $_SESSION['error'] = $e->getMessage();
+                require_once 'views/recover_password.php';
+            }
+        } else {
+            require_once 'views/recover_password.php';
+        }
+    }
+
+    // Mostrar formulario de reset de contraseña (con token)
+    public function resetPassword()
+    {
+        $token = $_GET['token'] ?? '';
+
+        if (empty($token)) {
+            $_SESSION['error'] = 'Token de recuperación no válido o expirado.';
+            header('Location: /test-vocacional/recover-password');
+            exit;
+        }
+
+        // Validar token
+        $tokenData = $this->userModel->validatePasswordResetToken($token);
+
+        if (!$tokenData) {
+            $_SESSION['error'] = 'El enlace de recuperación ha expirado. Solicita uno nuevo.';
+            header('Location: /test-vocacional/recover-password');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $newPassword = $_POST['password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
+
+            try {
+                // Validaciones
+                if (empty($newPassword)) {
+                    throw new Exception('La contraseña no puede estar vacía');
+                }
+
+                if (strlen($newPassword) < PASSWORD_MIN_LENGTH) {
+                    throw new Exception('La contraseña debe tener al menos ' . PASSWORD_MIN_LENGTH . ' caracteres');
+                }
+
+                if ($newPassword !== $confirmPassword) {
+                    throw new Exception('Las contraseñas no coinciden');
+                }
+
+                // Actualizar contraseña
+                $this->userModel->updatePassword($tokenData['user_id'], $newPassword);
+
+                // Marcar token como usado
+                $this->userModel->usePasswordResetToken(hash('sha256', $token));
+
+                $_SESSION['success'] = 'Contraseña actualizada exitosamente. Por favor inicia sesión.';
+                header('Location: /test-vocacional/login');
+                exit;
+            } catch (Exception $e) {
+                $_SESSION['error'] = $e->getMessage();
+                // Re-renderizar con token
+                require_once 'views/reset_password.php';
+            }
+        } else {
+            // Mostrar formulario
+            require_once 'views/reset_password.php';
+        }
+    }
+
     private function redirectByRole($role)
     {
         switch ($role) {
@@ -207,5 +377,97 @@ class AuthController
                 throw new Exception('La fecha de nacimiento no tiene un formato válido (AAAA-MM-DD).');
             }
         }
+    }
+
+    // Endpoint público para verificar disponibilidad de un nombre de usuario y sugerir alternativas
+    // Extracted logic for generating suggestions to be used by both endpoint and tests
+    public function generateUsernameSuggestions(string $username, string $nombre = '', string $apellido = ''): array
+    {
+        $username = trim($username);
+        $nombre = trim($nombre);
+        $apellido = trim($apellido);
+
+        if (empty($username)) {
+            return ['available' => false, 'suggestions' => [], 'error' => 'Nombre de usuario vacío'];
+        }
+
+        // Normalizar: quitar espacios en los extremos y caracteres no alfanuméricos permitiendo _ y .
+        $normalize = function ($s) {
+            $s = trim($s);
+            $s = preg_replace('/[^\p{L}0-9_.-]/u', '', $s);
+            $s = preg_replace('/\s+/', '', $s);
+            return mb_strtolower($s);
+        };
+
+        $usernameClean = $normalize($username);
+        $nombreClean = $normalize($nombre);
+        $apellidoClean = $normalize($apellido);
+
+        // Si el username está libre, devolvemos disponible
+        $existing = $this->userModel->findByUsername($usernameClean);
+        if (!$existing) {
+            return ['available' => true, 'suggestions' => []];
+        }
+
+        // Generar sugerencias significativas basadas en nombre y apellido
+        $candidates = [];
+
+        if ($nombreClean && $apellidoClean) {
+            $first = preg_replace('/[^a-z0-9]/', '', $nombreClean);
+            $last = preg_replace('/[^a-z0-9]/', '', $apellidoClean);
+
+            $candidates[] = $first . '.' . $last;      // john.doe
+            $candidates[] = $first . $last;           // johndoe
+            $candidates[] = substr($first, 0, 1) . $last; // jdoe
+            $candidates[] = $first . '.' . substr($last, 0, 1); // john.d
+            $candidates[] = $last . $first;           // doejohn
+        }
+
+        // Add username-based variations
+        $candidates[] = $usernameClean . mt_rand(10, 99);
+        $candidates[] = $usernameClean . '_' . mt_rand(10, 99);
+        $candidates[] = $usernameClean . '.' . mt_rand(10, 99);
+
+        // Ensure uniqueness and availability
+        $suggestions = [];
+        foreach ($candidates as $cand) {
+            if (count($suggestions) >= 5) break;
+            $cand = mb_strtolower($cand);
+            $cand = preg_replace('/[^a-z0-9_.-]/', '', $cand);
+            $cand = substr($cand, 0, 30);
+            if (empty($cand)) continue;
+
+            if ($cand === $usernameClean || in_array($cand, $suggestions, true)) continue;
+
+            if (!$this->userModel->findByUsername($cand)) {
+                $suggestions[] = $cand;
+            }
+        }
+
+        // If no available suggestions found, fallback to random numeric ones
+        $tries = 0;
+        while (count($suggestions) < 3 && $tries < 30) {
+            $tries++;
+            $cand = $usernameClean . mt_rand(100, 999);
+            $cand = substr(preg_replace('/[^a-z0-9_.-]/', '', $cand), 0, 30);
+            if (!$this->userModel->findByUsername($cand) && !in_array($cand, $suggestions, true)) {
+                $suggestions[] = $cand;
+            }
+        }
+
+        return ['available' => false, 'suggestions' => array_values($suggestions)];
+    }
+
+    public function checkUsername()
+    {
+        header('Content-Type: application/json');
+
+        $username = trim($_GET['username'] ?? $_POST['username'] ?? '');
+        $nombre = trim($_GET['nombre'] ?? $_POST['nombre'] ?? '');
+        $apellido = trim($_GET['apellido'] ?? $_POST['apellido'] ?? '');
+
+        $res = $this->generateUsernameSuggestions($username, $nombre, $apellido);
+        echo json_encode($res);
+        exit;
     }
 }

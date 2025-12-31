@@ -102,6 +102,8 @@
             </div>
             <div class="nav-menu">
                 <span>Hola, <?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                <a href="/test-vocacional/auth/changePassword" class="btn btn-sm btn-outline"
+                    style="border-color: white; color: white;">Cambiar Contraseña</a>
                 <a href="/test-vocacional/logout" class="btn btn-sm btn-outline"
                     style="border-color: white; color: white;">Cerrar Sesión</a>
             </div>

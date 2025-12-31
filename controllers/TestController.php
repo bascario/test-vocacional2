@@ -28,11 +28,8 @@ class TestController
             return;
         }
 
-        // Si el usuario pidió un nuevo test, limpiar flags de encuesta previa para reiniciar flujo
-        if ($forceNew) {
-            unset($_SESSION['pre_test_completed']);
-            unset($_SESSION['encuesta_data']);
-        }
+        // Nota: no eliminar `pre_test_completed` aquí — si venimos de la encuesta
+        // esta variable debe permanecer para que el flujo muestre el cuestionario.
 
         // Check for survey completion in session
         if (!isset($_SESSION['pre_test_completed']) || $_SESSION['pre_test_completed'] !== true) {
@@ -92,8 +89,8 @@ class TestController
         // Mark as completed
         $_SESSION['pre_test_completed'] = true;
 
-        // Redirect to main test (TestController::index will now show test form)
-        header('Location: /test-vocacional/test');
+        // Redirect to main test forcing a new test (so users who already have results can start a fresh one)
+        header('Location: /test-vocacional/test?new=1');
         exit;
     }
 

@@ -51,13 +51,13 @@ class ZonaController
 
         $zona = $zonaId; // Using zona_id as zona name
 
-        // Get filter parameters
         $institucionId = $_GET['institucion'] ?? null;
+        $amie = $_GET['amie'] ?? null;
         $curso = $_GET['curso'] ?? null;
         $paralelo = $_GET['paralelo'] ?? null;
 
         // Get statistics
-        $stats = $this->testModel->getStatisticsByZona($zona, $institucionId, $curso, $paralelo);
+        $stats = $this->testModel->getStatisticsByZona($zona, $institucionId, $curso, $paralelo, $amie);
 
         // Get performance by institution
         $performanceByInstitution = $this->testModel->getPerformanceByInstitution($zona);
@@ -73,7 +73,7 @@ class ZonaController
         }
 
         // Get student results
-        $studentResults = $this->testModel->getStudentResultsByZona($zona, $institucionId, $curso, $paralelo);
+        $studentResults = $this->testModel->getStudentResultsByZona($zona, $institucionId, $curso, $paralelo, $amie);
 
         // Count institutions and total students
         $totalInstitutions = count($institutions);
@@ -160,7 +160,8 @@ class ZonaController
                 'zona' => $zona,
                 'institucion_id' => $institucionId,
                 'curso' => $curso,
-                'paralelo' => $paralelo
+                'paralelo' => $paralelo,
+                'amie' => $_GET['amie'] ?? null
             ];
             $results = $this->testModel->getGroupResults($filters);
 
@@ -257,7 +258,7 @@ class ZonaController
             $paralelo = $_GET['paralelo'] ?? null;
 
             // Get student results
-            $results = $this->testModel->getStudentResultsByZona($zona, $institucionId, $curso, $paralelo);
+            $results = $this->testModel->getStudentResultsByZona($zona, $institucionId, $curso, $paralelo, $_GET['amie'] ?? null);
 
             // Generate Excel
             require_once 'utils/ExcelGenerator.php';

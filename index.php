@@ -47,6 +47,32 @@ switch ($request) {
         $controller->logout();
         break;
 
+    case '/auth/changePassword':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        require_once 'controllers/AuthController.php';
+        $controller = new AuthController();
+        $controller->changePassword();
+        break;
+
+    case '/recover-password':
+        require_once 'controllers/AuthController.php';
+        $controller = new AuthController();
+        $controller->recoverPassword();
+        break;
+
+    case '/auth/recoverPassword':
+        require_once 'controllers/AuthController.php';
+        $controller = new AuthController();
+        $controller->recoverPassword();
+        break;
+
+    case '/reset-password':
+        require_once 'controllers/AuthController.php';
+        $controller = new AuthController();
+        $controller->resetPassword();
+        break;
+
     case '/test':
         require_once 'middleware/AuthMiddleware.php';
         AuthMiddleware::checkAuth();
@@ -248,11 +274,30 @@ switch ($request) {
         $controller->users();
         break;
 
+    case '/admin/users/change-password':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        // Allow admins, dece and zonal to use this endpoint; method will enforce additional constraints
+        AuthMiddleware::checkRole(['administrador','dece','zonal']);
+        require_once 'controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->changeUserPassword();
+        break;
+
     case '/institutions/search':
         // Public endpoint for autocomplete/search of institutions
         require_once 'controllers/AdminController.php';
         $controller = new AdminController();
         $controller->searchInstitutions();
+        break;
+
+    case '/verify-report':
+        require_once 'controllers/AdminController.php';
+        if (file_exists('views/verify_report.php')) {
+            require_once 'views/verify_report.php';
+        } else {
+            echo "Página de verificación en construcción";
+        }
         break;
 
     case '/admin/reports/individual':

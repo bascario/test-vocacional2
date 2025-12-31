@@ -3,24 +3,32 @@
  * Modelo base simple con operaciones CRUD reutilizables.
  * Clase abstracta de la que heredan los modelos específicos.
  */
-abstract class BaseModel {
+abstract class BaseModel
+{
     protected $db;
     protected $table;
 
-    public function __construct() {
+    public function __construct()
+    {
         // Obtener conexión PDO desde el singleton de Database
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // Buscar un registro por su id
-    public function find($id) {
+    /**
+     * Buscar un registro por su id
+     * @param mixed $id
+     * @return array|false
+     */
+    public function find($id)
+    {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
 
     // Obtener todos los registros (opcionalmente con condiciones y orden)
-    public function findAll($conditions = [], $orderBy = '') {
+    public function findAll($conditions = [], $orderBy = '')
+    {
         $sql = "SELECT * FROM {$this->table}";
         $params = [];
 
@@ -43,7 +51,8 @@ abstract class BaseModel {
     }
 
     // Insertar un nuevo registro y devolver el id insertado
-    public function create($data) {
+    public function create($data)
+    {
         $columns = implode(', ', array_keys($data));
         $placeholders = implode(', ', array_fill(0, count($data), '?'));
 
@@ -55,7 +64,8 @@ abstract class BaseModel {
     }
 
     // Actualizar campos de un registro por id
-    public function update($id, $data) {
+    public function update($id, $data)
+    {
         $setClauses = [];
         $params = [];
 
@@ -71,7 +81,8 @@ abstract class BaseModel {
     }
 
     // Eliminar un registro por id
-    public function delete($id) {
+    public function delete($id)
+    {
         $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = ?");
         return $stmt->execute([$id]);
     }

@@ -99,6 +99,65 @@ if (!empty($result['fecha_nacimiento'])) {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
+
+            @page {
+                size: auto;
+                margin: 15mm;
+            }
+
+            .print-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 10mm;
+                display: block !important;
+                text-align: center;
+                font-size: 10px;
+                color: #666;
+            }
+
+            .print-footer::after {
+                content: "Página " counter(page) " de 2";
+            }
+
+            .qr-code-print {
+                display: block !important;
+            }
+
+            .qr-code-print img {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        .print-footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .qr-code-print {
+            text-align: center;
+            padding: 5px;
+            background: #fff;
+            border: 1px dashed #00aeef;
+            width: fit-content;
+        }
+
+        .qr-code-print img {
+            width: 80px;
+            height: 80px;
+        }
+
+        .qr-label {
+            font-size: 8px;
+            color: #00aeef;
+            font-weight: bold;
+            margin-top: 2px;
         }
 
         /* Header */
@@ -266,10 +325,27 @@ if (!empty($result['fecha_nacimiento'])) {
         }
 
         .sig-box {
-            width: 45%;
+            width: 30%;
             border-top: 1px solid #000;
             padding-top: 5px;
             font-weight: bold;
+            font-size: 10px;
+        }
+
+        .qr-data-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .dece-info {
+            width: 75%;
+            background-color: #f2f2f2;
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-weight: bold;
+            font-size: 11px;
         }
 
         .dece-box {
@@ -489,14 +565,33 @@ if (!empty($result['fecha_nacimiento'])) {
 
         <!-- Footer -->
         <div class="section-title">IV. DATOS DEL ESTUDIANTE Y PROFESIONAL DECE</div>
-        <div class="dece-box">
-            ESTUDIANTE: <?= htmlspecialchars($result['nombre'] . ' ' . $result['apellido']) ?> -
-            <?= htmlspecialchars($result['curso'] ?? '-') ?><br><br>
-            <?= htmlspecialchars($deceUser ? ($deceUser['nombre'] . ' ' . $deceUser['apellido']) : 'No asignado') ?><br>
-            <?= htmlspecialchars($institution['nombre'] ?? 'Ecuador') ?>, <?= $date ?><br>
-            FIRMA DE RESPONSABILIDAD
+        <div class="qr-data-container">
+            <div class="dece-info">
+                ESTUDIANTE: <?= htmlspecialchars($result['nombre'] . ' ' . $result['apellido']) ?> -
+                <?= htmlspecialchars($result['curso'] ?? '-') ?><br>
+                <?= htmlspecialchars($deceUser ? ($deceUser['nombre'] . ' ' . $deceUser['apellido']) : 'No asignado') ?><br>
+                <?= htmlspecialchars($institution['nombre'] ?? 'Ecuador') ?>, <?= $date ?>
+            </div>
+
+            <?php if (isset($qrCodeBase64) && !empty($qrCodeBase64)): ?>
+                <div class="qr-code-print">
+                    <img src="<?= $qrCodeBase64 ?>" alt="QR Validación">
+                    <div class="qr-label">VALIDACIÓN QR</div>
+                </div>
+            <?php endif; ?>
         </div>
 
+        <div class="signatures">
+            <div class="sig-box">
+                ESTUDIANTE
+            </div>
+            <div class="sig-box">
+                REPRESENTANTE LEGAL
+            </div>
+            <div class="sig-box">
+                PROFESIONAL DECE / RECTOR(A)
+            </div>
+        </div>
     </div>
 
     <!-- PAGE 2: Definitions Table -->
@@ -572,6 +667,13 @@ if (!empty($result['fecha_nacimiento'])) {
                 </tr>
             </tbody>
         </table>
+
+        <?php if (isset($qrCodeBase64) && !empty($qrCodeBase64)): ?>
+            <div class="qr-code-print">
+                <img src="<?= $qrCodeBase64 ?>" alt="QR Validación">
+                <div class="qr-label">VALIDACIÓN QR</div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Branding Footer (Global or End of Report) -->
@@ -643,6 +745,7 @@ if (!empty($result['fecha_nacimiento'])) {
             }
         });
     </script>
+    <div class="print-footer"></div>
 </body>
 
 </html>

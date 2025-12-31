@@ -20,7 +20,8 @@ class AdminController
         $filters = [
             'zona' => $_GET['zona'] ?? null,
             'distrito' => $_GET['distrito'] ?? null,
-            'institucion_id' => $_GET['institucion_id'] ?? null
+            'institucion_id' => $_GET['institucion_id'] ?? null,
+            'amie' => $_GET['amie'] ?? null
         ];
 
         // Obtener opciones de filtro
@@ -61,12 +62,13 @@ class AdminController
             $currentUserId = $_SESSION['user_id'] ?? null;
             $currentUserRole = $_SESSION['user_role'] ?? null;
 
-            // Permitir si: administrador, dece de la misma institución, o el estudiante descargando su propio reporte
+            // Permitir si: administrador, dece de la misma institución, zonal de su zona, o el estudiante
             $isOwn = ($currentUserId == $studentId);
             $isAdmin = ($currentUserRole === 'administrador');
             $isDece = ($currentUserRole === 'dece');
+            $isZonal = ($currentUserRole === 'zonal');
 
-            if (!$isOwn && !$isAdmin && !$isDece) {
+            if (!$isOwn && !$isAdmin && !$isDece && !$isZonal) {
                 throw new Exception('Acceso denegado: no tienes permiso para descargar este reporte');
             }
 
@@ -81,6 +83,24 @@ class AdminController
                 $student = $this->userModel->find($studentId);
                 if (empty($student) || ($student['institucion_id'] ?? null) != $current['institucion_id']) {
                     throw new Exception('Acceso denegado: el estudiante no pertenece a su institución');
+                }
+            }
+
+            // Si el usuario actual es Zonal, permitir si el estudiante es de su zona
+            if ($isZonal && !$isOwn) {
+                $current = $this->userModel->find($currentUserId);
+                if (empty($current) || empty($current['zona_id'])) {
+                    throw new Exception('Acceso denegado: tu cuenta no está vinculada a una zona');
+                }
+
+                $student = $this->userModel->find($studentId);
+                if (empty($student) || empty($student['institucion_id'])) {
+                    throw new Exception('Acceso denegado: el estudiante no está vinculado a una institución');
+                }
+
+                $studentInst = $this->institucionModel->find($student['institucion_id']);
+                if (empty($studentInst) || ($studentInst['zona'] ?? null) != $current['zona_id']) {
+                    throw new Exception('Acceso denegado: el estudiante no pertenece a su zona');
                 }
             }
 
@@ -114,6 +134,10 @@ class AdminController
             $competence = ReportHelper::calculateCompetence($normalizedScores);
             $topAreas = ReportHelper::getTopAreas($normalizedScores, 3);
 
+            // Generar validación QR
+            $validationUrl = ReportHelper::getValidationUrl($latestResult['id']);
+            $qrCodeBase64 = ReportHelper::generateQRCodeBase64($validationUrl);
+
             // Renderizar la vista imprimible
             // No se envían cabeceras PDF aquí, solo HTML
             require 'views/report_individual_print.php';
@@ -133,7 +157,8 @@ class AdminController
             'zona' => $_GET['zona'] ?? null,
             'distrito' => $_GET['distrito'] ?? null,
             'institucion_id' => $_GET['institucion_id'] ?? null,
-            'curso' => $_GET['course'] ?? null
+            'curso' => $_GET['course'] ?? null,
+            'amie' => $_GET['amie'] ?? null
         ];
         $format = $_GET['format'] ?? 'pdf';
 
@@ -161,7 +186,8 @@ class AdminController
                 'zona' => $filters['zona'],
                 'distrito' => $filters['distrito'],
                 'institution' => $filters['institucion_id'] ? ($this->institucionModel->find($filters['institucion_id'])['nombre'] ?? 'Desconocida') : 'Todas las Instituciones',
-                'course' => $filters['curso']
+                'course' => $filters['curso'],
+                'amie' => $filters['amie']
             ];
 
             if ($format === 'excel') {
@@ -233,6 +259,14 @@ class AdminController
                 }
                 $deceUser = $current;
                 $reportTitle = "Reporte Grupal - Administrador";
+
+                // Generar validación QR (para el grupo/institución si aplica, o test individual de referencia)
+                // Usamos el ID de la institución o un identificador único si subiera a BD, pero por ahora
+                // como es dinámico, podemos usar un hash de los filtros o simplemente omitir si no es individual.
+                // Sin embargo, el usuario pidió para TODOS. Usaremos una URL general de la institución si hay institucion_id.
+                $validationData = $filters['institucion_id'] ?? 'group_report';
+                $validationUrl = ReportHelper::getValidationUrl($validationData);
+                $qrCodeBase64 = ReportHelper::generateQRCodeBase64($validationUrl);
 
                 // Render Update View
                 // No headers needed as we output HTML to browser directly
@@ -384,6 +418,84 @@ class AdminController
         // Get zonas for zonal assignment
         $zonas = $institucionModel->getZonaList();
 
+        // Render view
         require_once 'views/admin_users.php';
+    }
+
+    /**
+     * Allow administrators to change any user's password, DECE can change passwords
+     * for users from the same institution, ZONAL can change passwords for users from their zone.
+     */
+    /**
+     * Core logic to update a user's password, callable from tests.
+     * Throws Exception on permission errors or invalid input.
+     */
+    public function updateUserPassword(int $actorId, string $actorRole, int $targetUserId, string $newPassword)
+    {
+        if (strlen($newPassword) < PASSWORD_MIN_LENGTH) {
+            throw new Exception('La nueva contraseña debe tener al menos ' . PASSWORD_MIN_LENGTH . ' caracteres');
+        }
+
+        // Permission checks
+        if ($actorRole === 'administrador') {
+            // ok
+        } elseif ($actorRole === 'dece') {
+            // only allow if target user belongs to same institution
+            $current = $this->userModel->find($actorId);
+            $target = $this->userModel->find($targetUserId);
+            if (empty($current['institucion_id']) || empty($target['institucion_id']) || $current['institucion_id'] != $target['institucion_id']) {
+                throw new Exception('Acceso denegado: sólo puedes cambiar contraseñas de estudiantes de tu institución');
+            }
+        } elseif ($actorRole === 'zonal') {
+            // only allow if target user belongs to same zona
+            $current = $this->userModel->find($actorId);
+            $target = $this->userModel->find($targetUserId);
+            if (empty($current['zona_id']) || empty($target['zona_id']) || $current['zona_id'] != $target['zona_id']) {
+                throw new Exception('Acceso denegado: sólo puedes cambiar contraseñas de usuarios de tu zona');
+            }
+        } else {
+            throw new Exception('Acceso denegado: no tienes permiso para cambiar contraseñas de otros usuarios');
+        }
+
+        return $this->userModel->updatePassword($targetUserId, $newPassword);
+    }
+
+    public function changeUserPassword()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $_SESSION['error'] = 'Método inválido';
+            header('Location: /test-vocacional/admin/users');
+            exit;
+        }
+
+        $targetUserId = $_POST['target_user_id'] ?? null;
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirm = $_POST['confirm_password'] ?? '';
+
+        if (empty($targetUserId) || empty($newPassword) || empty($confirm)) {
+            $_SESSION['error'] = 'Faltan datos para cambiar la contraseña';
+            header('Location: /test-vocacional/admin/users');
+            exit;
+        }
+
+        if ($newPassword !== $confirm) {
+            $_SESSION['error'] = 'Las contraseñas no coinciden';
+            header('Location: /test-vocacional/admin/users');
+            exit;
+        }
+
+        try {
+            $currentUserId = $_SESSION['user_id'] ?? null;
+            $currentRole = $_SESSION['user_role'] ?? null;
+
+            $this->updateUserPassword((int) $currentUserId, $currentRole, (int) $targetUserId, $newPassword);
+
+            $_SESSION['success'] = 'Contraseña actualizada correctamente';
+        } catch (Exception $e) {
+            $_SESSION['error'] = 'Error: ' . $e->getMessage();
+        }
+
+        header('Location: /test-vocacional/admin/users');
+        exit;
     }
 }

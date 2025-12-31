@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 
-<body>
+<body class="auth-page">
     <div class="container">
         <div class="login-container">
             <div class="login-card">
@@ -35,7 +35,8 @@
                     <div class="form-group">
                         <label for="username">Usuario</label>
                         <input type="text" id="username" name="username" required
-                            placeholder="Ingresa un nombre de usuario">
+                            placeholder="Ingresa un nombre de usuario" autocomplete="off">
+                        <div id="username-help" class="form-help" style="margin-top:6px;font-size:0.95em;color:#666;"></div>
                     </div>
 
                     <div class="form-group">
@@ -150,8 +151,7 @@
                 searching: function () {
                     return 'Buscando…';
                 }
-            },
-            dropdownParent: $('#institucion_id').parent()
+            }
         });
     });
 </script>

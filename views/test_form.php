@@ -17,6 +17,7 @@
             </div>
             <div class="nav-menu">
                 <span>Bienvenido, <?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                <a href="/test-vocacional/auth/changePassword" class="btn btn-sm btn-outline">Cambiar Contraseña</a>
                 <a href="/test-vocacional/logout" class="btn btn-sm btn-outline">Cerrar Sesión</a>
             </div>
         </div>
@@ -245,23 +246,33 @@
 
         // Expose function to global scope for onclick handler
         window.selectOption = function (qId, val) {
-            // Unselect others
-            document.querySelectorAll(`.likert-btn`).forEach(el => el.classList.remove('selected'));
+            // Unselect others within current likert-options container
+            const curBtns = document.querySelectorAll('.likert-options .likert-btn');
+            curBtns.forEach(el => el.classList.remove('selected'));
 
-            // Select clicked (re-find it specifically to be safe, though event handling is simplified here)
-            // Actually, we just re-render or update DOM. simplest is update DOM class
-            const btns = document.querySelectorAll(`.likert-btn`);
+            // Find the matching button/input for this value and mark it
+            const btns = document.querySelectorAll('.likert-btn');
+            let matchedInput = null;
             btns.forEach(btn => {
                 const input = btn.querySelector('input');
-                if (input && input.value == val) {
-                    btn.classList.add('selected');
-                    input.checked = true;
-                    // Trigger change event manually so save logic works
-                    const event = new Event('change', { bubbles: true });
-                    document.getElementById('testForm').dispatchEvent(event);
+                if (input) {
+                    if (parseInt(input.value, 10) === val) {
+                        btn.classList.add('selected');
+                        input.checked = true;
+                        matchedInput = input;
+                    } else {
+                        input.checked = false;
+                    }
                 }
             });
-            // Auto advance after short delay? Optional. Let's stick to manual next for now to be safe.
+
+            // Persist immediately to localStorage
+            const data = JSON.parse(localStorage.getItem('testProgress') || '{}');
+            data[`respuestas[${qId}]`] = String(val);
+            localStorage.setItem('testProgress', JSON.stringify(data));
+
+            // Update progress bar immediately
+            updateProgressBar();
         };
 
         function escapeHtml(str) {
@@ -269,7 +280,7 @@
         }
 
         function updateProgressBar() {
-            // Count answers saved in localStorage (all pages) plus any currently checked inputs not yet saved
+            // Count answers saved in localStorage ONLY (single source of truth)
             let answered = 0;
             let saved = {};
             try {
@@ -278,23 +289,43 @@
                 saved = {};
             }
 
+            // Count all respuestas keys in saved
             for (const key in saved) {
-                if (key && key.indexOf('respuestas[') === 0) answered++;
-            }
-
-            // Include any checked inputs present in DOM that may not be in saved (edge case)
-            document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
-                const name = input.name;
-                if (name && name.indexOf('respuestas[') === 0 && !(name in saved)) {
+                if (key && key.indexOf('respuestas[') === 0) {
                     answered++;
                 }
-            });
+            }
 
             // Clamp answered to totalQuestions
             answered = Math.max(0, Math.min(answered, totalQuestions));
             const pct = Math.round((answered / totalQuestions) * 100);
             document.getElementById('progressFill').style.width = pct + '%';
             document.getElementById('progressText').textContent = pct + '% completado';
+        }
+
+        function focusOnPage() {
+            try {
+                pageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // briefly highlight the page to draw attention
+                pageEl.classList.add('highlight-focus');
+                setTimeout(() => pageEl.classList.remove('highlight-focus'), 900);
+            } catch (e) { /* ignore */ }
+        }
+
+        function findFirstUnansweredIndex() {
+            let saved = {};
+            try { saved = JSON.parse(localStorage.getItem('testProgress') || '{}'); } catch (ex) { saved = {}; }
+
+            for (let i = 0; i < questions.length; i++) {
+                const q = questions[i];
+                const key = `respuestas[${q.id}]`;
+                // check saved progress first
+                if (Object.prototype.hasOwnProperty.call(saved, key)) continue;
+                // check DOM in case it's on the current page but not yet saved
+                const checked = document.querySelector(`input[name="${key}"]:checked`);
+                if (!checked) return i;
+            }
+            return -1;
         }
 
         function updateControls() {
@@ -304,15 +335,15 @@
         }
 
         function saveCurrentAnswer() {
+            // Only save if there's a checked input in the current page
             const q = questions[currentIndex];
             const checked = document.querySelector(`input[name="respuestas[${q.id}]"]:checked`);
             const data = JSON.parse(localStorage.getItem('testProgress') || '{}');
+
             if (checked) {
                 data[`respuestas[${q.id}]`] = checked.value;
-            } else {
-                delete data[`respuestas[${q.id}]`];
+                localStorage.setItem('testProgress', JSON.stringify(data));
             }
-            localStorage.setItem('testProgress', JSON.stringify(data));
         }
 
         function goTo(index) {
@@ -323,7 +354,13 @@
                 const curQ = questions[currentIndex];
                 const checked = document.querySelector(`input[name="respuestas[${curQ.id}]"]:checked`);
                 if (!checked) {
-                    alert('Por favor responde la pregunta antes de continuar.');
+                    if (window.TestVocacional && typeof window.TestVocacional.showAlert === 'function') {
+                        window.TestVocacional.showAlert('Por favor responde la pregunta antes de continuar.', 'error');
+                    } else {
+                        alert('Por favor responde la pregunta antes de continuar.');
+                    }
+                    // bring the current question into view and highlight
+                    focusOnPage();
                     return;
                 }
             }
@@ -349,71 +386,87 @@
         prevBtn.addEventListener('click', function () { goTo(currentIndex - 1); });
         nextBtn.addEventListener('click', function () { goTo(currentIndex + 1); });
 
-        // When user interacts with page (click an option), save and update progress
+        // Ensure last selection is saved when clicking the final submit button
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function () {
+                try { saveCurrentAnswer(); updateProgressBar(); } catch (e) { /* ignore */ }
+            });
+        }
+
+        // When user interacts with page (click an option), update progress immediately
         document.getElementById('testForm').addEventListener('change', function (e) {
             if (e.target && e.target.name && e.target.name.startsWith('respuestas')) {
-                saveCurrentAnswer();
+                // Change event already saved it, just update UI
                 updateProgressBar();
             }
         });
 
-        // On submit, ensure all answered — count saved responses in localStorage (all pages)
+        // On submit, ensure all answered — count saved responses in localStorage (single source of truth)
         document.getElementById('testForm').addEventListener('submit', function (e) {
-            // Count responses stored in localStorage
+            e.preventDefault();
+
+            // Save the current page answer before validating
+            saveCurrentAnswer();
+
+            // Count all responses in localStorage
             let saved = {};
-            try { saved = JSON.parse(localStorage.getItem('testProgress') || '{}'); } catch (ex) { saved = {}; }
+            try {
+                saved = JSON.parse(localStorage.getItem('testProgress') || '{}');
+            } catch (ex) {
+                saved = {};
+            }
 
             let answered = 0;
             for (const key in saved) {
-                if (key && key.indexOf('respuestas[') === 0) answered++;
-            }
-
-            // Also count any checked inputs currently in DOM that may not be saved yet
-            document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
-                const name = input.name;
-                if (name && name.indexOf('respuestas[') === 0 && !(name in saved)) {
+                if (key && key.indexOf('respuestas[') === 0) {
                     answered++;
                 }
-            });
+            }
 
+            // If not all answered, show error and jump to first unanswered
             if (answered < totalQuestions) {
-                e.preventDefault();
-                alert('Por favor responde todas las preguntas antes de enviar el test.');
+                if (window.TestVocacional && typeof window.TestVocacional.showAlert === 'function') {
+                    window.TestVocacional.showAlert('Por favor responde todas las preguntas antes de enviar el test.', 'error');
+                } else {
+                    alert('Por favor responde todas las preguntas antes de enviar el test.');
+                }
+
+                // Jump to first unanswered question
+                const first = findFirstUnansweredIndex();
+                if (first >= 0 && first !== currentIndex) {
+                    currentIndex = first;
+                    renderQuestion(currentIndex);
+                    setTimeout(() => focusOnPage(), 100);
+                }
                 return;
             }
 
-            // Append saved responses as hidden inputs (in case some aren't in DOM)
+            // All answered - prepare hidden inputs for all responses
             for (const key in saved) {
                 if (key && key.indexOf('respuestas[') === 0) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = saved[key];
-                    document.getElementById('testForm').appendChild(input);
+                    // Check if input already exists
+                    let existingInput = document.querySelector(`input[name="${key}"][type="hidden"]`);
+                    if (!existingInput) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = saved[key];
+                        document.getElementById('testForm').appendChild(input);
+                    }
                 }
             }
 
-            // Also include any checked inputs present in DOM that might not be saved
-            document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
-                const name = input.name;
-                if (name && name.indexOf('respuestas[') === 0 && !(name in saved)) {
-                    const hidden = document.createElement('input');
-                    hidden.type = 'hidden';
-                    hidden.name = name;
-                    hidden.value = input.value;
-                    document.getElementById('testForm').appendChild(hidden);
-                }
-            });
-
-            // Clear saved progress now that we're submitting
+            // Clear localStorage and submit form
             localStorage.removeItem('testProgress');
+            document.getElementById('testForm').removeEventListener('submit', arguments.callee);
+            document.getElementById('testForm').submit();
         });
 
         // Initial render
         renderQuestion(0);
 
     </script>
-        <?php require 'views/layout/footer.php'; ?>
+    <?php require 'views/layout/footer.php'; ?>
 </body>
 
 </html>

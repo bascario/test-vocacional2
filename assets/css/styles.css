@@ -44,9 +44,11 @@ body {
     margin: 0 auto;
     padding: 30px 20px;
 }
-       Reglas responsive (móviles/tablets)
-       Ajustes para que el layout colapse correctamente
-       ========================== */
+
+/* ==========================
+   Reglas responsive (móviles/tablets)
+   Ajustes para que el layout colapse correctamente
+   ========================== */
 
 
 
@@ -65,8 +67,53 @@ body {
     box-shadow: var(--box-shadow);
     padding: 40px;
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     border-top: 4px solid var(--secondary-color);
+}
+
+/* Auth page layout: center the card in viewport and scale for larger screens */
+.auth-page .container {
+    max-width: 520px;
+    height: 100vh;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-page .login-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.auth-page .login-card {
+    width: 100%;
+    max-width: 480px;
+    padding: 36px 36px;
+    border-radius: 10px;
+}
+
+/* Improve input sizes and spacing on auth pages */
+.auth-page .form-group input,
+.auth-page .form-group select {
+    padding: 12px 14px;
+    font-size: 1rem;
+}
+
+/* Responsive tweaks for small screens */
+@media (max-width: 520px) {
+    .auth-page .container {
+        padding: 20px;
+        height: auto;
+    }
+
+    .auth-page .login-card {
+        padding: 20px;
+        max-width: 100%;
+    }
 }
 
 .login-header {
@@ -83,6 +130,104 @@ body {
 .login-header p {
     color: #666;
     font-size: 1.1rem;
+}
+
+/* --- Login animations and logo --- */
+.login-logo {
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 12px auto;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(35, 55, 109, 0.18);
+    transform: translateY(-8px) scale(0.98);
+    opacity: 0;
+}
+
+.logo-mark {
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
+}
+
+.login-logo.show {
+    animation: logoDrop 700ms cubic-bezier(.2, .9, .2, 1) forwards;
+}
+
+@keyframes logoDrop {
+    from {
+        opacity: 0;
+        transform: translateY(-24px) scale(0.7) rotate(-8deg);
+    }
+
+    60% {
+        transform: translateY(6px) scale(1.06) rotate(4deg);
+        opacity: 1;
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0);
+    }
+}
+
+.brand-title {
+    animation: titlePop 520ms ease both 120ms;
+}
+
+@keyframes titlePop {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.login-card.animate {
+    animation: slideIn 520ms cubic-bezier(.22, .9, .2, 1) both;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Subtle pulsing for primary button on first load */
+.btn-primary.pulse {
+    animation: buttonPulse 1.6s ease-out 700ms 1;
+}
+
+@keyframes buttonPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(240, 172, 44, 0.36);
+    }
+
+    60% {
+        box-shadow: 0 0 0 18px rgba(240, 172, 44, 0.0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(240, 172, 44, 0);
+    }
+}
+
+/* A friendly floating hover for the logo */
+.login-logo:hover {
+    transform: translateY(-4px) scale(1.02);
+    transition: transform 220ms ease;
 }
 
 .login-form {
@@ -115,6 +260,70 @@ body {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(240, 172, 44, 0.2);
+}
+
+/* Username Checker Styles */
+.form-help {
+    min-height: 20px;
+    transition: all 0.3s ease;
+}
+
+.suggest-btn {
+    display: inline-block;
+    margin: 2px 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--primary-color);
+    background: #fff;
+    color: var(--primary-color);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.suggest-btn:hover {
+    background: var(--primary-color);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(240, 172, 44, 0.3);
+}
+
+.status-check {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.status-available {
+    color: var(--success-color);
+}
+
+.status-taken {
+    color: var(--danger-color);
+}
+
+.status-loading {
+    color: var(--tertiary-color);
+}
+
+.suggestions-container {
+    margin-top: 8px;
+    padding: 10px;
+    background: #fdf8ef;
+    border-radius: 8px;
+    border: 1px solid #faedda;
+}
+
+.suggestions-title {
+    font-size: 0.8rem;
+    color: #966b1c;
+    margin-bottom: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    display: block;
 }
 
 /* Buttons */
@@ -207,6 +416,12 @@ body {
     background-color: #d4edda;
     border-color: #c3e6cb;
     color: #155724;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
 }
 
 .login-footer {
@@ -769,12 +984,14 @@ body {
     border: none;
     background: #fff;
     color: var(--secondary-color);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     cursor: pointer;
 }
 
 @media (min-width: 769px) {
-    .sidebar-toggle-btn { display: none; }
+    .sidebar-toggle-btn {
+        display: none;
+    }
 }
 
 .sidebar-header {
@@ -905,6 +1122,7 @@ body {
 .filters-section .choices__list--dropdown {
     z-index: 9999 !important;
 }
+
 .filters-form {
     display: flex !important;
     flex-flow: row nowrap !important;

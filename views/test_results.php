@@ -14,6 +14,7 @@
         <div class="nav-brand">Mis Resultados</div>
         <div class="nav-menu">
             <a href="/test-vocacional/test?new=1" class="btn btn-sm btn-outline">Nuevo Test</a>
+            <a href="/test-vocacional/auth/changePassword" class="btn btn-sm btn-outline">Cambiar Contraseña</a>
             <a href="/test-vocacional/logout" class="btn btn-sm btn-outline">Cerrar Sesión</a>
         </div>
     </div>

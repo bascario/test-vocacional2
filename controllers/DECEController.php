@@ -45,6 +45,7 @@ class DECEController
         // Get filter parameters
         $curso = $_GET['curso'] ?? null;
         $paralelo = $_GET['paralelo'] ?? null;
+        $amie = $_GET['amie'] ?? null;
 
         // Get statistics
         $stats = $this->testModel->getStatisticsByInstitution($institucionId, $curso, $paralelo);
@@ -126,7 +127,8 @@ class DECEController
             $filters = [
                 'institucion_id' => $institucionId,
                 'curso' => $curso,
-                'paralelo' => $paralelo
+                'paralelo' => $paralelo,
+                'amie' => $_GET['amie'] ?? null
             ];
             $results = $this->testModel->getGroupResults($filters);
 
@@ -217,7 +219,8 @@ class DECEController
             $excelGenerator = new ExcelGenerator();
             $excelContent = $excelGenerator->generateDECEReport($results, [
                 'curso' => $curso,
-                'paralelo' => $paralelo
+                'paralelo' => $paralelo,
+                'amie' => $_GET['amie'] ?? null
             ]);
 
             $filename = 'datos_dece_' . date('Y-m-d') . '.xlsx';

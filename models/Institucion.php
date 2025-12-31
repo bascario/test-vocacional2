@@ -61,6 +61,7 @@ class Institucion extends BaseModel
             return [];
 
         $like = "%" . $q . "%";
+        // Search by both name and AMIE code
         $stmt = $this->db->prepare("SELECT id, nombre, codigo, tipo FROM {$this->table} WHERE nombre LIKE ? OR codigo LIKE ? ORDER BY nombre LIMIT ?");
         $stmt->execute([$like, $like, (int) $limit]);
         return $stmt->fetchAll();

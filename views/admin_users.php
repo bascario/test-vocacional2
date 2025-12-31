@@ -105,6 +105,15 @@
                             </td>
                             <td>
                                     <button type="submit" class="btn btn-sm btn-primary" form="user-form-<?= $u['id'] ?>">Guardar</button>
+                                    <!-- Change password inline form -->
+                                    <button type="button" class="btn btn-sm btn-outline change-pass-btn" data-user-id="<?= $u['id'] ?>">Cambiar contraseña</button>
+
+                                    <form method="POST" action="/test-vocacional/admin/users/change-password" class="change-pass-form" id="change-pass-form-<?= $u['id'] ?>" style="display:none; margin-top:8px;">
+                                        <input type="hidden" name="target_user_id" value="<?= $u['id'] ?>">
+                                        <input type="password" name="new_password" placeholder="Nueva contraseña" required style="padding:6px; margin-right:6px;">
+                                        <input type="password" name="confirm_password" placeholder="Confirmar" required style="padding:6px; margin-right:6px;">
+                                        <button type="submit" class="btn btn-sm btn-danger">Actualizar</button>
+                                    </form>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -143,6 +152,19 @@ document.querySelectorAll('.searchable-select').forEach(el => {
         noChoicesText: 'No hay opciones disponibles',
         placeholder: true,
         placeholderValue: 'Buscar institución...'
+    });
+});
+
+// Toggle inline change-password form
+document.querySelectorAll('.change-pass-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const userId = this.dataset.userId;
+        const form = document.getElementById('change-pass-form-' + userId);
+        if (form.style.display === 'none' || form.style.display === '') {
+            form.style.display = 'block';
+        } else {
+            form.style.display = 'none';
+        }
     });
 });
 </script>

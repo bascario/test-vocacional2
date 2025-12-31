@@ -42,6 +42,11 @@ require 'views/layout/header.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div class="filter-group">
+                    <label for="amie">AMIE</label>
+                    <input type="text" name="amie" id="amie" value="<?= htmlspecialchars($amie ?? '') ?>" 
+                           placeholder="AMIE..." onchange="this.form.submit()">
+                </div>
                 <div class="filter-group actions">
                     <a href="/test-vocacional/admin/dece" class="btn btn-sm btn-secondary">Limpiar</a>
                 </div>
@@ -228,6 +233,10 @@ require 'views/layout/header.php';
             if ($paralelo) {
                 $reportUrl .= '&paralelo=' . urlencode($paralelo);
                 $exportUrl .= '&paralelo=' . urlencode($paralelo);
+            }
+            if (!empty($amie)) {
+                $reportUrl .= '&amie=' . urlencode($amie);
+                $exportUrl .= '&amie=' . urlencode($amie);
             }
             ?>
             <a href="<?= $reportUrl ?>" class="btn btn-primary" target="_blank">

@@ -54,6 +54,7 @@ if (empty($user)) {
             </div>
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="/test-vocacional/auth/changePassword" class="btn btn-secondary">Cambiar Contraseña</a>
             </div>
         </form>
     </div>

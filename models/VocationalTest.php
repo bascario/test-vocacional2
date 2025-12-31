@@ -224,6 +224,10 @@ class VocationalTest extends BaseModel
             $where .= " AND u.institucion_id = ?";
             $params[] = $filters['institucion_id'];
         }
+        if (!empty($filters['amie'])) {
+            $where .= " AND ie.codigo = ?";
+            $params[] = $filters['amie'];
+        }
 
         // Base Query with Joins
         $baseQuery = " FROM {$this->table} rt 
@@ -286,6 +290,10 @@ class VocationalTest extends BaseModel
         if (!empty($filters['institucion_id'])) {
             $where .= " AND u.institucion_id = ?";
             $params[] = $filters['institucion_id'];
+        }
+        if (!empty($filters['amie'])) {
+            $where .= " AND ie.codigo = ?";
+            $params[] = $filters['amie'];
         }
 
         // Include first/last answer timestamps and duration (seconds) using respuestas_detalle
@@ -517,7 +525,7 @@ class VocationalTest extends BaseModel
     /**
      * Get statistics for all institutions in a zona
      */
-    public function getStatisticsByZona($zona, $institucionId = null, $curso = null, $paralelo = null)
+    public function getStatisticsByZona($zona, $institucionId = null, $curso = null, $paralelo = null, $amie = null)
     {
         $sql = "
             SELECT 
@@ -540,6 +548,11 @@ class VocationalTest extends BaseModel
         if ($institucionId) {
             $sql .= " AND u.institucion_id = ?";
             $params[] = $institucionId;
+        }
+
+        if ($amie) {
+            $sql .= " AND ie.codigo = ?";
+            $params[] = $amie;
         }
 
         if ($curso) {
@@ -618,6 +631,10 @@ class VocationalTest extends BaseModel
             $where .= " AND u.institucion_id = ?";
             $params[] = $filters['institucion_id'];
         }
+        if (!empty($filters['amie'])) {
+            $where .= " AND ie.codigo = ?";
+            $params[] = $filters['amie'];
+        }
         if (!empty($filters['curso'])) {
             $where .= " AND u.curso = ?";
             $params[] = $filters['curso'];
@@ -645,11 +662,11 @@ class VocationalTest extends BaseModel
     /**
      * Get student results for zona with optional filters
      */
-    public function getStudentResultsByZona($zona, $institucionId = null, $curso = null, $paralelo = null)
+    public function getStudentResultsByZona($zona, $institucionId = null, $curso = null, $paralelo = null, $amie = null)
     {
         $sql = "
             SELECT 
-                u.id as usuario_id,
+                u.id,
                 u.nombre,
                 u.apellido,
                 u.email,
@@ -680,6 +697,11 @@ class VocationalTest extends BaseModel
         if ($institucionId) {
             $sql .= " AND u.institucion_id = ?";
             $params[] = $institucionId;
+        }
+
+        if ($amie) {
+            $sql .= " AND ie.codigo = ?";
+            $params[] = $amie;
         }
 
         if ($curso) {
