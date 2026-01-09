@@ -44,14 +44,28 @@
                         <input type="email" id="email" name="email" required placeholder="Ingresa tu email">
                     </div>
 
-                    <div class="form-group">
-                        <label for="nombre">Nombre</label>
-                        <input type="text" id="nombre" name="nombre" required placeholder="Ingresa tu nombre">
+                    <h3 class="section-header">Datos del Estudiante</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="student_nombres">Nombres</label>
+                            <input type="text" id="student_nombres" name="student_nombres" required placeholder="Nombres">
+                        </div>
+                        <div class="form-group">
+                            <label for="student_apellidos">Apellidos</label>
+                            <input type="text" id="student_apellidos" name="student_apellidos" required placeholder="Apellidos">
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="apellido">Apellido</label>
-                        <input type="text" id="apellido" name="apellido" required placeholder="Ingresa tu apellido">
+                    <h3 class="section-header">Datos del Representante</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="representative_nombres">Nombres</label>
+                            <input type="text" id="representative_nombres" name="representative_nombres" required placeholder="Nombres">
+                        </div>
+                        <div class="form-group">
+                            <label for="representative_apellidos">Apellidos</label>
+                            <input type="text" id="representative_apellidos" name="representative_apellidos" required placeholder="Apellidos">
+                        </div>
                     </div>
 
                     <div class="form-group">

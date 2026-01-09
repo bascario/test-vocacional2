@@ -291,24 +291,56 @@ class AdminController
             exit;
         }
 
-        // Handle create
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nombre = $_POST['nombre'] ?? '';
-            $codigo = $_POST['codigo'] ?? '';
-            $tipo = $_POST['tipo'] ?? '';
-
+        // Handle delete
+        if (isset($_GET['delete'])) {
             try {
-                $this->institucionModel->createInstitution([
-                    'nombre' => $nombre,
-                    'codigo' => $codigo,
-                    'tipo' => $tipo
-                ]);
-
-                $_SESSION['success'] = 'Institución agregada exitosamente';
+                // Only admin can delete
+                if ($_SESSION['user_role'] !== 'administrador') {
+                    throw new Exception('Sólo el administrador puede eliminar instituciones');
+                }
+                $this->institucionModel->delete($_GET['delete']);
+                $_SESSION['success'] = 'Institución eliminada exitosamente';
                 header('Location: /test-vocacional/admin/institutions');
                 exit;
             } catch (Exception $e) {
-                $_SESSION['error'] = 'Error al agregar institución: ' . $e->getMessage();
+                $_SESSION['error'] = 'Error al eliminar: ' . $e->getMessage();
+            }
+        }
+
+        // Handle create/update
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'] ?? null;
+            $nombre = $_POST['nombre'] ?? '';
+            $codigo = $_POST['codigo'] ?? '';
+            $tipo = $_POST['tipo'] ?? '';
+            $provincia = $_POST['provincia'] ?? '';
+            $canton = $_POST['canton'] ?? '';
+            $zona = $_POST['zona'] ?? '';
+            $distrito = $_POST['distrito'] ?? '';
+
+            try {
+                $data = [
+                    'nombre' => $nombre,
+                    'codigo' => $codigo,
+                    'tipo' => $tipo,
+                    'provincia' => $provincia,
+                    'canton' => $canton,
+                    'zona' => $zona,
+                    'distrito' => $distrito
+                ];
+
+                if ($id) {
+                    $this->institucionModel->updateInstitution($id, $data);
+                    $_SESSION['success'] = 'Institución actualizada exitosamente';
+                } else {
+                    $this->institucionModel->createInstitution($data);
+                    $_SESSION['success'] = 'Institución agregada exitosamente';
+                }
+
+                header('Location: /test-vocacional/admin/institutions');
+                exit;
+            } catch (Exception $e) {
+                $_SESSION['error'] = 'Error: ' . $e->getMessage();
             }
         }
 
@@ -407,10 +439,17 @@ class AdminController
             exit;
         }
 
-        // Get all users
-        $users = $this->userModel->findAll([], 'apellido, nombre');
+        // Filtros
+        $filters = [
+            'rol' => $_GET['rol'] ?? null,
+            'institucion_id' => $_GET['institucion_id'] ?? null,
+            'search' => $_GET['search'] ?? null
+        ];
 
-        // Get institutions for DECE assignment
+        // Get all users with filters and institution info
+        $users = $this->userModel->findAllWithDetails($filters);
+
+        // Get institutions for filters and DECE assignment
         require_once 'models/Institucion.php';
         $institucionModel = new Institucion();
         $institutions = $institucionModel->getAll();

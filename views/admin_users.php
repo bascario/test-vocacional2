@@ -40,7 +40,37 @@
             <p>Listado de usuarios y asignación de roles</p>
         </div>
 
-        
+        <div class="table-container" style="margin-bottom: 20px;">
+            <form method="GET" action="/test-vocacional/admin/users" class="filters-row" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Rol</label>
+                    <select name="rol" class="form-control" onchange="this.form.submit()">
+                        <option value="">Todos los roles</option>
+                        <option value="estudiante" <?= ($filters['rol'] ?? '') === 'estudiante' ? 'selected' : '' ?>>Estudiante</option>
+                        <option value="dece" <?= ($filters['rol'] ?? '') === 'dece' ? 'selected' : '' ?>>DECE</option>
+                        <option value="zonal" <?= ($filters['rol'] ?? '') === 'zonal' ? 'selected' : '' ?>>Zonal</option>
+                        <option value="administrador" <?= ($filters['rol'] ?? '') === 'administrador' ? 'selected' : '' ?>>Administrador</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0; min-width: 250px;">
+                    <label>Institución</label>
+                    <select name="institucion_id" class="searchable-filter" onchange="this.form.submit()">
+                        <option value="">Todas las instituciones</option>
+                        <?php foreach ($institutions as $inst): ?>
+                            <option value="<?= $inst['id'] ?>" <?= ($filters['institucion_id'] ?? '') == $inst['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($inst['nombre']) ?> (<?= htmlspecialchars($inst['codigo']) ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0; flex-grow: 1;">
+                    <label>Buscar</label>
+                    <input type="text" name="search" class="form-control" placeholder="Nombre, usuario o email..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
+                </div>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="/test-vocacional/admin/users" class="btn btn-outline">Limpiar</a>
+            </form>
+        </div>
 
         <div class="table-container">
             <table class="admin-table">
@@ -48,8 +78,8 @@
                     <tr>
                         <th>ID</th>
                         <th>Usuario</th>
-                        <th>Nombre</th>
-                        <th>Email</th>
+                        <th>Nombre / Representante</th>
+                        <th>Institución / Ubicación</th>
                         <th>Rol</th>
                         <th>Asignación</th>
                         <th>Acción</th>
@@ -61,8 +91,21 @@
                         <tr>
                             <td><?= $u['id'] ?></td>
                             <td><?= htmlspecialchars($u['username']) ?></td>
-                            <td><?= htmlspecialchars($u['nombre'] . ' ' . $u['apellido']) ?></td>
-                            <td><?= htmlspecialchars($u['email']) ?></td>
+                            <td>
+                                <div><strong>Est:</strong> <?= htmlspecialchars($u['nombre']) ?></div>
+                                <div style="font-size: 0.85em; color: #666;"><strong>Rep:</strong> <?= htmlspecialchars($u['apellido']) ?></div>
+                            </td>
+                            <td>
+                                <?php if (!empty($u['institucion_nombre'])): ?>
+                                    <div style="font-weight: 500;"><?= htmlspecialchars($u['institucion_nombre']) ?></div>
+                                    <div style="font-size: 0.85em; color: #666;">
+                                        Zona: <?= htmlspecialchars($u['zona'] ?? '-') ?> | 
+                                        Dist: <?= htmlspecialchars($u['distrito'] ?? '-') ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span style="color: #999;">Sin institución</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                     <input type="hidden" name="user_id" value="<?= $u['id'] ?>" form="user-form-<?= $u['id'] ?>">
                                     <select name="role" class="role-select" data-user-id="<?= $u['id'] ?>" form="user-form-<?= $u['id'] ?>">
@@ -144,7 +187,7 @@ document.querySelectorAll('.role-select').forEach(select => {
     });
 });
 // Initialize Choices.js for institution dropdowns
-document.querySelectorAll('.searchable-select').forEach(el => {
+document.querySelectorAll('.searchable-select, .searchable-filter').forEach(el => {
     new Choices(el, {
         searchEnabled: true,
         itemSelectText: '',

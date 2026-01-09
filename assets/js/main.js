@@ -171,8 +171,10 @@ function initializeUsernameChecker() {
         help.innerHTML = '<div class="status-check status-loading">⏳ Verificando disponibilidad...</div>';
 
         try {
-            const nombre = document.getElementById('nombre') ? document.getElementById('nombre').value.trim() : '';
-            const apellido = document.getElementById('apellido') ? document.getElementById('apellido').value.trim() : '';
+            const nombreField = document.getElementById('student_nombres') || document.getElementById('nombre');
+            const apellidoField = document.getElementById('student_apellidos') || document.getElementById('apellido');
+            const nombre = nombreField ? nombreField.value.trim() : '';
+            const apellido = apellidoField ? apellidoField.value.trim() : '';
             const params = new URLSearchParams({ username: val });
             if (nombre) params.set('nombre', nombre);
             if (apellido) params.set('apellido', apellido);

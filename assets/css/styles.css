@@ -74,8 +74,8 @@ body {
 /* Auth page layout: center the card in viewport and scale for larger screens */
 .auth-page .container {
     max-width: 520px;
-    height: 100vh;
-    padding: 0;
+    min-height: 100vh;
+    padding: 40px 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -260,6 +260,33 @@ body {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(240, 172, 44, 0.2);
+}
+
+/* Layout for fields on the same row */
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+@media (max-width: 520px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+.section-header {
+    margin: 25px 0 15px 0;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #f0f0f0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--tertiary-color);
+    text-transform: uppercase;
 }
 
 /* Username Checker Styles */

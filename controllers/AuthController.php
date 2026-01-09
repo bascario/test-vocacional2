@@ -65,7 +65,11 @@ class AuthController
             $this->userModel->update($_SESSION['user_id'], $data);
             // Refresh session display name if nombre/apellido changed
             $user = $this->userModel->find($_SESSION['user_id']);
-            $_SESSION['user_name'] = trim(($user['nombre'] ?? '') . ' ' . ($user['apellido'] ?? ''));
+            if ($user['rol'] === 'estudiante') {
+                $_SESSION['user_name'] = $user['nombre'];
+            } else {
+                $_SESSION['user_name'] = trim(($user['nombre'] ?? '') . ' ' . ($user['apellido'] ?? ''));
+            }
             $_SESSION['success'] = 'Perfil actualizado correctamente.';
             header('Location: /test-vocacional/results');
             exit;
@@ -101,7 +105,13 @@ class AuthController
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['user_username'] = $user['username'];
                     $_SESSION['user_role'] = $user['rol'];
-                    $_SESSION['user_name'] = $user['nombre'] . ' ' . $user['apellido'];
+
+                    // Solo el nombre del estudiante para el header
+                    if ($user['rol'] === 'estudiante') {
+                        $_SESSION['user_name'] = $user['nombre'];
+                    } else {
+                        $_SESSION['user_name'] = $user['nombre'] . ' ' . $user['apellido'];
+                    }
 
                     // Notify if the password was auto-updated from a legacy MD5 to bcrypt
                     if ($this->userModel->isPasswordRehashedFor($user['id'])) {
@@ -128,19 +138,29 @@ class AuthController
     public function register()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $student_nombres = trim($_POST['student_nombres'] ?? '');
+            $student_apellidos = trim($_POST['student_apellidos'] ?? '');
+            $representative_nombres = trim($_POST['representative_nombres'] ?? '');
+            $representative_apellidos = trim($_POST['representative_apellidos'] ?? '');
+
             $data = [
                 'username' => $_POST['username'] ?? '',
                 'password' => $_POST['password'] ?? '',
                 'email' => $_POST['email'] ?? '',
-                'nombre' => $_POST['nombre'] ?? '',
-                'apellido' => $_POST['apellido'] ?? '',
+                'nombre' => trim($student_nombres . ' ' . $student_apellidos),
+                'apellido' => trim($representative_nombres . ' ' . $representative_apellidos),
                 'institucion_id' => !empty($_POST['institucion_id']) ? (int) $_POST['institucion_id'] : null,
                 'fecha_nacimiento' => !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : null,
                 'curso' => $_POST['curso'] ?? '',
                 'paralelo' => $_POST['paralelo'] ?? '',
                 'bachillerato' => $_POST['bachillerato'] ?? '',
                 'telefono' => $_POST['telefono'] ?? '',
-                'rol' => 'estudiante'
+                'rol' => 'estudiante',
+                // Keep the original split fields in case they are needed for validation
+                'student_nombres' => $student_nombres,
+                'student_apellidos' => $student_apellidos,
+                'representative_nombres' => $representative_nombres,
+                'representative_apellidos' => $representative_apellidos
             ];
 
             try {
@@ -232,7 +252,7 @@ class AuthController
 
                 // Buscar usuario por email
                 $user = $this->userModel->findByEmail($email);
-                
+
                 // Por seguridad, siempre mostrar mensaje genérico
                 if ($user) {
                     // Generar token
@@ -359,7 +379,15 @@ class AuthController
     private function validateRegistrationData($data)
     {
         if (empty($data['username']) || empty($data['password']) || empty($data['email'])) {
-            throw new Exception("Todos los campos son obligatorios");
+            throw new Exception("Todos los campos básicos son obligatorios");
+        }
+
+        if (empty($data['student_nombres']) || empty($data['student_apellidos'])) {
+            throw new Exception("Los nombres y apellidos del estudiante son obligatorios");
+        }
+
+        if (empty($data['representative_nombres']) || empty($data['representative_apellidos'])) {
+            throw new Exception("Los nombres y apellidos del representante son obligatorios");
         }
 
         if (strlen($data['password']) < PASSWORD_MIN_LENGTH) {
@@ -431,13 +459,16 @@ class AuthController
         // Ensure uniqueness and availability
         $suggestions = [];
         foreach ($candidates as $cand) {
-            if (count($suggestions) >= 5) break;
+            if (count($suggestions) >= 5)
+                break;
             $cand = mb_strtolower($cand);
             $cand = preg_replace('/[^a-z0-9_.-]/', '', $cand);
             $cand = substr($cand, 0, 30);
-            if (empty($cand)) continue;
+            if (empty($cand))
+                continue;
 
-            if ($cand === $usernameClean || in_array($cand, $suggestions, true)) continue;
+            if ($cand === $usernameClean || in_array($cand, $suggestions, true))
+                continue;
 
             if (!$this->userModel->findByUsername($cand)) {
                 $suggestions[] = $cand;
@@ -463,8 +494,10 @@ class AuthController
         header('Content-Type: application/json');
 
         $username = trim($_GET['username'] ?? $_POST['username'] ?? '');
-        $nombre = trim($_GET['nombre'] ?? $_POST['nombre'] ?? '');
-        $apellido = trim($_GET['apellido'] ?? $_POST['apellido'] ?? '');
+
+        // Attempt to get name from split fields if coming from registration
+        $nombre = trim($_GET['student_nombres'] ?? $_POST['student_nombres'] ?? $_GET['nombre'] ?? $_POST['nombre'] ?? '');
+        $apellido = trim($_GET['student_apellidos'] ?? $_POST['student_apellidos'] ?? $_GET['apellido'] ?? $_POST['apellido'] ?? '');
 
         $res = $this->generateUsernameSuggestions($username, $nombre, $apellido);
         echo json_encode($res);

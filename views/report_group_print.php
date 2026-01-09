@@ -438,7 +438,6 @@
         <div class="header">
             <div class="header-logo" style="display:flex; align-items:center; gap:8px;">
                 <img src="/test-vocacional/assets/img/mined.png" alt="MINED" style="height:48px;">
-                <img src="/test-vocacional/assets/img/logoTUVN.png" alt="Logo TUVN" style="height:64px;">
             </div>
             <div style="flex:1; text-align:center;">
                 <div class="report-title-bar">
@@ -597,7 +596,11 @@
                     ?>
                     <tr>
                         <td><?= $index + 1 ?></td>
-                        <td><?= htmlspecialchars($row['nombre'] . ' ' . $row['apellido']) ?></td>
+                        <td>
+                            <div><strong>Est:</strong> <?= htmlspecialchars($row['nombre']) ?></div>
+                            <div style="font-size: 0.85em; color: #666;"><strong>Rep:</strong>
+                                <?= htmlspecialchars($row['apellido']) ?></div>
+                        </td>
                         <td><?= htmlspecialchars($row['curso'] ?? '-') ?></td>
                         <td><span class="area-pill"
                                 style="background-color: var(--accent-color);"><?= htmlspecialchars($area1) ?></span></td>

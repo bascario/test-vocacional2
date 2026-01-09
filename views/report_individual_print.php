@@ -35,10 +35,67 @@ if (!empty($result['fecha_nacimiento'])) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Informe Vocacional - <?= htmlspecialchars($result['nombre'] . ' ' . $result['apellido']) ?></title>
+    <title>Informe Vocacional - <?= htmlspecialchars($result['nombre']) ?></title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+        :root {
+            --primary-color: #00aeef;
+            --secondary-color: #004b59;
+            --text-color: #333;
+            --light-bg: #f4f7f6;
+            --border-color: #e1e8ed;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        .report-page {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 15mm;
+            min-height: 297mm;
+        }
+
+        .career-recommendations-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .career-box {
+            border: 1px solid #00aeef;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f9fdff;
+        }
+
+        .career-box h4 {
+            margin: 0 0 10px 0;
+            color: #00aeef;
+            border-bottom: 2px solid #00aeef;
+            padding-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .career-box ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 12px;
+        }
+
+        .career-box li {
+            margin-bottom: 5px;
+        }
 
         body {
             font-family: 'Roboto', sans-serif;
@@ -426,7 +483,7 @@ if (!empty($result['fecha_nacimiento'])) {
         <div class="section-title">I. DATOS PERSONALES</div>
         <div class="personal-data-grid">
             <div class="data-row"><span class="data-label">NOMBRES:</span>
-                <div class="data-value"><?= htmlspecialchars($result['nombre'] . ' ' . $result['apellido']) ?></div>
+                <div class="data-value"><?= htmlspecialchars($result['nombre']) ?></div>
             </div>
             <div class="data-row"><span class="data-label">CURSO:</span>
                 <div class="data-value"><?= htmlspecialchars($result['curso'] ?? '') ?></div>
@@ -436,6 +493,9 @@ if (!empty($result['fecha_nacimiento'])) {
             </div>
             <div class="data-row"><span class="data-label">EDAD:</span>
                 <div class="data-value"><?= htmlspecialchars($age_display) ?></div>
+            </div>
+            <div class="data-row"><span class="data-label">REPRESENTANTE:</span>
+                <div class="data-value"><?= htmlspecialchars($result['apellido'] ?? '-') ?></div>
             </div>
         </div>
 
@@ -567,8 +627,9 @@ if (!empty($result['fecha_nacimiento'])) {
         <div class="section-title">IV. DATOS DEL ESTUDIANTE Y PROFESIONAL DECE</div>
         <div class="qr-data-container">
             <div class="dece-info">
-                ESTUDIANTE: <?= htmlspecialchars($result['nombre'] . ' ' . $result['apellido']) ?> -
+                ESTUDIANTE: <?= htmlspecialchars($result['nombre']) ?> -
                 <?= htmlspecialchars($result['curso'] ?? '-') ?><br>
+                REPRESENTANTE: <?= htmlspecialchars($result['apellido'] ?? '-') ?><br>
                 <?= htmlspecialchars($deceUser ? ($deceUser['nombre'] . ' ' . $deceUser['apellido']) : 'No asignado') ?><br>
                 <?= htmlspecialchars($institution['nombre'] ?? 'Ecuador') ?>, <?= $date ?>
             </div>
@@ -674,6 +735,91 @@ if (!empty($result['fecha_nacimiento'])) {
                 <div class="qr-label">VALIDACIÓN QR</div>
             </div>
         <?php endif; ?>
+
+        <!-- Section V: Career Recommendations -->
+        <div class="section-title">V. RECOMENDACIONES DE CARRERAS</div>
+        <p style="font-size: 12px; margin-bottom: 15px;">Basado en las tres áreas de mayor puntaje, se sugieren las
+            siguientes trayectorias académicas tanto en universidades públicas como en el Tecnológico Universitario Vida
+            Nueva:</p>
+
+        <?php
+        $publicUniversityMap = [
+            'Realista' => ['Ingeniería Civil (UCE)', 'Ingeniería Agronómica (UCE)', 'Ingeniería Ambiental (UNACH)'],
+            'Investigador' => ['Medicina (UCE)', 'Biología (UCE)', 'Física (EPN)', 'Psicología Clínica (UCE)'],
+            'Artístico' => ['Artes Plásticas (UNL)', 'Música (UCE)', 'Artes Escénicas (UCE)', 'Diseño Gráfico (UTA)'],
+            'Social' => ['Psicología Infantil (UCE)', 'Enfermería (UCE)', 'Trabajo Social (UCE)'],
+            'Emprendedor' => ['Derecho (UCE)', 'Administración de Empresas (UCE)', 'Comunicación (UCE)', 'Turismo (UCE)'],
+            'Convencional' => ['Contabilidad y Auditoría (UCE)', 'Finanzas (UCE)', 'Economía (UCE)']
+        ];
+
+        $vidaNuevaMap = [
+            'Realista' => ['Electromecánica', 'Mecánica Automotriz', 'Mecánica Industrial'],
+            'Investigador' => ['Desarrollo de Software', 'Automatización e Instrumentación'],
+            'Artístico' => ['Diseño Gráfico (Próximamente)', 'Estética Integral'],
+            'Social' => ['Enfermería', 'Educación Inicial', 'Educación Básica', 'Entrenamiento Deportivo'],
+            'Emprendedor' => ['Administración', 'Marketing Digital', 'Contabilidad'],
+            'Convencional' => ['Contabilidad y Asesoría Tributaria']
+        ];
+
+        $scores = json_decode($result['puntajes_json'], true);
+        $userScores = [];
+        foreach ($scores as $area => $data) {
+            $userScores[$area] = (float) $data['porcentaje'];
+        }
+        arsort($userScores);
+        $topThree = array_slice(array_keys($userScores), 0, 3);
+        ?>
+
+        <div class="career-recommendations-grid">
+            <?php foreach ($topThree as $area): ?>
+                <?php
+                $areaKey = ucfirst(strtolower($area));
+                $dotColor = '#95a5a6';
+                if ($userScores[$area] >= 60)
+                    $dotColor = '#27ae60';
+                elseif ($userScores[$area] >= 40)
+                    $dotColor = '#f1c40f';
+                else
+                    $dotColor = '#e74c3c';
+                ?>
+                <div class="career-box" style="border-top: 4px solid <?= $dotColor ?>;">
+                    <h4 style="color: <?= $dotColor ?>; border-bottom-color: <?= $dotColor ?>;">
+                        <?= strtoupper($areaKey) ?> (<?= $userScores[$area] ?>%)
+                    </h4>
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <strong style="font-size: 11px; color: #555;">Univ. Públicas:</strong>
+                            <ul>
+                                <?php if (isset($publicUniversityMap[$areaKey])): ?>
+                                    <?php foreach (array_slice($publicUniversityMap[$areaKey], 0, 3) as $c): ?>
+                                        <li><?= htmlspecialchars($c) ?></li>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <li>Consultar oferta CES</li>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
+                        <div style="flex: 1;">
+                            <strong style="font-size: 11px; color: #555;">Vida Nueva:</strong>
+                            <ul>
+                                <?php if (isset($vidaNuevaMap[$areaKey])): ?>
+                                    <?php foreach ($vidaNuevaMap[$areaKey] as $c): ?>
+                                        <li><?= htmlspecialchars($c) ?></li>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <li>Consultar oferta Institucional</li>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="branding-footer" style="margin-top: 40px;">
+            <p>© Tecnológico Universitario Vida Nueva<br>
+                www.vidanueva.edu.ec | admisiones@istvidanueva.edu.ec</p>
+        </div>
     </div>
 
     <!-- Branding Footer (Global or End of Report) -->

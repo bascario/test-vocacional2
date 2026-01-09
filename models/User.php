@@ -422,4 +422,47 @@ class User extends BaseModel
             error_log("Error limpiando tokens: " . $e->getMessage());
             return false;
         }
-    }}
+    }
+
+    /**
+     * Get all users with details (institution, etc) and filtering support
+     */
+    public function findAllWithDetails($filters = [])
+    {
+        $sql = "SELECT u.*, ie.nombre as institucion_nombre, ie.zona, ie.distrito, ie.codigo as amie 
+                FROM {$this->table} u 
+                LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id";
+
+        $where = [];
+        $params = [];
+
+        if (!empty($filters['rol'])) {
+            $where[] = "u.rol = ?";
+            $params[] = $filters['rol'];
+        }
+
+        if (!empty($filters['institucion_id'])) {
+            $where[] = "u.institucion_id = ?";
+            $params[] = $filters['institucion_id'];
+        }
+
+        if (!empty($filters['search'])) {
+            $s = "%" . $filters['search'] . "%";
+            $where[] = "(u.username LIKE ? OR u.nombre LIKE ? OR u.apellido LIKE ? OR u.email LIKE ?)";
+            $params[] = $s;
+            $params[] = $s;
+            $params[] = $s;
+            $params[] = $s;
+        }
+
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(" AND ", $where);
+        }
+
+        $sql .= " ORDER BY u.apellido, u.nombre";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+}

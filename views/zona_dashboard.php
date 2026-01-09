@@ -54,8 +54,8 @@ require 'views/layout/header.php';
                 </div>
                 <div class="filter-group">
                     <label for="amie">Código AMIE</label>
-                    <input type="text" name="amie" id="amie" value="<?= htmlspecialchars($amie ?? '') ?>" 
-                           placeholder="AMIE..." onchange="this.form.submit()">
+                    <input type="text" name="amie" id="amie" value="<?= htmlspecialchars($amie ?? '') ?>"
+                        placeholder="AMIE..." onchange="this.form.submit()">
                 </div>
                 <div class="filter-group actions">
                     <a href="/test-vocacional/admin/zona" class="btn btn-sm btn-secondary">Limpiar</a>
@@ -183,7 +183,11 @@ require 'views/layout/header.php';
                                 }
                                 ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($studentName) ?></td>
+                                    <td>
+                                        <div><strong>Est:</strong> <?= htmlspecialchars($student['nombre']) ?></div>
+                                        <div style="font-size: 0.8em; color: #666;"><strong>Rep:</strong>
+                                            <?= htmlspecialchars($student['apellido']) ?></div>
+                                    </td>
                                     <td><?= htmlspecialchars($student['institucion_nombre'] ?? '—') ?></td>
                                     <td><?= htmlspecialchars($student['curso'] ?? '—') ?></td>
                                     <td><?= htmlspecialchars($student['paralelo'] ?? '—') ?></td>

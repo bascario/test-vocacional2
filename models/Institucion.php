@@ -14,9 +14,13 @@ class Institucion extends BaseModel
         $data['nombre'] = trim($data['nombre']);
         $data['codigo'] = strtoupper(trim($data['codigo']));
         $data['tipo'] = trim($data['tipo']);
+        $data['provincia'] = trim($data['provincia'] ?? '');
+        $data['canton'] = trim($data['canton'] ?? '');
+        $data['zona'] = trim($data['zona'] ?? '');
+        $data['distrito'] = trim($data['distrito'] ?? '');
 
         // Validate tipo against allowed values
-        $allowedTypes = ['Fiscal', 'Fiscomisional'];
+        $allowedTypes = ['Fiscal', 'Fiscomisional', 'Particular', 'Municipal'];
         if (!in_array($data['tipo'], $allowedTypes, true)) {
             throw new Exception('Tipo de institución inválido');
         }
@@ -31,8 +35,52 @@ class Institucion extends BaseModel
         return $this->create([
             'nombre' => $data['nombre'],
             'codigo' => $data['codigo'],
-            'tipo' => $data['tipo']
+            'tipo' => $data['tipo'],
+            'provincia' => $data['provincia'],
+            'canton' => $data['canton'],
+            'zona' => $data['zona'],
+            'distrito' => $data['distrito']
         ]);
+    }
+
+    public function updateInstitution($id, $data)
+    {
+        // Validate required fields if provided
+        if (isset($data['nombre']) && empty($data['nombre']))
+            throw new Exception('El nombre es obligatorio');
+
+        if (isset($data['tipo'])) {
+            $allowedTypes = ['Fiscal', 'Fiscomisional', 'Particular', 'Municipal'];
+            if (!in_array($data['tipo'], $allowedTypes, true)) {
+                throw new Exception('Tipo de institución inválido');
+            }
+        }
+
+        if (!empty($data['codigo'])) {
+            $data['codigo'] = strtoupper(trim($data['codigo']));
+            $existing = $this->findByCodigo($data['codigo']);
+            if ($existing && $existing['id'] != $id) {
+                throw new Exception('El código AMIE ya existe en otra institución');
+            }
+        }
+
+        $fields = [];
+        $params = [];
+
+        foreach ($data as $key => $value) {
+            if (in_array($key, ['nombre', 'tipo', 'codigo', 'provincia', 'canton', 'zona', 'distrito'])) {
+                $fields[] = "$key = ?";
+                $params[] = trim($value);
+            }
+        }
+
+        if (empty($fields))
+            return false;
+
+        $params[] = $id;
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($params);
     }
 
     public function getAll($limit = null)
