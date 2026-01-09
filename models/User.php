@@ -425,9 +425,9 @@ class User extends BaseModel
     }
 
     /**
-     * Get all users with details (institution, etc) and filtering support
+     * Get all users with details (institution, etc) and filtering support, with pagination
      */
-    public function findAllWithDetails($filters = [])
+    public function findAllWithDetails($filters = [], $limit = null, $offset = 0)
     {
         $sql = "SELECT u.*, ie.nombre as institucion_nombre, ie.zona, ie.distrito, ie.codigo as amie 
                 FROM {$this->table} u 
@@ -459,10 +459,54 @@ class User extends BaseModel
             $sql .= " WHERE " . implode(" AND ", $where);
         }
 
-        $sql .= " ORDER BY u.apellido, u.nombre";
+        $sql .= " ORDER BY u.id";
+
+        if ($limit !== null) {
+            $sql .= " LIMIT " . (int) $limit . " OFFSET " . (int) $offset;
+        }
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Count users matching filters
+     */
+    public function countAllWithFilters($filters = [])
+    {
+        $sql = "SELECT COUNT(*) 
+                FROM {$this->table} u 
+                LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id";
+
+        $where = [];
+        $params = [];
+
+        if (!empty($filters['rol'])) {
+            $where[] = "u.rol = ?";
+            $params[] = $filters['rol'];
+        }
+
+        if (!empty($filters['institucion_id'])) {
+            $where[] = "u.institucion_id = ?";
+            $params[] = $filters['institucion_id'];
+        }
+
+        if (!empty($filters['search'])) {
+            $s = "%" . $filters['search'] . "%";
+            $where[] = "(u.username LIKE ? OR u.nombre LIKE ? OR u.apellido LIKE ? OR u.email LIKE ?)";
+            $params[] = $s;
+            $params[] = $s;
+            $params[] = $s;
+            $params[] = $s;
+        }
+
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(" AND ", $where);
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchColumn();
     }
 }

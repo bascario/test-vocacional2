@@ -83,16 +83,24 @@ class Institucion extends BaseModel
         return $stmt->execute($params);
     }
 
-    public function getAll($limit = null)
+    public function getAll($limit = null, $offset = 0)
     {
-        if ($limit) {
-            $stmt = $this->db->prepare("SELECT * FROM {$this->table} ORDER BY nombre LIMIT ?");
-            $stmt->execute([$limit]);
+        if ($limit !== null) {
+            $stmt = $this->db->prepare("SELECT * FROM {$this->table} ORDER BY id LIMIT ? OFFSET ?");
+            $stmt->bindValue(1, (int) $limit, PDO::PARAM_INT);
+            $stmt->bindValue(2, (int) $offset, PDO::PARAM_INT);
+            $stmt->execute();
             return $stmt->fetchAll();
         }
 
-        $stmt = $this->db->query("SELECT * FROM {$this->table} ORDER BY nombre");
+        $stmt = $this->db->query("SELECT * FROM {$this->table} ORDER BY id");
         return $stmt->fetchAll();
+    }
+
+    public function countAll()
+    {
+        $stmt = $this->db->query("SELECT COUNT(*) FROM {$this->table}");
+        return $stmt->fetchColumn();
     }
 
     public function findByCodigo($codigo)

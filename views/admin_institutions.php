@@ -140,6 +140,25 @@
                     <?php endforeach; ?>
                 </tbody>
             </table>
+
+            <?php if ($totalPages > 1): ?>
+                <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+                    <?php if ($currentPage > 1): ?>
+                        <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; Primera</a>
+                        <a href="?page=<?= $currentPage - 1 ?>" class="btn btn-sm btn-outline-secondary">Anterior</a>
+                    <?php endif; ?>
+
+                    <span style="align-self: center;">Página <?= $currentPage ?> de <?= $totalPages ?></span>
+
+                    <?php if ($currentPage < $totalPages): ?>
+                        <a href="?page=<?= $currentPage + 1 ?>" class="btn btn-sm btn-outline-secondary">Siguiente</a>
+                        <a href="?page=<?= $totalPages ?>" class="btn btn-sm btn-outline-secondary">Última &raquo;</a>
+                    <?php endif; ?>
+                </div>
+                <div style="text-align: center; margin-top: 10px; color: #666; font-size: 0.9em;">
+                    Total: <?= $totalRecords ?> instituciones
+                </div>
+            <?php endif; ?>
         </div>
     </main>
 </div>

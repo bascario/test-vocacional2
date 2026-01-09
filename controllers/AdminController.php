@@ -344,6 +344,13 @@ class AdminController
             }
         }
 
+        // Pagination settings
+        $perPage = 20;
+        $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+        if ($page < 1)
+            $page = 1;
+        $offset = ($page - 1) * $perPage;
+
         // If DECE, show only the institution linked to the user (but allow creation)
         if (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'dece') {
             $current = $this->userModel->find($_SESSION['user_id']);
@@ -353,9 +360,16 @@ class AdminController
                 if ($inst)
                     $institutions[] = $inst;
             }
+            $totalRecords = count($institutions);
+            $totalPages = 1;
         } else {
-            $institutions = $this->institucionModel->getAll();
+            $totalRecords = $this->institucionModel->countAll();
+            $totalPages = ceil($totalRecords / $perPage);
+            $institutions = $this->institucionModel->getAll($perPage, $offset);
         }
+
+        $currentPage = $page;
+
         require_once 'views/admin_institutions.php';
     }
 
@@ -439,6 +453,13 @@ class AdminController
             exit;
         }
 
+        // Pagination settings
+        $perPage = 20;
+        $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+        if ($page < 1)
+            $page = 1;
+        $offset = ($page - 1) * $perPage;
+
         // Filtros
         $filters = [
             'rol' => $_GET['rol'] ?? null,
@@ -447,7 +468,10 @@ class AdminController
         ];
 
         // Get all users with filters and institution info
-        $users = $this->userModel->findAllWithDetails($filters);
+        $totalRecords = $this->userModel->countAllWithFilters($filters);
+        $totalPages = ceil($totalRecords / $perPage);
+        $users = $this->userModel->findAllWithDetails($filters, $perPage, $offset);
+        $currentPage = $page;
 
         // Get institutions for filters and DECE assignment
         require_once 'models/Institucion.php';
