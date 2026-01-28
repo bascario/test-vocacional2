@@ -14,6 +14,11 @@ abstract class BaseModel
         $this->db = Database::getInstance()->getConnection();
     }
 
+    public function getDb()
+    {
+        return $this->db;
+    }
+
     /**
      * Buscar un registro por su id
      * @param mixed $id

@@ -63,6 +63,56 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Zona</label>
+                    <select name="zona" class="form-control" onchange="this.form.submit()">
+                        <option value="">Todas</option>
+                        <?php foreach ($zonasList as $z): ?>
+                            <option value="<?= $z ?>" <?= ($filters['zona'] ?? '') === $z ? 'selected' : '' ?>><?= htmlspecialchars($z) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Distrito</label>
+                    <select name="distrito" class="form-control" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        <?php foreach ($distritosList as $d): ?>
+                            <option value="<?= $d ?>" <?= ($filters['distrito'] ?? '') === $d ? 'selected' : '' ?>><?= htmlspecialchars($d) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Curso</label>
+                    <select name="curso" class="form-control" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        <?php foreach ($cursosList as $c): ?>
+                            <option value="<?= $c ?>" <?= ($filters['curso'] ?? '') === $c ? 'selected' : '' ?>><?= htmlspecialchars($c) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Paralelo</label>
+                    <select name="paralelo" class="form-control" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        <?php foreach ($paralelosList as $p): ?>
+                            <option value="<?= $p ?>" <?= ($filters['paralelo'] ?? '') === $p ? 'selected' : '' ?>><?= htmlspecialchars($p) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Bachillerato</label>
+                    <select name="bachillerato" class="form-control" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        <?php foreach ($bachilleratosList as $b): ?>
+                            <option value="<?= $b ?>" <?= ($filters['bachillerato'] ?? '') === $b ? 'selected' : '' ?>><?= htmlspecialchars($b) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div class="form-group" style="margin-bottom: 0; flex-grow: 1;">
                     <label>Buscar</label>
                     <input type="text" name="search" class="form-control" placeholder="Nombre, usuario o email..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
@@ -94,6 +144,15 @@
                             <td>
                                 <div><strong>Est:</strong> <?= htmlspecialchars($u['nombre']) ?></div>
                                 <div style="font-size: 0.85em; color: #666;"><strong>Rep:</strong> <?= htmlspecialchars($u['apellido']) ?></div>
+                                <?php if ($u['rol'] === 'estudiante'): ?>
+                                    <div style="font-size: 0.85em; color: #444; margin-top: 2px;">
+                                        <strong>Cur:</strong> <?= htmlspecialchars($u['curso'] ?? '-') ?> | 
+                                        <strong>Par:</strong> <?= htmlspecialchars($u['paralelo'] ?? '-') ?>
+                                    </div>
+                                    <div style="font-size: 0.8em; color: #777;">
+                                        <?= htmlspecialchars($u['bachillerato'] ?? '') ?>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php if (!empty($u['institucion_nombre'])): ?>

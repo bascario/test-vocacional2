@@ -84,13 +84,76 @@
         </div>
 
         <div class="table-container">
+            <div class="table-container" style="margin-bottom: 20px;">
+                <form method="GET" action="/test-vocacional/admin/institutions" class="filters-row"
+                    style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Provincia</label>
+                        <select name="provincia" class="form-control" onchange="this.form.submit()">
+                            <option value="">Todas</option>
+                            <?php foreach ($provinciasList as $p): ?>
+                                <option value="<?= $p ?>" <?= ($filters['provincia'] ?? '') === $p ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($p) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Cantón</label>
+                        <select name="canton" class="form-control" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            <?php foreach ($cantonesList as $c): ?>
+                                <option value="<?= $c ?>" <?= ($filters['canton'] ?? '') === $c ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($c) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Zona</label>
+                        <select name="zona" class="form-control" onchange="this.form.submit()">
+                            <option value="">Todas</option>
+                            <?php foreach ($zonasInstList as $z): ?>
+                                <option value="<?= $z ?>" <?= ($filters['zona'] ?? '') === $z ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($z) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Distrito</label>
+                        <select name="distrito" class="form-control" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            <?php foreach ($distritosInstList as $d): ?>
+                                <option value="<?= $d ?>" <?= ($filters['distrito'] ?? '') === $d ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($d) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Tipo</label>
+                        <select name="tipo" class="form-control" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            <?php foreach ($tiposList as $t): ?>
+                                <option value="<?= $t ?>" <?= ($filters['tipo'] ?? '') === $t ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($t) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0; flex-grow: 1;">
+                        <label>Buscar</label>
+                        <input type="text" name="search" class="form-control" placeholder="Nombre o código..."
+                            value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <a href="/test-vocacional/admin/institutions" class="btn btn-outline">Limpiar</a>
+                </form>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin-bottom: 0;">Listado de Instituciones</h2>
-                <div class="search-box" style="width: 300px;">
-                    <input type="text" id="institutionSearch"
-                        placeholder="Buscar institución por nombre, código o tipo..." class="form-control"
-                        style="width: 100%;">
-                </div>
             </div>
             <table class="admin-table" id="institutionsTable">
                 <thead>
@@ -142,17 +205,27 @@
             </table>
 
             <?php if ($totalPages > 1): ?>
+                <?php
+                $queryParams = $_GET;
+                unset($queryParams['page']);
+                $queryString = http_build_query($queryParams);
+                if ($queryString)
+                    $queryString = '&' . $queryString;
+                ?>
                 <div class="pagination" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
                     <?php if ($currentPage > 1): ?>
-                        <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; Primera</a>
-                        <a href="?page=<?= $currentPage - 1 ?>" class="btn btn-sm btn-outline-secondary">Anterior</a>
+                        <a href="?page=1<?= $queryString ?>" class="btn btn-sm btn-outline-secondary">&laquo; Primera</a>
+                        <a href="?page=<?= $currentPage - 1 ?><?= $queryString ?>"
+                            class="btn btn-sm btn-outline-secondary">Anterior</a>
                     <?php endif; ?>
 
                     <span style="align-self: center;">Página <?= $currentPage ?> de <?= $totalPages ?></span>
 
                     <?php if ($currentPage < $totalPages): ?>
-                        <a href="?page=<?= $currentPage + 1 ?>" class="btn btn-sm btn-outline-secondary">Siguiente</a>
-                        <a href="?page=<?= $totalPages ?>" class="btn btn-sm btn-outline-secondary">Última &raquo;</a>
+                        <a href="?page=<?= $currentPage + 1 ?><?= $queryString ?>"
+                            class="btn btn-sm btn-outline-secondary">Siguiente</a>
+                        <a href="?page=<?= $totalPages ?><?= $queryString ?>" class="btn btn-sm btn-outline-secondary">Última
+                            &raquo;</a>
                     <?php endif; ?>
                 </div>
                 <div style="text-align: center; margin-top: 10px; color: #666; font-size: 0.9em;">
@@ -201,16 +274,7 @@
         this.style.display = 'none';
     });
 
-    // Search filter
-    document.getElementById('institutionSearch').addEventListener('keyup', function () {
-        const value = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#institutionsTable tbody tr');
-
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(value) ? '' : 'none';
-        });
-    });
+    // Clear search filter logic as it resides in server-side now
 </script>
 
 <?php require 'views/layout/footer.php'; ?>

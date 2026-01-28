@@ -83,23 +83,122 @@ class Institucion extends BaseModel
         return $stmt->execute($params);
     }
 
-    public function getAll($limit = null, $offset = 0)
+    public function getAll($limit = null, $offset = 0, $filters = [])
     {
+        $sql = "SELECT * FROM {$this->table}";
+        $params = [];
+        $where = [];
+
+        if (!empty($filters['search'])) {
+            $s = trim($filters['search']);
+            $sParam = "%" . $s . "%";
+            $where[] = "(nombre LIKE ? OR codigo LIKE ? OR provincia LIKE ? OR canton LIKE ? OR zona LIKE ? OR distrito LIKE ? OR tipo LIKE ?)";
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+        }
+
+        if (!empty($filters['provincia'])) {
+            $where[] = "provincia = ?";
+            $params[] = $filters['provincia'];
+        }
+        if (!empty($filters['canton'])) {
+            $where[] = "canton = ?";
+            $params[] = $filters['canton'];
+        }
+        if (!empty($filters['zona'])) {
+            $where[] = "zona = ?";
+            $params[] = $filters['zona'];
+        }
+        if (!empty($filters['distrito'])) {
+            $where[] = "distrito = ?";
+            $params[] = $filters['distrito'];
+        }
+        if (!empty($filters['tipo'])) {
+            $where[] = "tipo = ?";
+            $params[] = $filters['tipo'];
+        }
+
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(" AND ", $where);
+        }
+
+        $sql .= " ORDER BY id";
+
         if ($limit !== null) {
-            $stmt = $this->db->prepare("SELECT * FROM {$this->table} ORDER BY id LIMIT ? OFFSET ?");
-            $stmt->bindValue(1, (int) $limit, PDO::PARAM_INT);
-            $stmt->bindValue(2, (int) $offset, PDO::PARAM_INT);
+            $sql .= " LIMIT ? OFFSET ?";
+            $params[] = (int) $limit;
+            $params[] = (int) $offset;
+
+            $stmt = $this->db->prepare($sql);
+            // We use bindValue for integers in LIMIT/OFFSET to avoid issues with execute() treating them as strings
+            $i = 1;
+            foreach ($params as $param) {
+                if (is_int($param)) {
+                    $stmt->bindValue($i++, $param, PDO::PARAM_INT);
+                } else {
+                    $stmt->bindValue($i++, $param);
+                }
+            }
             $stmt->execute();
             return $stmt->fetchAll();
         }
 
-        $stmt = $this->db->query("SELECT * FROM {$this->table} ORDER BY id");
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
-    public function countAll()
+    public function countAll($filters = [])
     {
-        $stmt = $this->db->query("SELECT COUNT(*) FROM {$this->table}");
+        $sql = "SELECT COUNT(*) FROM {$this->table}";
+        $params = [];
+        $where = [];
+
+        if (!empty($filters['search'])) {
+            $s = trim($filters['search']);
+            $sParam = "%" . $s . "%";
+            $where[] = "(nombre LIKE ? OR codigo LIKE ? OR provincia LIKE ? OR canton LIKE ? OR zona LIKE ? OR distrito LIKE ? OR tipo LIKE ?)";
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+            $params[] = $sParam;
+        }
+
+        if (!empty($filters['provincia'])) {
+            $where[] = "provincia = ?";
+            $params[] = $filters['provincia'];
+        }
+        if (!empty($filters['canton'])) {
+            $where[] = "canton = ?";
+            $params[] = $filters['canton'];
+        }
+        if (!empty($filters['zona'])) {
+            $where[] = "zona = ?";
+            $params[] = $filters['zona'];
+        }
+        if (!empty($filters['distrito'])) {
+            $where[] = "distrito = ?";
+            $params[] = $filters['distrito'];
+        }
+        if (!empty($filters['tipo'])) {
+            $where[] = "tipo = ?";
+            $params[] = $filters['tipo'];
+        }
+
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(" AND ", $where);
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchColumn();
     }
 

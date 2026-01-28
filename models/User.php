@@ -455,6 +455,31 @@ class User extends BaseModel
             $params[] = $s;
         }
 
+        if (!empty($filters['curso'])) {
+            $where[] = "u.curso = ?";
+            $params[] = $filters['curso'];
+        }
+
+        if (!empty($filters['paralelo'])) {
+            $where[] = "u.paralelo = ?";
+            $params[] = $filters['paralelo'];
+        }
+
+        if (!empty($filters['bachillerato'])) {
+            $where[] = "u.bachillerato = ?";
+            $params[] = $filters['bachillerato'];
+        }
+
+        if (!empty($filters['zona'])) {
+            $where[] = "ie.zona = ?";
+            $params[] = $filters['zona'];
+        }
+
+        if (!empty($filters['distrito'])) {
+            $where[] = "ie.distrito = ?";
+            $params[] = $filters['distrito'];
+        }
+
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
         }
@@ -475,8 +500,7 @@ class User extends BaseModel
      */
     public function countAllWithFilters($filters = [])
     {
-        $sql = "SELECT COUNT(*) 
-                FROM {$this->table} u 
+        $sql = "SELECT COUNT(*) FROM {$this->table} u 
                 LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id";
 
         $where = [];
@@ -499,6 +523,31 @@ class User extends BaseModel
             $params[] = $s;
             $params[] = $s;
             $params[] = $s;
+        }
+
+        if (!empty($filters['curso'])) {
+            $where[] = "u.curso = ?";
+            $params[] = $filters['curso'];
+        }
+
+        if (!empty($filters['paralelo'])) {
+            $where[] = "u.paralelo = ?";
+            $params[] = $filters['paralelo'];
+        }
+
+        if (!empty($filters['bachillerato'])) {
+            $where[] = "u.bachillerato = ?";
+            $params[] = $filters['bachillerato'];
+        }
+
+        if (!empty($filters['zona'])) {
+            $where[] = "ie.zona = ?";
+            $params[] = $filters['zona'];
+        }
+
+        if (!empty($filters['distrito'])) {
+            $where[] = "ie.distrito = ?";
+            $params[] = $filters['distrito'];
         }
 
         if (!empty($where)) {

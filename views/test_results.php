@@ -74,6 +74,22 @@
                     <input type="text" name="telefono" value="<?= htmlspecialchars($user['telefono'] ?? '') ?>"
                         class="form-control">
                 </div>
+                <div style="flex:1;min-width:200px;">
+                    <label>Colegio</label>
+                    <select name="institucion_id" id="institucion_id_edit" class="form-control"
+                        style="width: 100%;">
+                        <option value="">Selecciona un colegio</option>
+                        <?php
+                        require_once 'models/Institucion.php';
+                        $instModel = new Institucion();
+                        $instituciones = $instModel->getAll();
+                        foreach ($instituciones as $inst) {
+                            $selected = ($user['institucion_id'] ?? '') == $inst['id'] ? 'selected' : '';
+                            echo '<option value="' . $inst['id'] . '" ' . $selected . '>' . htmlspecialchars($inst['nombre']) . '</option>';
+                        }
+                        ?>
+                    </select>
+                </div>
                 <div style="flex:0 0 auto;">
                     <button type="submit" class="btn btn-success">Guardar Perfil</button>
                 </div>

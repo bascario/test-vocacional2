@@ -344,12 +344,21 @@ class AdminController
             }
         }
 
-        // Pagination settings
+        // Pagination and Filtering settings
         $perPage = 20;
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         if ($page < 1)
             $page = 1;
         $offset = ($page - 1) * $perPage;
+
+        $filters = [
+            'search' => $_GET['search'] ?? null,
+            'provincia' => $_GET['provincia'] ?? null,
+            'canton' => $_GET['canton'] ?? null,
+            'zona' => $_GET['zona'] ?? null,
+            'distrito' => $_GET['distrito'] ?? null,
+            'tipo' => $_GET['tipo'] ?? null,
+        ];
 
         // If DECE, show only the institution linked to the user (but allow creation)
         if (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'dece') {
@@ -363,12 +372,27 @@ class AdminController
             $totalRecords = count($institutions);
             $totalPages = 1;
         } else {
-            $totalRecords = $this->institucionModel->countAll();
+            $totalRecords = $this->institucionModel->countAll($filters);
             $totalPages = ceil($totalRecords / $perPage);
-            $institutions = $this->institucionModel->getAll($perPage, $offset);
+            $institutions = $this->institucionModel->getAll($perPage, $offset, $filters);
         }
 
         $currentPage = $page;
+
+        // Get unique values for filters
+        $stmt = $this->institucionModel->getDb()->query("SELECT DISTINCT provincia FROM instituciones_educativas WHERE provincia IS NOT NULL AND provincia != '' ORDER BY provincia");
+        $provinciasList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $stmt = $this->institucionModel->getDb()->query("SELECT DISTINCT canton FROM instituciones_educativas WHERE canton IS NOT NULL AND canton != '' ORDER BY canton");
+        $cantonesList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $stmt = $this->institucionModel->getDb()->query("SELECT DISTINCT zona FROM instituciones_educativas WHERE zona IS NOT NULL AND zona != '' ORDER BY zona");
+        $zonasInstList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $stmt = $this->institucionModel->getDb()->query("SELECT DISTINCT distrito FROM instituciones_educativas WHERE distrito IS NOT NULL AND distrito != '' ORDER BY distrito");
+        $distritosInstList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $tiposList = ['Fiscal', 'Particular', 'Fiscomisional', 'Municipal'];
 
         require_once 'views/admin_institutions.php';
     }
@@ -464,7 +488,12 @@ class AdminController
         $filters = [
             'rol' => $_GET['rol'] ?? null,
             'institucion_id' => $_GET['institucion_id'] ?? null,
-            'search' => $_GET['search'] ?? null
+            'search' => $_GET['search'] ?? null,
+            'curso' => $_GET['curso'] ?? null,
+            'paralelo' => $_GET['paralelo'] ?? null,
+            'bachillerato' => $_GET['bachillerato'] ?? null,
+            'zona' => $_GET['zona'] ?? null,
+            'distrito' => $_GET['distrito'] ?? null,
         ];
 
         // Get all users with filters and institution info
@@ -478,8 +507,21 @@ class AdminController
         $institucionModel = new Institucion();
         $institutions = $institucionModel->getAll();
 
-        // Get zonas for zonal assignment
-        $zonas = $institucionModel->getZonaList();
+        // Get unique values for filters
+        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT curso FROM usuarios WHERE curso IS NOT NULL AND curso != '' ORDER BY curso");
+        $cursosList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT paralelo FROM usuarios WHERE paralelo IS NOT NULL AND paralelo != '' ORDER BY paralelo");
+        $paralelosList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT bachillerato FROM usuarios WHERE bachillerato IS NOT NULL AND bachillerato != '' ORDER BY bachillerato");
+        $bachilleratosList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT zona FROM instituciones_educativas WHERE zona IS NOT NULL AND zona != '' ORDER BY zona");
+        $zonasList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT distrito FROM instituciones_educativas WHERE distrito IS NOT NULL AND distrito != '' ORDER BY distrito");
+        $distritosList = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
         // Render view
         require_once 'views/admin_users.php';

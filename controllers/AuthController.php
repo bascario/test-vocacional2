@@ -34,7 +34,7 @@ class AuthController
             exit;
         }
 
-        $allowed = ['nombre', 'apellido', 'email', 'curso', 'paralelo', 'telefono'];
+        $allowed = ['nombre', 'apellido', 'email', 'curso', 'paralelo', 'telefono', 'institucion_id'];
         // allow updating fecha_nacimiento from profile
         $allowed[] = 'fecha_nacimiento';
         $data = [];
