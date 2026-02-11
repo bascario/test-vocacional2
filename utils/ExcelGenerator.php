@@ -97,7 +97,15 @@ class ExcelGenerator
         $categories = ['ciencias', 'tecnologia', 'humanidades', 'artes', 'negocios', 'convencional'];
 
         foreach ($results as $result) {
-            $scores = is_string($result['puntajes_json'] ?? '') ? json_decode($result['puntajes_json'], true) : ($result['puntajes_json'] ?? []);
+            // Fix for PHP 8.1+ deprecation: json_decode() expects string, not null
+            $puntajesJson = $result['puntajes_json'] ?? null;
+            if ($puntajesJson === null || $puntajesJson === '') {
+                $scores = [];
+            } elseif (is_string($puntajesJson)) {
+                $scores = json_decode($puntajesJson, true) ?? [];
+            } else {
+                $scores = $puntajesJson;
+            }
 
             $this->sheet->setCellValue('A' . $row, ($result['apellido'] ?? '') . ', ' . ($result['nombre'] ?? ''));
             $this->sheet->setCellValue('B' . $row, $result['curso'] ?? '');

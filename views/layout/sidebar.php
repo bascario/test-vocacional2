@@ -39,18 +39,20 @@ function active($path)
                         <span class="menu-icon">📥</span>
                         <span class="menu-text">Importar Preguntas</span>
                     </a></li>
-
-                <li><a href="/test-vocacional/admin/users" class="<?= active('/admin/users') ?>" title="Gestión de Usuarios">
-                        <span class="menu-icon">👥</span>
-                        <span class="menu-text">Gestión de Usuarios</span>
-                    </a></li>
             <?php endif; ?>
 
-            <li><a href="/test-vocacional/admin/institutions" class="<?= active('/admin/institutions') ?>"
-                    title="Instituciones">
-                    <span class="menu-icon">🏫</span>
-                    <span class="menu-text">Instituciones</span>
+            <li><a href="/test-vocacional/admin/users" class="<?= active('/admin/users') ?>" title="Gestión de Usuarios">
+                    <span class="menu-icon">👥</span>
+                    <span class="menu-text">Gestión de Usuarios</span>
                 </a></li>
+
+            <?php if ($_SESSION['user_role'] === 'administrador'): ?>
+                <li><a href="/test-vocacional/admin/institutions" class="<?= active('/admin/institutions') ?>"
+                        title="Instituciones">
+                        <span class="menu-icon">🏫</span>
+                        <span class="menu-text">Instituciones</span>
+                    </a></li>
+            <?php endif; ?>
         <?php endif; ?>
 
         <li><a href="/test-vocacional/admin/reports/group" class="<?= active('/admin/reports/group') ?>"
@@ -75,5 +77,6 @@ function active($path)
             localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         });
     </script>
-    <p style="color: #FFFFFF;"><small><span style="font-size: 0.4em;">desarrollado por Rubén Jaramillo</small></span></p>
+    <p style="color: #FFFFFF;"><small><span style="font-size: 0.4em;">desarrollado por Rubén Jaramillo</small></span>
+    </p>
 </aside>

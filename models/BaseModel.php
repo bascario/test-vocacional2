@@ -3,6 +3,8 @@
  * Modelo base simple con operaciones CRUD reutilizables.
  * Clase abstracta de la que heredan los modelos específicos.
  */
+require_once __DIR__ . '/../utils/QueryHelper.php';
+
 abstract class BaseModel
 {
     protected $db;
@@ -31,7 +33,13 @@ abstract class BaseModel
         return $stmt->fetch();
     }
 
-    // Obtener todos los registros (opcionalmente con condiciones y orden)
+    /**
+     * Obtener todos los registros (opcionalmente con condiciones y orden).
+     *
+     * @param array $conditions Condiciones WHERE (columna => valor).
+     * @param string $orderBy Cláusula ORDER BY.
+     * @return array Lista de registros.
+     */
     public function findAll($conditions = [], $orderBy = '')
     {
         $sql = "SELECT * FROM {$this->table}";
@@ -55,7 +63,12 @@ abstract class BaseModel
         return $stmt->fetchAll();
     }
 
-    // Insertar un nuevo registro y devolver el id insertado
+    /**
+     * Insertar un nuevo registro y devolver el id insertado.
+     *
+     * @param array $data Datos a insertar (columna => valor).
+     * @return string|false ID del último registro insertado.
+     */
     public function create($data)
     {
         $columns = implode(', ', array_keys($data));
@@ -68,7 +81,13 @@ abstract class BaseModel
         return $this->db->lastInsertId();
     }
 
-    // Actualizar campos de un registro por id
+    /**
+     * Actualizar campos de un registro por id.
+     *
+     * @param mixed $id ID del registro.
+     * @param array $data Datos a actualizar.
+     * @return bool Resultado de la ejecución.
+     */
     public function update($id, $data)
     {
         $setClauses = [];
@@ -85,7 +104,12 @@ abstract class BaseModel
         return $stmt->execute($params);
     }
 
-    // Eliminar un registro por id
+    /**
+     * Eliminar un registro por id.
+     *
+     * @param mixed $id ID del registro.
+     * @return bool Resultado de la ejecución.
+     */
     public function delete($id)
     {
         $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = ?");

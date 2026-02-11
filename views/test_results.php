@@ -13,11 +13,28 @@
 
 <body>
 
+    <?php
+    // Check if user can retake test
+    require_once 'models/VocationalTest.php';
+    $testModel = new VocationalTest();
+    $canRetake = $testModel->canRetakeTest($_SESSION['user_id']);
+    $daysUntilRetake = $canRetake ? 0 : $testModel->getDaysUntilRetake($_SESSION['user_id']);
+    $nextRetakeDate = $canRetake ? null : $testModel->getNextRetakeDate($_SESSION['user_id']);
+    ?>
+
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">Mis Resultados</div>
             <div class="nav-menu">
-                <a href="/test-vocacional/test?new=1" class="btn btn-sm btn-outline">Nuevo Test</a>
+                <?php if ($canRetake): ?>
+                    <a href="/test-vocacional/test?new=1" class="btn btn-sm btn-outline">Nuevo Test</a>
+                <?php else: ?>
+                    <button class="btn btn-sm btn-outline" disabled 
+                        title="Podrás retomar el test el <?= date('d/m/Y', strtotime($nextRetakeDate)) ?> (<?= $daysUntilRetake ?> días restantes)"
+                        style="opacity: 0.5; cursor: not-allowed;">
+                        Nuevo Test (<?= $daysUntilRetake ?> días)
+                    </button>
+                <?php endif; ?>
                 <a href="/test-vocacional/auth/changePassword" class="btn btn-sm btn-outline">Cambiar Contraseña</a>
                 <a href="/test-vocacional/logout" class="btn btn-sm btn-outline">Cerrar Sesión</a>
             </div>
@@ -36,6 +53,13 @@
             <div class="alert alert-success">
                 <?= htmlspecialchars($_SESSION['success']);
                 unset($_SESSION['success']); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['warning'])): ?>
+            <div class="alert alert-warning">
+                <?= htmlspecialchars($_SESSION['warning']);
+                unset($_SESSION['warning']); ?>
             </div>
         <?php endif; ?>
 
@@ -76,8 +100,7 @@
                 </div>
                 <div style="flex:1;min-width:200px;">
                     <label>Colegio</label>
-                    <select name="institucion_id" id="institucion_id_edit" class="form-control"
-                        style="width: 100%;">
+                    <select name="institucion_id" id="institucion_id_edit" class="form-control" style="width: 100%;">
                         <option value="">Selecciona un colegio</option>
                         <?php
                         require_once 'models/Institucion.php';
@@ -420,7 +443,18 @@
 
         <!-- Acciones -->
         <div class="action-buttons">
-            <a href="/test-vocacional/test?new=1" class="btn btn-primary">Realizar Nuevo Test</a>
+            <?php if ($canRetake): ?>
+                <a href="/test-vocacional/test?new=1" class="btn btn-primary">Realizar Nuevo Test</a>
+            <?php else: ?>
+                <button class="btn btn-primary" disabled
+                    title="Debes esperar <?= TEST_RETAKE_MONTHS ?> meses desde tu último test. Podrás retomar el <?= date('d/m/Y', strtotime($nextRetakeDate)) ?>."
+                    style="opacity: 0.6; cursor: not-allowed;">
+                    Realizar Nuevo Test (Disponible en <?= $daysUntilRetake ?> días)
+                </button>
+                <p style="text-align: center; color: #666; margin-top: 10px; font-size: 0.9em;">
+                    ⏳ Podrás retomar el test el <strong><?= date('d/m/Y', strtotime($nextRetakeDate)) ?></strong>
+                </p>
+            <?php endif; ?>
             <a href="/test-vocacional/admin/reports/individual?student_id=<?= $_SESSION['user_id'] ?>"
                 class="btn btn-secondary" target="_blank">Descargar PDF</a>
         </div>

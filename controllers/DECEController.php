@@ -3,6 +3,10 @@ require_once 'models/User.php';
 require_once 'models/VocationalTest.php';
 require_once 'models/Institucion.php';
 
+/**
+ * Controlador para el dashboard del DECE (Departamento de Consejería Estudiantil).
+ * Gestiona la visualización de estadísticas, reportes y exportación de datos.
+ */
 class DECEController
 {
     private $userModel;
@@ -17,18 +21,19 @@ class DECEController
     }
 
     /**
-     * Main DECE dashboard
+     * Página principal del dashboard DECE.
+     * Muestra estadísticas y filtros.
      */
     public function index()
     {
-        // Verify DECE role
+        // Verificar rol DECE
         if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'dece') {
             $_SESSION['error'] = 'Acceso no autorizado';
             header('Location: /test-vocacional/login');
             exit;
         }
 
-        // Get current DECE user
+        // Obtener usuario DECE actual
         $currentUser = $this->userModel->find($_SESSION['user_id']);
 
         if (empty($currentUser['institucion_id'])) {
@@ -39,41 +44,41 @@ class DECEController
 
         $institucionId = $currentUser['institucion_id'];
 
-        // Get institution details
+        // Obtener detalles de la institución
         $institucion = $this->institucionModel->find($institucionId);
 
-        // Get filter parameters
+        // Obtener parámetros de filtro
         $curso = $_GET['curso'] ?? null;
         $paralelo = $_GET['paralelo'] ?? null;
         $amie = $_GET['amie'] ?? null;
 
-        // Get statistics
+        // Obtener estadísticas
         $stats = $this->testModel->getStatisticsByInstitution($institucionId, $curso, $paralelo);
 
-        // Get available courses and paralelos
+        // Obtener cursos disponibles
         $courses = $this->userModel->getCoursesByInstitution($institucionId);
         $paralelos = [];
         if ($curso) {
             $paralelos = $this->userModel->getParalelosByCourse($institucionId, $curso);
         }
 
-        // Get performance by course
+        // Obtener rendimiento por curso
         $performanceByCourse = $this->testModel->getPerformanceByCourse($institucionId);
 
-        // Get performance by paralelo if course is selected
+        // Obtener rendimiento por paralelo si se seleccionó curso
         $performanceByParalelo = [];
         if ($curso) {
             $performanceByParalelo = $this->testModel->getPerformanceByParalelo($institucionId, $curso);
         }
 
-        // Get student results
+        // Obtener resultados de estudiantes
         $studentResults = $this->testModel->getStudentResultsByInstitution($institucionId, $curso, $paralelo);
 
         require_once 'views/dece_dashboard.php';
     }
 
     /**
-     * AJAX endpoint to get paralelos for a course
+     * Endpoint AJAX para obtener paralelos de un curso.
      */
     public function getParalelos()
     {
@@ -101,6 +106,9 @@ class DECEController
     /**
      * Generate institution report (HTML Print View)
      */
+    /**
+     * Generar reporte institucional (Vista HTML para imprimir).
+     */
     public function generateInstitutionReport()
     {
         if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'dece') {
@@ -120,10 +128,10 @@ class DECEController
             $curso = $_GET['curso'] ?? null;
             $paralelo = $_GET['paralelo'] ?? null;
 
-            // Get institution details
+            // Obtener detalles de la institución
             $institucion = $this->institucionModel->find($institucionId);
 
-            // Use unified method for results to be consistent with Admin
+            // Usar método unificado para resultados (consistente con Admin)
             $filters = [
                 'institucion_id' => $institucionId,
                 'curso' => $curso,
@@ -136,7 +144,7 @@ class DECEController
                 throw new Exception("No se encontraron resultados para los filtros seleccionados");
             }
 
-            // Calculate Group Stats
+            // Calcular estadísticas grupales
             $totals = ['Realista' => 0, 'Investigador' => 0, 'Artístico' => 0, 'Social' => 0, 'Emprendedor' => 0, 'Convencional' => 0];
             $numStudents = count($results);
 
@@ -157,7 +165,7 @@ class DECEController
                 }
             }
 
-            // Identify Top Area
+            // Identificar área más destacada
             $topAreaName = null;
             $topAreaScore = -1;
             foreach ($groupAverages as $cat => $avg) {
@@ -167,7 +175,7 @@ class DECEController
                 }
             }
 
-            // Prepare View Data
+            // Preparar datos para la vista
             $filterInfo = [
                 'institution' => $institucion['nombre'],
                 'zona' => $institucion['zona'] ?? '',
@@ -175,10 +183,10 @@ class DECEController
                 'course' => ($curso ? $curso . ($paralelo ? ' - ' . $paralelo : '') : 'Todos los cursos')
             ];
 
-            $deceUser = $currentUser; // For signature
+            $deceUser = $currentUser; // Para firma
             $reportTitle = "Reporte Institucional - " . $institucion['nombre'];
 
-            // Render View
+            // Renderizar vista
             require 'views/report_group_print.php';
             exit;
 
@@ -191,6 +199,9 @@ class DECEController
 
     /**
      * Export data to Excel
+     */
+    /**
+     * Exportar datos a Excel.
      */
     public function exportData()
     {
@@ -211,10 +222,10 @@ class DECEController
             $curso = $_GET['curso'] ?? null;
             $paralelo = $_GET['paralelo'] ?? null;
 
-            // Get student results
+            // Obtener resultados de estudiantes
             $results = $this->testModel->getStudentResultsByInstitution($institucionId, $curso, $paralelo);
 
-            // Generate Excel
+            // Generar Excel
             require_once 'utils/ExcelGenerator.php';
             $excelGenerator = new ExcelGenerator();
             $excelContent = $excelGenerator->generateDECEReport($results, [

@@ -577,7 +577,6 @@
                 <tr>
                     <th>#</th>
                     <th>Estudiante</th>
-                    <th>Curso</th>
                     <th>Área Principal (1ra Opción)</th>
                     <th>Área Secundaria (2da Opción)</th>
                 </tr>

@@ -3,14 +3,21 @@ class Institucion extends BaseModel
 {
     protected $table = 'instituciones_educativas';
 
+    /**
+     * Crea una nueva institución educativa.
+     *
+     * @param array $data Datos de la institución.
+     * @return string ID de la institución creada.
+     * @throws Exception Si faltan datos o hay duplicados.
+     */
     public function createInstitution($data)
     {
-        // Validate required fields
+        // Validar campos requeridos
         if (empty($data['nombre']) || empty($data['codigo']) || empty($data['tipo'])) {
             throw new Exception('Nombre, código y tipo son obligatorios');
         }
 
-        // Normalize
+        // Normalizar
         $data['nombre'] = trim($data['nombre']);
         $data['codigo'] = strtoupper(trim($data['codigo']));
         $data['tipo'] = trim($data['tipo']);
@@ -19,19 +26,19 @@ class Institucion extends BaseModel
         $data['zona'] = trim($data['zona'] ?? '');
         $data['distrito'] = trim($data['distrito'] ?? '');
 
-        // Validate tipo against allowed values
+        // Validar tipo contra valores permitidos
         $allowedTypes = ['Fiscal', 'Fiscomisional', 'Particular', 'Municipal'];
         if (!in_array($data['tipo'], $allowedTypes, true)) {
             throw new Exception('Tipo de institución inválido');
         }
 
-        // Check codigo uniqueness
+        // Verificar unicidad del código
         $existing = $this->findByCodigo($data['codigo']);
         if ($existing) {
             throw new Exception('El código AMIE ya existe en otra institución');
         }
 
-        // Insert
+        // Insertar
         return $this->create([
             'nombre' => $data['nombre'],
             'codigo' => $data['codigo'],
@@ -43,9 +50,17 @@ class Institucion extends BaseModel
         ]);
     }
 
+    /**
+     * Actualiza una institución existente.
+     *
+     * @param int $id ID de la institución.
+     * @param array $data Datos a actualizar.
+     * @return bool Resultado de la actualización.
+     * @throws Exception Si hay errores de validación.
+     */
     public function updateInstitution($id, $data)
     {
-        // Validate required fields if provided
+        // Validar campos requeridos si se proporcionan
         if (isset($data['nombre']) && empty($data['nombre']))
             throw new Exception('El nombre es obligatorio');
 
@@ -83,45 +98,35 @@ class Institucion extends BaseModel
         return $stmt->execute($params);
     }
 
+    /**
+     * Obtiene instituciones con paginación y filtros avazados.
+     *
+     * @param int|null $limit Límite de registros.
+     * @param int $offset Desplazamiento.
+     * @param array $filters Filtros de búsqueda (search, provincia, etc).
+     * @return array Lista de instituciones.
+     */
     public function getAll($limit = null, $offset = 0, $filters = [])
     {
         $sql = "SELECT * FROM {$this->table}";
-        $params = [];
-        $where = [];
 
-        if (!empty($filters['search'])) {
-            $s = trim($filters['search']);
-            $sParam = "%" . $s . "%";
-            $where[] = "(nombre LIKE ? OR codigo LIKE ? OR provincia LIKE ? OR canton LIKE ? OR zona LIKE ? OR distrito LIKE ? OR tipo LIKE ?)";
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-        }
+        $mappings = [
+            'search' => [
+                'col' => ['nombre', 'codigo', 'provincia', 'canton', 'zona', 'distrito', 'tipo'],
+                'op' => 'LIKE',
+                'wrapper' => '%%%s%%',
+                'use_or' => true
+            ],
+            'provincia' => 'provincia',
+            'canton' => 'canton',
+            'zona' => 'zona',
+            'distrito' => 'distrito',
+            'tipo' => 'tipo'
+        ];
 
-        if (!empty($filters['provincia'])) {
-            $where[] = "provincia = ?";
-            $params[] = $filters['provincia'];
-        }
-        if (!empty($filters['canton'])) {
-            $where[] = "canton = ?";
-            $params[] = $filters['canton'];
-        }
-        if (!empty($filters['zona'])) {
-            $where[] = "zona = ?";
-            $params[] = $filters['zona'];
-        }
-        if (!empty($filters['distrito'])) {
-            $where[] = "distrito = ?";
-            $params[] = $filters['distrito'];
-        }
-        if (!empty($filters['tipo'])) {
-            $where[] = "tipo = ?";
-            $params[] = $filters['tipo'];
-        }
+        $queryRef = QueryHelper::buildWhereClause($filters, $mappings);
+        $where = $queryRef['where'];
+        $params = $queryRef['params'];
 
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
@@ -133,65 +138,49 @@ class Institucion extends BaseModel
             $sql .= " LIMIT ? OFFSET ?";
             $params[] = (int) $limit;
             $params[] = (int) $offset;
-
-            $stmt = $this->db->prepare($sql);
-            // We use bindValue for integers in LIMIT/OFFSET to avoid issues with execute() treating them as strings
-            $i = 1;
-            foreach ($params as $param) {
-                if (is_int($param)) {
-                    $stmt->bindValue($i++, $param, PDO::PARAM_INT);
-                } else {
-                    $stmt->bindValue($i++, $param);
-                }
-            }
-            $stmt->execute();
-            return $stmt->fetchAll();
         }
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
+
+        $i = 1;
+        foreach ($params as $param) {
+            if (is_int($param)) {
+                $stmt->bindValue($i++, $param, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($i++, $param);
+            }
+        }
+        $stmt->execute();
         return $stmt->fetchAll();
     }
 
+    /**
+     * Cuenta el total de instituciones según filtros.
+     *
+     * @param array $filters Filtros aplicados.
+     * @return int Total de registros.
+     */
     public function countAll($filters = [])
     {
         $sql = "SELECT COUNT(*) FROM {$this->table}";
-        $params = [];
-        $where = [];
 
-        if (!empty($filters['search'])) {
-            $s = trim($filters['search']);
-            $sParam = "%" . $s . "%";
-            $where[] = "(nombre LIKE ? OR codigo LIKE ? OR provincia LIKE ? OR canton LIKE ? OR zona LIKE ? OR distrito LIKE ? OR tipo LIKE ?)";
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-            $params[] = $sParam;
-        }
+        $mappings = [
+            'search' => [
+                'col' => ['nombre', 'codigo', 'provincia', 'canton', 'zona', 'distrito', 'tipo'],
+                'op' => 'LIKE',
+                'wrapper' => '%%%s%%',
+                'use_or' => true
+            ],
+            'provincia' => 'provincia',
+            'canton' => 'canton',
+            'zona' => 'zona',
+            'distrito' => 'distrito',
+            'tipo' => 'tipo'
+        ];
 
-        if (!empty($filters['provincia'])) {
-            $where[] = "provincia = ?";
-            $params[] = $filters['provincia'];
-        }
-        if (!empty($filters['canton'])) {
-            $where[] = "canton = ?";
-            $params[] = $filters['canton'];
-        }
-        if (!empty($filters['zona'])) {
-            $where[] = "zona = ?";
-            $params[] = $filters['zona'];
-        }
-        if (!empty($filters['distrito'])) {
-            $where[] = "distrito = ?";
-            $params[] = $filters['distrito'];
-        }
-        if (!empty($filters['tipo'])) {
-            $where[] = "tipo = ?";
-            $params[] = $filters['tipo'];
-        }
+        $queryRef = QueryHelper::buildWhereClause($filters, $mappings);
+        $where = $queryRef['where'];
+        $params = $queryRef['params'];
 
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
@@ -202,6 +191,9 @@ class Institucion extends BaseModel
         return $stmt->fetchColumn();
     }
 
+    /**
+     * Busca una institución por su código AMIE.
+     */
     public function findByCodigo($codigo)
     {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE codigo = ?");
@@ -209,6 +201,9 @@ class Institucion extends BaseModel
         return $stmt->fetch();
     }
 
+    /**
+     * Búsqueda ligera para autocompletado (nombre o código).
+     */
     public function search($q, $limit = 20)
     {
         $q = trim($q);
@@ -216,14 +211,14 @@ class Institucion extends BaseModel
             return [];
 
         $like = "%" . $q . "%";
-        // Search by both name and AMIE code
+        // Buscar por nombre y código AMIE
         $stmt = $this->db->prepare("SELECT id, nombre, codigo, tipo FROM {$this->table} WHERE nombre LIKE ? OR codigo LIKE ? ORDER BY nombre LIMIT ?");
         $stmt->execute([$like, $like, (int) $limit]);
         return $stmt->fetchAll();
     }
 
     /**
-     * Get all institutions in a specific zona
+     * Obtener todas las instituciones en una zona específica.
      */
     public function getByZona($zona)
     {
@@ -237,7 +232,7 @@ class Institucion extends BaseModel
     }
 
     /**
-     * Get list of unique zonas
+     * Obtener lista de zonas únicas.
      */
     public function getZonaList()
     {
@@ -251,7 +246,7 @@ class Institucion extends BaseModel
     }
 
     /**
-     * Get list of unique distritos
+     * Obtener lista de distritos únicos.
      */
     public function getDistritoList($zona = null)
     {
@@ -271,7 +266,7 @@ class Institucion extends BaseModel
     }
 
     /**
-     * Get institutions by distrito
+     * Obtener instituciones por distrito.
      */
     public function getByDistrito($distrito)
     {
@@ -281,7 +276,7 @@ class Institucion extends BaseModel
     }
 
     /**
-     * Update zona and distrito for an institution
+     * Actualizar zona y distrito para una institución.
      */
     public function updateLocationConfig($id, $zona, $distrito)
     {
@@ -293,7 +288,7 @@ class Institucion extends BaseModel
         return $stmt->execute([$zona, $distrito, $id]);
     }
 
-    // Keep legacy updateZona for compatibility if needed
+    // Mantener updateZona heredado para compatibilidad si es necesario
     public function updateZona($id, $zona)
     {
         $stmt = $this->db->prepare("UPDATE {$this->table} SET zona = ? WHERE id = ?");

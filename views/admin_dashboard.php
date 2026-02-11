@@ -14,65 +14,63 @@ require 'views/layout/header.php';
         </div>
 
         <!-- Filters Section -->
-        <!--<div class="filters-section"> -->
-            <form method="GET" action="/test-vocacional/admin" class="filters-form">
+        <form method="GET" action="/test-vocacional/admin" class="filters-form">
+            <div class="filter-group">
+                <label for="zona">Zona</label>
+                <select name="zona" id="zona" class="form-control" onchange="this.form.submit()">
+                    <option value="">Todas las Zonas</option>
+                    <?php foreach ($zonas as $z): ?>
+                        <option value="<?= htmlspecialchars($z) ?>" <?= ($filters['zona'] == $z) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($z) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <?php if (!empty($filters['zona'])): ?>
                 <div class="filter-group">
-                    <label for="zona">Zona</label>
-                    <select name="zona" id="zona" class="form-control" onchange="this.form.submit()">
-                        <option value="">Todas las Zonas</option>
-                        <?php foreach ($zonas as $z): ?>
-                            <option value="<?= htmlspecialchars($z) ?>" <?= ($filters['zona'] == $z) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($z) ?>
-                            </option>
-                        <?php endforeach; ?>
+                    <label for="distrito">Distrito</label>
+                    <select name="distrito" id="distrito" class="form-control" onchange="this.form.submit()">
+                        <option value="">Todos los Distritos</option>
+                        <?php if (!empty($distritos)): ?>
+                            <?php foreach ($distritos as $d): ?>
+                                <option value="<?= htmlspecialchars($d) ?>" <?= ($filters['distrito'] == $d) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($d) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </select>
                 </div>
+            <?php endif; ?>
 
-                <?php if (!empty($filters['zona'])): ?>
-                    <div class="filter-group">
-                        <label for="distrito">Distrito</label>
-                        <select name="distrito" id="distrito" class="form-control" onchange="this.form.submit()">
-                            <option value="">Todos los Distritos</option>
-                            <?php if (!empty($distritos)): ?>
-                                <?php foreach ($distritos as $d): ?>
-                                    <option value="<?= htmlspecialchars($d) ?>" <?= ($filters['distrito'] == $d) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($d) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (!empty($filters['zona'])): ?>
-                    <div class="filter-group">
-                        <label for="institucion_id">Institución</label>
-                        <select name="institucion_id" id="institucion_id" class="form-control"
-                            onchange="this.form.submit()">
-                            <option value="">Todas las Instituciones</option>
-                            <?php if (!empty($instituciones)): ?>
-                                <?php foreach ($instituciones as $i): ?>
-                                    <option value="<?= $i['id'] ?>" <?= ($filters['institucion_id'] == $i['id']) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($i['nombre']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-                    </div>
-                <?php endif; ?>
-
+            <?php if (!empty($filters['zona'])): ?>
                 <div class="filter-group">
-                    <label for="amie">Código AMIE</label>
-                    <input type="text" name="amie" id="amie" class="form-control" placeholder="Buscar por AMIE..." 
-                           value="<?= htmlspecialchars($filters['amie'] ?? '') ?>" onchange="this.form.submit()">
+                    <label for="institucion_id">Institución</label>
+                    <select name="institucion_id" id="institucion_id" class="form-control" onchange="this.form.submit()">
+                        <option value="">Todas las Instituciones</option>
+                        <?php if (!empty($instituciones)): ?>
+                            <?php foreach ($instituciones as $i): ?>
+                                <option value="<?= $i['id'] ?>" <?= ($filters['institucion_id'] == $i['id']) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($i['nombre']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
                 </div>
+            <?php endif; ?>
 
-                <div class="filter-group actions">
-                    <a href="/test-vocacional/admin" class="btn btn-sm btn-secondary">Limpiar</a>
-                </div>
-            </form>
-       <!-- </div>-->
-<div> <br><br>     </div>
+            <div class="filter-group">
+                <label for="amie">Código AMIE</label>
+                <input type="text" name="amie" id="amie" class="form-control" placeholder="Buscar por AMIE..."
+                    value="<?= htmlspecialchars($filters['amie'] ?? '') ?>" onchange="this.form.submit()">
+            </div>
+
+            <div class="filter-group actions">
+                <a href="/test-vocacional/admin" class="btn btn-sm btn-secondary">Limpiar</a>
+            </div>
+        </form>
+        <!-- </div>-->
+        <div> <br><br> </div>
 
         <!-- Statistics Cards (Modified to remove student list count if not available/relevant, or assume it's filtered if method updated) -->
         <!-- For now, we keep totals from stats which are filtered -->
@@ -88,7 +86,8 @@ require 'views/layout/header.php';
             <div class="stat-card">
                 <div class="stat-icon">🎯</div>
                 <div class="stat-content">
-                    <h3><?= isset($stats['average_scores']['Realista']) ? round($stats['average_scores']['Realista'], 1) : 0 ?>%</h3>
+                    <h3><?= isset($stats['average_scores']['Realista']) ? round($stats['average_scores']['Realista'], 1) : 0 ?>%
+                    </h3>
                     <p>Promedio Realista</p>
                 </div>
             </div>
@@ -96,7 +95,8 @@ require 'views/layout/header.php';
             <div class="stat-card">
                 <div class="stat-icon">🔬</div>
                 <div class="stat-content">
-                    <h3><?= isset($stats['average_scores']['Investigador']) ? round($stats['average_scores']['Investigador'], 1) : 0 ?>%</h3>
+                    <h3><?= isset($stats['average_scores']['Investigador']) ? round($stats['average_scores']['Investigador'], 1) : 0 ?>%
+                    </h3>
                     <p>Promedio Investigador</p>
                 </div>
             </div>
@@ -104,7 +104,8 @@ require 'views/layout/header.php';
             <div class="stat-card">
                 <div class="stat-icon">🎨</div>
                 <div class="stat-content">
-                    <h3><?= isset($stats['average_scores']['Artistico']) ? round($stats['average_scores']['Artistico'], 1) : (isset($stats['average_scores']['Artístico']) ? round($stats['average_scores']['Artístico'],1) : 0) ?>%</h3>
+                    <h3><?= isset($stats['average_scores']['Artístico']) ? round($stats['average_scores']['Artístico'], 1) : 0 ?>%
+                    </h3>
                     <p>Promedio Artístico</p>
                 </div>
             </div>
@@ -112,7 +113,8 @@ require 'views/layout/header.php';
             <div class="stat-card">
                 <div class="stat-icon">🤝</div>
                 <div class="stat-content">
-                    <h3><?= isset($stats['average_scores']['Social']) ? round($stats['average_scores']['Social'], 1) : 0 ?>%</h3>
+                    <h3><?= isset($stats['average_scores']['Social']) ? round($stats['average_scores']['Social'], 1) : 0 ?>%
+                    </h3>
                     <p>Promedio Social</p>
                 </div>
             </div>
@@ -120,7 +122,8 @@ require 'views/layout/header.php';
             <div class="stat-card">
                 <div class="stat-icon">💼</div>
                 <div class="stat-content">
-                    <h3><?= isset($stats['average_scores']['Emprendedor']) ? round($stats['average_scores']['Emprendedor'], 1) : 0 ?>%</h3>
+                    <h3><?= isset($stats['average_scores']['Emprendedor']) ? round($stats['average_scores']['Emprendedor'], 1) : 0 ?>%
+                    </h3>
                     <p>Promedio Emprendedor</p>
                 </div>
             </div>
@@ -128,7 +131,8 @@ require 'views/layout/header.php';
             <div class="stat-card">
                 <div class="stat-icon">📁</div>
                 <div class="stat-content">
-                    <h3><?= isset($stats['average_scores']['Convencional']) ? round($stats['average_scores']['Convencional'], 1) : 0 ?>%</h3>
+                    <h3><?= isset($stats['average_scores']['Convencional']) ? round($stats['average_scores']['Convencional'], 1) : 0 ?>%
+                    </h3>
                     <p>Promedio Convencional</p>
                 </div>
             </div>
@@ -141,7 +145,7 @@ require 'views/layout/header.php';
         $avgScores = [
             'Realista' => isset($avgRaw['Realista']) ? round((float) $avgRaw['Realista'], 1) : 0.0,
             'Investigador' => isset($avgRaw['Investigador']) ? round((float) $avgRaw['Investigador'], 1) : 0.0,
-            'Artístico' => isset($avgRaw['Artistico']) ? round((float) $avgRaw['Artistico'], 1) : 0.0, // 'Artistico' in SQL alias
+            'Artístico' => isset($avgRaw['Artístico']) ? round((float) $avgRaw['Artístico'], 1) : 0.0,
             'Social' => isset($avgRaw['Social']) ? round((float) $avgRaw['Social'], 1) : 0.0,
             'Emprendedor' => isset($avgRaw['Emprendedor']) ? round((float) $avgRaw['Emprendedor'], 1) : 0.0,
             'Convencional' => isset($avgRaw['Convencional']) ? round((float) $avgRaw['Convencional'], 1) : 0.0,

@@ -1,4 +1,8 @@
 <?php
+/**
+ * Controlador de Autenticación.
+ * Maneja inicio de sesión, registro, recuperación de contraseña y perfil de usuario.
+ */
 class AuthController
 {
     private $userModel;
@@ -8,7 +12,9 @@ class AuthController
         $this->userModel = new User();
     }
 
-    // Mostrar página de perfil (opcional)
+    /**
+     * Mostrar página de perfil del usuario.
+     */
     public function profile()
     {
         if (empty($_SESSION['user_id'])) {
@@ -20,7 +26,9 @@ class AuthController
         require_once 'views/profile.php';
     }
 
-    // Manejar actualizaciones de perfil desde la página de resultados o perfil
+    /**
+     * Manejar actualizaciones de perfil desde la página de resultados o perfil.
+     */
     public function updateProfile()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -35,7 +43,7 @@ class AuthController
         }
 
         $allowed = ['nombre', 'apellido', 'email', 'curso', 'paralelo', 'telefono', 'institucion_id'];
-        // allow updating fecha_nacimiento from profile
+        // permitir actualización de fecha_nacimiento desde perfil
         $allowed[] = 'fecha_nacimiento';
         $data = [];
         foreach ($allowed as $field) {
@@ -44,14 +52,14 @@ class AuthController
             }
         }
 
-        // Basic validation: email format if provided
+        // Validación básica: formato de email si se proporciona
         if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             $_SESSION['error'] = 'El email no tiene un formato válido.';
             header('Location: /test-vocacional/results');
             exit;
         }
 
-        // Validate fecha_nacimiento if provided
+        // Validar fecha_nacimiento si se proporciona
         if (!empty($data['fecha_nacimiento'])) {
             $d = DateTime::createFromFormat('Y-m-d', $data['fecha_nacimiento']);
             if (!$d || $d->format('Y-m-d') !== $data['fecha_nacimiento']) {
@@ -63,7 +71,7 @@ class AuthController
 
         try {
             $this->userModel->update($_SESSION['user_id'], $data);
-            // Refresh session display name if nombre/apellido changed
+            // Actualizar nombre en sesión si nombre/apellido cambiaron
             $user = $this->userModel->find($_SESSION['user_id']);
             if ($user['rol'] === 'estudiante') {
                 $_SESSION['user_name'] = $user['nombre'];
@@ -80,7 +88,10 @@ class AuthController
         }
     }
 
-    // Página de inicio del controlador de autenticación
+    /**
+     * Página principal del controlador de autenticación.
+     * Redirige al dashboard correspondiente según el rol, o al login.
+     */
     public function index()
     {
         if (isset($_SESSION['user_id'])) {
@@ -91,7 +102,11 @@ class AuthController
         }
     }
 
-    // Manejar inicio de sesión (GET muestra formulario, POST procesa)
+    /**
+     * Manejar inicio de sesión.
+     * GET: Muestra formulario.
+     * POST: Procesa credenciales.
+     */
     public function login()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -113,7 +128,7 @@ class AuthController
                         $_SESSION['user_name'] = $user['nombre'] . ' ' . $user['apellido'];
                     }
 
-                    // Notify if the password was auto-updated from a legacy MD5 to bcrypt
+                    // Notificar si la contraseña fue actualizada automáticamente de MD5 legacy a bcrypt
                     if ($this->userModel->isPasswordRehashedFor($user['id'])) {
                         $_SESSION['info'] = 'Por seguridad tu contraseña fue actualizada automáticamente. Se recomienda cambiarla desde tu perfil.';
                     }
@@ -134,7 +149,11 @@ class AuthController
         }
     }
 
-    // Manejar registro de usuarios (GET muestra formulario, POST procesa)
+    /**
+     * Manejar registro de usuarios.
+     * GET: Muestra formulario.
+     * POST: Procesa datos de registro.
+     */
     public function register()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -153,10 +172,9 @@ class AuthController
                 'fecha_nacimiento' => !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : null,
                 'curso' => $_POST['curso'] ?? '',
                 'paralelo' => $_POST['paralelo'] ?? '',
-                'bachillerato' => $_POST['bachillerato'] ?? '',
                 'telefono' => $_POST['telefono'] ?? '',
                 'rol' => 'estudiante',
-                // Keep the original split fields in case they are needed for validation
+                // Mantener campos separados original por si se necesitan para validación
                 'student_nombres' => $student_nombres,
                 'student_apellidos' => $student_apellidos,
                 'representative_nombres' => $representative_nombres,
@@ -175,7 +193,7 @@ class AuthController
                 require_once 'views/register.php';
             }
         } else {
-            // Load institutions for selection
+            // Cargar instituciones para selección
             require_once 'models/Institucion.php';
             $institucionModel = new Institucion();
             $institutions = $institucionModel->getAll();
@@ -183,6 +201,9 @@ class AuthController
         }
     }
 
+    /**
+     * Cerrar sesión del usuario.
+     */
     public function logout()
     {
         session_destroy();
@@ -190,7 +211,9 @@ class AuthController
         exit;
     }
 
-    // Mostrar formulario de cambio de contraseña
+    /**
+     * Mostrar formulario de cambio de contraseña.
+     */
     public function changePassword()
     {
         if (empty($_SESSION['user_id'])) {
@@ -238,7 +261,9 @@ class AuthController
         }
     }
 
-    // Mostrar formulario de recuperación de contraseña
+    /**
+     * Mostrar formulario de recuperación de contraseña.
+     */
     public function recoverPassword()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -297,7 +322,9 @@ class AuthController
         }
     }
 
-    // Mostrar formulario de reset de contraseña (con token)
+    /**
+     * Mostrar formulario de restablecimiento de contraseña (con token).
+     */
     public function resetPassword()
     {
         $token = $_GET['token'] ?? '';
@@ -355,6 +382,11 @@ class AuthController
         }
     }
 
+    /**
+     * Redirigir al usuario según su rol.
+     *
+     * @param string $role Rol del usuario.
+     */
     private function redirectByRole($role)
     {
         switch ($role) {
@@ -376,6 +408,12 @@ class AuthController
         exit;
     }
 
+    /**
+     * Validar datos de registro del usuario.
+     *
+     * @param array $data Datos del formulario de registro.
+     * @throws Exception Si algún dato es inválido o falta.
+     */
     private function validateRegistrationData($data)
     {
         if (empty($data['username']) || empty($data['password']) || empty($data['email'])) {
@@ -398,7 +436,7 @@ class AuthController
             throw new Exception("El email no es válido");
         }
 
-        // Validate fecha_nacimiento if provided (expect YYYY-MM-DD)
+        // Validar fecha_nacimiento si se proporciona (espera AAAA-MM-DD)
         if (!empty($data['fecha_nacimiento'])) {
             $d = DateTime::createFromFormat('Y-m-d', $data['fecha_nacimiento']);
             if (!$d || $d->format('Y-m-d') !== $data['fecha_nacimiento']) {
@@ -407,8 +445,15 @@ class AuthController
         }
     }
 
-    // Endpoint público para verificar disponibilidad de un nombre de usuario y sugerir alternativas
-    // Extracted logic for generating suggestions to be used by both endpoint and tests
+    /**
+     * Endpoint público para verificar disponibilidad de un nombre de usuario y sugerir alternativas.
+     * Lógica extraída para generar sugerencias que pueden ser usadas por el endpoint y tests.
+     *
+     * @param string $username Nombre de usuario deseado.
+     * @param string $nombre Nombres para sugerencias.
+     * @param string $apellido Apellidos para sugerencias.
+     * @return array Disponibilidad y sugerencias.
+     */
     public function generateUsernameSuggestions(string $username, string $nombre = '', string $apellido = ''): array
     {
         $username = trim($username);
@@ -451,12 +496,12 @@ class AuthController
             $candidates[] = $last . $first;           // doejohn
         }
 
-        // Add username-based variations
+        // Agregar variaciones basadas en el username original
         $candidates[] = $usernameClean . mt_rand(10, 99);
         $candidates[] = $usernameClean . '_' . mt_rand(10, 99);
         $candidates[] = $usernameClean . '.' . mt_rand(10, 99);
 
-        // Ensure uniqueness and availability
+        // Asegurar unicidad y disponibilidad
         $suggestions = [];
         foreach ($candidates as $cand) {
             if (count($suggestions) >= 5)
@@ -475,7 +520,7 @@ class AuthController
             }
         }
 
-        // If no available suggestions found, fallback to random numeric ones
+        // Si no se encuentran sugerencias disponibles, usar numéricas aleatorias
         $tries = 0;
         while (count($suggestions) < 3 && $tries < 30) {
             $tries++;
@@ -489,13 +534,16 @@ class AuthController
         return ['available' => false, 'suggestions' => array_values($suggestions)];
     }
 
+    /**
+     * Endpoint API para verificar disponibilidad de usuario.
+     */
     public function checkUsername()
     {
         header('Content-Type: application/json');
 
         $username = trim($_GET['username'] ?? $_POST['username'] ?? '');
 
-        // Attempt to get name from split fields if coming from registration
+        // Intentar obtener nombre de los campos separados si viene del registro
         $nombre = trim($_GET['student_nombres'] ?? $_POST['student_nombres'] ?? $_GET['nombre'] ?? $_POST['nombre'] ?? '');
         $apellido = trim($_GET['student_apellidos'] ?? $_POST['student_apellidos'] ?? $_GET['apellido'] ?? $_POST['apellido'] ?? '');
 

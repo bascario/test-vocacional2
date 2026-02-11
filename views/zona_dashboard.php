@@ -324,20 +324,15 @@ require 'views/layout/header.php';
 
         // Transform data for chart
         // We need datasets for each RIASEC category
-        const categories = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor'];
-        const labels = instData.map(item => item.nombre);
+        const categories = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional'];
+        const labels = instData.map(item => item.institucion_nombre);
 
         const datasets = categories.map(cat => ({
             label: cat,
             data: instData.map(item => {
-                if (cat === 'Investigador') return item.ciencias || item.Investigador || 0;
-                if (cat === 'Realista') return item.tecnologia || item.Realista || 0;
-                if (cat === 'Artístico') return item.artes || item.Artístico || 0;
-                if (cat === 'Social') return item.humanidades || item.Social || 0;
-                if (cat === 'Emprendedor') return item.negocios || item.Emprendedor || 0;
-                return 0;
+                return parseFloat(item[cat] || 0);
             }),
-            backgroundColor: '<?= getRIASECColor("'+cat+'") ?>'.replace("'+cat+'", cat) // Simple hack for Color injection
+            backgroundColor: '<?= getRIASECColor("'+cat+'") ?>'.replace("'+cat+'", cat)
         }));
 
         // Fix colors manually since JS injection above is tricky

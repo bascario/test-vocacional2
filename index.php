@@ -122,7 +122,6 @@ switch ($request) {
         break;
 
     case '/politica-datos':
-        // Public page with data policy
         require_once 'views/politica_datos.php';
         break;
 
@@ -140,7 +139,6 @@ switch ($request) {
             exit;
         }
 
-        // Only administrators can access main admin dashboard
         AuthMiddleware::checkRole(['administrador']);
 
         require_once 'controllers/AdminController.php';
@@ -268,7 +266,7 @@ switch ($request) {
     case '/admin/users':
         require_once 'middleware/AuthMiddleware.php';
         AuthMiddleware::checkAuth();
-        AuthMiddleware::checkRole(['administrador']);
+        AuthMiddleware::checkRole(['administrador', 'dece']);
         require_once 'controllers/AdminController.php';
         $controller = new AdminController();
         $controller->users();
@@ -277,15 +275,13 @@ switch ($request) {
     case '/admin/users/change-password':
         require_once 'middleware/AuthMiddleware.php';
         AuthMiddleware::checkAuth();
-        // Allow admins, dece and zonal to use this endpoint; method will enforce additional constraints
-        AuthMiddleware::checkRole(['administrador','dece','zonal']);
+        AuthMiddleware::checkRole(['administrador', 'dece', 'zonal']);
         require_once 'controllers/AdminController.php';
         $controller = new AdminController();
         $controller->changeUserPassword();
         break;
 
     case '/institutions/search':
-        // Public endpoint for autocomplete/search of institutions
         require_once 'controllers/AdminController.php';
         $controller = new AdminController();
         $controller->searchInstitutions();
@@ -302,7 +298,7 @@ switch ($request) {
 
     case '/admin/reports/individual':
         require_once 'middleware/AuthMiddleware.php';
-        AuthMiddleware::checkAuth(); // Only require logged in, role check is done in controller
+        AuthMiddleware::checkAuth();
         require_once 'controllers/AdminController.php';
         $controller = new AdminController();
         $controller->generateIndividualReport();

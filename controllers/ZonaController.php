@@ -3,6 +3,10 @@ require_once 'models/User.php';
 require_once 'models/VocationalTest.php';
 require_once 'models/Institucion.php';
 
+/**
+ * Controlador para la gestión de la zona (Coordinación Zonal).
+ * Permite visualizar estadísticas, reportes y exportar datos de las instituciones de la zona.
+ */
 class ZonaController
 {
     private $userModel;
@@ -17,18 +21,19 @@ class ZonaController
     }
 
     /**
-     * Main Zona dashboard
+     * Página principal del dashboard Zonal.
+     * Muestra estadísticas agregadas por zona y filtros por institución.
      */
     public function index()
     {
-        // Verify zonal role
+        // Verificar rol Zonal
         if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'zonal') {
             $_SESSION['error'] = 'Acceso no autorizado';
             header('Location: /test-vocacional/login');
             exit;
         }
 
-        // Get current zonal user
+        // Obtener usuario zonal actual
         $currentUser = $this->userModel->find($_SESSION['user_id']);
 
         if (empty($currentUser['zona_id'])) {
@@ -39,8 +44,8 @@ class ZonaController
 
         $zonaId = $currentUser['zona_id'];
 
-        // Get zona name from first institution (assuming zona_id matches zona name)
-        // In a real scenario, you might have a separate zonas table
+        // Obtener nombre de la zona (asumiendo que zona_id es el nombre)
+        // En un escenario real, podría haber una tabla separada de zonas
         $institutions = $this->institucionModel->getByZona($zonaId);
 
         if (empty($institutions)) {
@@ -49,20 +54,20 @@ class ZonaController
             exit;
         }
 
-        $zona = $zonaId; // Using zona_id as zona name
+        $zona = $zonaId; // Usando zona_id como nombre de zona
 
         $institucionId = $_GET['institucion'] ?? null;
         $amie = $_GET['amie'] ?? null;
         $curso = $_GET['curso'] ?? null;
         $paralelo = $_GET['paralelo'] ?? null;
 
-        // Get statistics
+        // Obtener estadísticas
         $stats = $this->testModel->getStatisticsByZona($zona, $institucionId, $curso, $paralelo, $amie);
 
-        // Get performance by institution
+        // Obtener rendimiento por institución
         $performanceByInstitution = $this->testModel->getPerformanceByInstitution($zona);
 
-        // Get available courses and paralelos (if institution selected)
+        // Obtener cursos y paralelos disponibles (si se seleccionó institución)
         $courses = [];
         $paralelos = [];
         if ($institucionId) {
@@ -72,10 +77,10 @@ class ZonaController
             }
         }
 
-        // Get student results
+        // Obtener resultados de estudiantes
         $studentResults = $this->testModel->getStudentResultsByZona($zona, $institucionId, $curso, $paralelo, $amie);
 
-        // Count institutions and total students
+        // Contar instituciones y total de estudiantes
         $totalInstitutions = count($institutions);
         $totalStudents = count($studentResults);
 
@@ -83,7 +88,7 @@ class ZonaController
     }
 
     /**
-     * AJAX endpoint to get courses for selected institution
+     * Endpoint AJAX para obtener cursos de una institución seleccionada.
      */
     public function getCourses()
     {
@@ -107,7 +112,7 @@ class ZonaController
     }
 
     /**
-     * AJAX endpoint to get paralelos for selected institution and course
+     * Endpoint AJAX para obtener paralelos de una institución y curso seleccionados.
      */
     public function getParalelos()
     {
@@ -132,7 +137,7 @@ class ZonaController
     }
 
     /**
-     * Generate zona report (HTML Print View)
+     * Generar reporte zonal (Vista HTML para imprimir).
      */
     public function generateZonaReport()
     {
@@ -155,7 +160,7 @@ class ZonaController
             $curso = $_GET['curso'] ?? null;
             $paralelo = $_GET['paralelo'] ?? null;
 
-            // Use unified method for results
+            // Usar método unificado para resultados
             $filters = [
                 'zona' => $zona,
                 'institucion_id' => $institucionId,
@@ -169,7 +174,7 @@ class ZonaController
                 throw new Exception("No se encontraron resultados para los filtros seleccionados");
             }
 
-            // Calculate Group Stats
+            // Calcular estadísticas grupales
             $totals = ['Realista' => 0, 'Investigador' => 0, 'Artístico' => 0, 'Social' => 0, 'Emprendedor' => 0, 'Convencional' => 0];
             $numStudents = count($results);
 
@@ -190,7 +195,7 @@ class ZonaController
                 }
             }
 
-            // Identify Top Area
+            // Identificar área más destacada
             $topAreaName = null;
             $topAreaScore = -1;
             foreach ($groupAverages as $cat => $avg) {
@@ -200,8 +205,8 @@ class ZonaController
                 }
             }
 
-            // Prepare View Data
-            // If specific institution selected, get its name, otherwise Generic
+            // Preparar datos para la vista
+            // Si se selecciona institución específica, obtener nombre, si no Genérico
             $instName = 'Todas las Instituciones de la Zona';
             if ($institucionId) {
                 $inst = $this->institucionModel->find($institucionId);
@@ -212,17 +217,17 @@ class ZonaController
             $filterInfo = [
                 'institution' => $instName,
                 'zona' => $zona,
-                'distrito' => 'Todos', // Could detect if filtering by institution
+                'distrito' => 'Todos', // Podría detectar si se filtra por institución
                 'course' => ($curso ? $curso . ($paralelo ? ' - ' . $paralelo : '') : 'Todos los cursos')
             ];
 
-            $deceUser = $currentUser; // Zonal Admin signature
-            // Mock institution object for signature place
+            $deceUser = $currentUser; // Firma de Admin Zonal
+            // Objeto institución simulado para lugar de firma
             $institution = ['nombre' => 'Coordinación Zonal ' . $zona];
 
             $reportTitle = "Reporte Zonal - Zona " . $zona;
 
-            // Render View
+            // Renderizar vista
             require 'views/report_group_print.php';
             exit;
 
@@ -234,7 +239,7 @@ class ZonaController
     }
 
     /**
-     * Export data to Excel
+     * Exportar datos a Excel.
      */
     public function exportData()
     {
@@ -257,10 +262,10 @@ class ZonaController
             $curso = $_GET['curso'] ?? null;
             $paralelo = $_GET['paralelo'] ?? null;
 
-            // Get student results
+            // Obtener resultados de estudiantes
             $results = $this->testModel->getStudentResultsByZona($zona, $institucionId, $curso, $paralelo, $_GET['amie'] ?? null);
 
-            // Generate Excel
+            // Generar Excel
             require_once 'utils/ExcelGenerator.php';
             $excelGenerator = new ExcelGenerator();
             $excelContent = $excelGenerator->generateZonaReport($results, [

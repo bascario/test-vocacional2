@@ -114,12 +114,12 @@ require 'views/layout/header.php';
         <?php
         $avgRaw = $stats['average_scores'] ?? [];
         $avgScores = [
-            'ciencias' => isset($avgRaw['ciencias']) ? round((float) $avgRaw['ciencias'], 1) : 0.0,
-            'tecnologia' => isset($avgRaw['tecnologia']) ? round((float) $avgRaw['tecnologia'], 1) : 0.0,
-            'humanidades' => isset($avgRaw['humanidades']) ? round((float) $avgRaw['humanidades'], 1) : 0.0,
-            'artes' => isset($avgRaw['artes']) ? round((float) $avgRaw['artes'], 1) : 0.0,
-            'salud' => isset($avgRaw['salud']) ? round((float) $avgRaw['salud'], 1) : 0.0,
-            'negocios' => isset($avgRaw['negocios']) ? round((float) $avgRaw['negocios'], 1) : 0.0,
+            'Investigador' => isset($avgRaw['Investigador']) ? round((float) $avgRaw['Investigador'], 1) : 0.0,
+            'Realista' => isset($avgRaw['Realista']) ? round((float) $avgRaw['Realista'], 1) : 0.0,
+            'Social' => isset($avgRaw['Social']) ? round((float) $avgRaw['Social'], 1) : 0.0,
+            'Artístico' => isset($avgRaw['Artístico']) ? round((float) $avgRaw['Artístico'], 1) : 0.0,
+            'Emprendedor' => isset($avgRaw['Emprendedor']) ? round((float) $avgRaw['Emprendedor'], 1) : 0.0,
+            'Convencional' => isset($avgRaw['Convencional']) ? round((float) $avgRaw['Convencional'], 1) : 0.0,
         ];
         ?>
         <div class="chart-grid">
@@ -161,7 +161,6 @@ require 'views/layout/header.php';
                                 <th>Estudiante</th>
                                 <th>Curso</th>
                                 <th>Paralelo</th>
-                                <th>Bachillerato</th>
                                 <th>Fecha Test</th>
                                 <th>Área Principal</th>
                                 <th>Acciones</th>
@@ -202,7 +201,7 @@ require 'views/layout/header.php';
                                     </td>
                                     <td><?= htmlspecialchars($student['curso'] ?? '—') ?></td>
                                     <td><?= htmlspecialchars($student['paralelo'] ?? '—') ?></td>
-                                    <td><?= htmlspecialchars($student['bachillerato'] ?? '—') ?></td>
+
                                     <td><?= $testDate ?></td>
                                     <td><strong><?= htmlspecialchars($mainArea) ?></strong></td>
                                     <td>
@@ -298,12 +297,12 @@ require 'views/layout/header.php';
             labels: ['Investigador', 'Realista', 'Artístico', 'Social', 'Emprendedor', 'Convencional'],
             datasets: [{
                 data: [
-                    <?= $avgScores['ciencias'] ?>,
-                    <?= $avgScores['tecnologia'] ?>,
-                    <?= $avgScores['artes'] ?>,
-                    <?= $avgScores['humanidades'] ?>,
-                    <?= $avgScores['negocios'] ?>,
-                    0 // Convencional default
+                    <?= $avgScores['Investigador'] ?>,
+                    <?= $avgScores['Realista'] ?>,
+                    <?= $avgScores['Artístico'] ?>,
+                    <?= $avgScores['Social'] ?>,
+                    <?= $avgScores['Emprendedor'] ?>,
+                    <?= $avgScores['Convencional'] ?>
                 ],
                 backgroundColor: [
                     'rgba(72, 187, 120, 0.8)',  // Investigador
@@ -337,34 +336,34 @@ require 'views/layout/header.php';
                 labels: courseData.map(item => item.curso),
                 datasets: [
                     {
-                        label: 'INVESTIGADORA',
-                        data: courseData.map(item => parseFloat(item.ciencias || 0)),
+                        label: 'INVESTIGADOR',
+                        data: courseData.map(item => parseFloat(item.Investigador || 0)),
                         backgroundColor: 'rgba(72, 187, 120, 0.8)'
                     },
                     {
                         label: 'REALISTA',
-                        data: courseData.map(item => parseFloat(item.tecnologia || 0)),
+                        data: courseData.map(item => parseFloat(item.Realista || 0)),
                         backgroundColor: 'rgba(102, 126, 234, 0.8)'
                     },
                     {
                         label: 'SOCIAL',
-                        data: courseData.map(item => parseFloat(item.humanidades || 0)),
+                        data: courseData.map(item => parseFloat(item.Social || 0)),
                         backgroundColor: 'rgba(245, 101, 101, 0.8)'
                     },
                     {
-                        label: 'ARTÍSTICA',
-                        data: courseData.map(item => parseFloat(item.artes || 0)),
+                        label: 'ARTÍSTICO',
+                        data: courseData.map(item => parseFloat(item.Artístico || 0)),
                         backgroundColor: 'rgba(237, 137, 54, 0.8)'
                     },
                     {
-                        label: 'SOCIAL (Salud)',
-                        data: courseData.map(item => parseFloat(item.salud || 0)),
-                        backgroundColor: 'rgba(245, 101, 101, 0.6)'
+                        label: 'EMPRENDEDOR',
+                        data: courseData.map(item => parseFloat(item.Emprendedor || 0)),
+                        backgroundColor: 'rgba(159, 122, 234, 0.8)'
                     },
                     {
-                        label: 'EMPRENDEDORA',
-                        data: courseData.map(item => parseFloat(item.negocios || 0)),
-                        backgroundColor: 'rgba(159, 122, 234, 0.8)'
+                        label: 'CONVENCIONAL',
+                        data: courseData.map(item => parseFloat(item.Convencional || 0)),
+                        backgroundColor: 'rgba(56, 178, 172, 0.8)'
                     }
                 ]
             },
@@ -393,33 +392,33 @@ require 'views/layout/header.php';
                 datasets: [
                     {
                         label: 'Investigador',
-                        data: paraleloData.map(item => parseFloat(item.ciencias || 0)),
+                        data: paraleloData.map(item => parseFloat(item.Investigador || 0)),
                         backgroundColor: 'rgba(72, 187, 120, 0.8)'
                     },
                     {
                         label: 'Realista',
-                        data: paraleloData.map(item => parseFloat(item.tecnologia || 0)),
+                        data: paraleloData.map(item => parseFloat(item.Realista || 0)),
                         backgroundColor: 'rgba(102, 126, 234, 0.8)'
                     },
                     {
                         label: 'Social',
-                        data: paraleloData.map(item => parseFloat(item.humanidades || 0)),
+                        data: paraleloData.map(item => parseFloat(item.Social || 0)),
                         backgroundColor: 'rgba(245, 101, 101, 0.8)'
                     },
                     {
                         label: 'Artístico',
-                        data: paraleloData.map(item => parseFloat(item.artes || 0)),
+                        data: paraleloData.map(item => parseFloat(item.Artístico || 0)),
                         backgroundColor: 'rgba(237, 137, 54, 0.8)'
                     },
                     {
-                        label: 'Social (Salud)',
-                        data: paraleloData.map(item => parseFloat(item.salud || 0)),
-                        backgroundColor: 'rgba(245, 101, 101, 0.6)'
+                        label: 'Emprendedor',
+                        data: paraleloData.map(item => parseFloat(item.Emprendedor || 0)),
+                        backgroundColor: 'rgba(159, 122, 234, 0.8)'
                     },
                     {
-                        label: 'Emprendedor',
-                        data: paraleloData.map(item => parseFloat(item.negocios || 0)),
-                        backgroundColor: 'rgba(159, 122, 234, 0.8)'
+                        label: 'Convencional',
+                        data: paraleloData.map(item => parseFloat(item.Convencional || 0)),
+                        backgroundColor: 'rgba(56, 178, 172, 0.8)'
                     }
                 ]
             },

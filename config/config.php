@@ -64,6 +64,10 @@ define('RIASEC_ORDER', [
 define('APTO_THRESHOLD', 80);
 define('POTENCIAL_THRESHOLD', 60);
 
+// Test retake restriction
+// Minimum number of months a student must wait before retaking the test
+define('TEST_RETAKE_MONTHS', 6);
+
 // Error reporting (disable in production)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);

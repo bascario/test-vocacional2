@@ -3,9 +3,29 @@ class VocationalTest extends BaseModel
 {
     protected $table = 'resultados_test';
 
-    // Crear resultado de test y guardar respuestas detalladas
+    /**
+     * Crea un resultado de test y guarda respuestas detalladas.
+     *
+     * @param int $usuarioId ID del usuario.
+     * @param array $respuestas Respuestas del test.
+     * @param array|null $encuestaData Datos de la encuesta previa.
+     * @return string ID del test creado.
+     * @throws Exception Si el usuario no puede retomar el test.
+     */
     public function createTest($usuarioId, $respuestas, $encuestaData = null)
     {
+        // Verificar si el usuario puede retomar el test
+        if (!$this->canRetakeTest($usuarioId)) {
+            $daysUntil = $this->getDaysUntilRetake($usuarioId);
+            $lastDate = $this->getLastTestDate($usuarioId);
+
+            throw new Exception(
+                "Debes esperar " . TEST_RETAKE_MONTHS . " meses desde tu último test antes de volver a realizarlo. " .
+                "Último test: " . date('d/m/Y', strtotime($lastDate)) . ". " .
+                "Podrás retomar el test en " . $daysUntil . " días."
+            );
+        }
+
         // Calcular puntajes
         $puntajes = $this->calculateScores($respuestas);
 
@@ -18,22 +38,120 @@ class VocationalTest extends BaseModel
             $data['encuesta_prev_json'] = json_encode($encuestaData);
         }
 
-        // Create test result
+        // Crear resultado del test
         $testId = $this->create($data);
 
-        // Store detailed answers
+        // Guardar respuestas detalladas
         $this->storeDetailedAnswers($testId, $respuestas);
 
         return $testId;
     }
 
-    // Calcular puntajes agregados por categoría a partir de las respuestas
+    /**
+     * Verificar si un usuario puede retomar el test
+     * @param int $usuarioId ID del usuario
+     * @return bool true si puede retomar, false si debe esperar
+     */
+    public function canRetakeTest($usuarioId)
+    {
+        $lastDate = $this->getLastTestDate($usuarioId);
+
+        // Si no tiene tests previos, puede tomar el test
+        if (!$lastDate) {
+            return true;
+        }
+
+        // Calcular la fecha mínima para retomar (último test + X meses)
+        $minRetakeDate = date('Y-m-d H:i:s', strtotime($lastDate . ' +' . TEST_RETAKE_MONTHS . ' months'));
+        $now = date('Y-m-d H:i:s');
+
+        // Puede retomar si la fecha actual es mayor o igual a la fecha mínima
+        return $now >= $minRetakeDate;
+    }
+
+    /**
+     * Obtener la fecha del último test realizado por un usuario
+     * @param int $usuarioId ID del usuario
+     * @return string|null Fecha del último test o null si no tiene tests
+     */
+    public function getLastTestDate($usuarioId)
+    {
+        $stmt = $this->db->prepare("
+            SELECT fecha_test 
+            FROM {$this->table} 
+            WHERE usuario_id = ? 
+            ORDER BY fecha_test DESC 
+            LIMIT 1
+        ");
+        $stmt->execute([$usuarioId]);
+        $result = $stmt->fetch();
+
+        return $result ? $result['fecha_test'] : null;
+    }
+
+    /**
+     * Calcular cuántos días faltan para poder retomar el test
+     * @param int $usuarioId ID del usuario
+     * @return int Número de días restantes (0 si ya puede retomar)
+     */
+    public function getDaysUntilRetake($usuarioId)
+    {
+        $lastDate = $this->getLastTestDate($usuarioId);
+
+        // Si no tiene tests previos, puede retomar inmediatamente
+        if (!$lastDate) {
+            return 0;
+        }
+
+        // Calcular la fecha mínima para retomar
+        $minRetakeDate = strtotime($lastDate . ' +' . TEST_RETAKE_MONTHS . ' months');
+        $now = time();
+
+        // Si ya puede retomar, retornar 0
+        if ($now >= $minRetakeDate) {
+            return 0;
+        }
+
+        // Calcular días restantes
+        $secondsRemaining = $minRetakeDate - $now;
+        $daysRemaining = ceil($secondsRemaining / (60 * 60 * 24));
+
+        return (int) $daysRemaining;
+    }
+
+    /**
+     * Obtener la fecha en que el usuario podrá retomar el test
+     * @param int $usuarioId ID del usuario
+     * @return string|null Fecha formateada o null si ya puede retomar
+     */
+    public function getNextRetakeDate($usuarioId)
+    {
+        $lastDate = $this->getLastTestDate($usuarioId);
+
+        if (!$lastDate) {
+            return null;
+        }
+
+        if ($this->canRetakeTest($usuarioId)) {
+            return null;
+        }
+
+        $nextDate = date('Y-m-d', strtotime($lastDate . ' +' . TEST_RETAKE_MONTHS . ' months'));
+        return $nextDate;
+    }
+
+    /**
+     * Calcular puntajes agregados por categoría a partir de las respuestas.
+     *
+     * @param array $respuestas Respuestas del usuario.
+     * @return array Resultados calculados por categoría.
+     */
     private function calculateScores($respuestas)
     {
         $puntajes = [];
         $conteos = [];
 
-        // Initialize arrays
+        // Inicializar arrays
         foreach (TEST_CATEGORIES as $category) {
             $puntajes[$category] = 0;
             $conteos[$category] = 0;
@@ -43,7 +161,7 @@ class VocationalTest extends BaseModel
         $questionModel = new Question();
 
         foreach ($respuestas as $preguntaId => $respuesta) {
-            // normalize/validate answer to 1-5
+            // normalizar/validar respuesta a 1-5
             $respuestaNorm = $this->normalizeAnswer($respuesta);
 
             $pregunta = $questionModel->find($preguntaId);
@@ -59,17 +177,15 @@ class VocationalTest extends BaseModel
                 $categoria = 'Artístico';
             }
 
-            // Ensure category exists in our initialized arrays
+            // Asegurar que la categoría existe en nuestros arrays inicializados
             if (!isset($puntajes[$categoria])) {
-                // Determine if we should map it to a valid category or skip
-                // Try to find a close match or log error. For now, skip to prevent crash
+                // Determinar si debemos mapear a una categoría válida o saltar
+                // Intentar encontrar una coincidencia cercana o registrar error. Por ahora, saltar
                 if (array_key_exists($categoria, $puntajes)) {
-                    // This creates the entry if it somehow was missing but key check passed? 
-                    // No, if !isset it means it's not in our TEST_CATEGORIES keys.
-                    // But we initialized them from TEST_CATEGORIES.
-                    // So if we are here, $categoria is an unexpected string.
+                    // Esto crea la entrada si faltaba pero la comprobación de clave pasó?
+                    // No, si !isset significa que no está en nuestras claves TEST_CATEGORIES.
                 } else {
-                    // Fallback or skip
+                    // Fallback o saltar
                     continue;
                 }
             }
@@ -86,10 +202,10 @@ class VocationalTest extends BaseModel
         foreach (TEST_CATEGORIES as $category) {
             if ($conteos[$category] > 0) {
                 $promedio = $puntajes[$category] / $conteos[$category];
-                // For 1-5 scale: max value per question is 4 (5-1), so divide by 4
+                // Para escala 1-5: valor máximo por pregunta es 4 (5-1), así que dividir por 4
                 $porcentaje = ($promedio / 4) * 100;
 
-                // Clamp percentage to the [0,100] range to avoid values >100
+                // Limitar porcentaje al rango [0,100] para evitar valores >100
                 if (!is_numeric($porcentaje)) {
                     $porcentaje = 0;
                 }
@@ -124,7 +240,12 @@ class VocationalTest extends BaseModel
         return $resultados;
     }
 
-    // Guardar respuestas detalladas en la tabla `respuestas_detalle`
+    /**
+     * Guardar respuestas detalladas en la tabla `respuestas_detalle`.
+     *
+     * @param int $testId ID del test.
+     * @param array $respuestas Array de respuestas.
+     */
     private function storeDetailedAnswers($testId, $respuestas)
     {
         $stmt = $this->db->prepare(
@@ -141,11 +262,13 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Normalize and validate input values to integer 1-5 for Likert scale.
-     * Accepts numeric 1-5 or strings '1'-'5'.
-     * Throws Exception on unrecognized or out-of-range values.
+     * Normaliza y valida una respuesta a entero entre 1 y 5.
+     * Acepta numéricos 1-5 o cadenas '1'-'5'.
+     *
+     * @param mixed $val Valor a normalizar.
+     * @return int Valor normalizado (1-5).
+     * @throws Exception Si el valor no es válido o está fuera de rango.
      */
-    // Normaliza y valida una respuesta a entero entre 1 y 5
     private function normalizeAnswer($val)
     {
         if (is_numeric($val)) {
@@ -165,10 +288,16 @@ class VocationalTest extends BaseModel
     }
 
 
+    /**
+     * Obtener resultados de tests por usuario.
+     *
+     * @param int $usuarioId ID del usuario.
+     * @return array Lista de resultados.
+     */
     public function getResultsByUser($usuarioId)
     {
         $stmt = $this->db->prepare("
-            SELECT rt.*, u.nombre, u.apellido, u.email, u.curso, u.paralelo, u.bachillerato, u.telefono, u.fecha_nacimiento
+            SELECT rt.*, u.nombre, u.apellido, u.email, u.curso, u.paralelo, u.telefono, u.fecha_nacimiento
             FROM {$this->table} rt
             JOIN usuarios u ON rt.usuario_id = u.id
             WHERE rt.usuario_id = ?
@@ -178,6 +307,9 @@ class VocationalTest extends BaseModel
         return $stmt->fetchAll();
     }
 
+    /**
+     * Obtener resultados filtrados por curso e institución.
+     */
     public function getResultsByCourse($curso = null, $institucionId = null)
     {
         $sql = "
@@ -205,43 +337,42 @@ class VocationalTest extends BaseModel
         return $stmt->fetchAll();
     }
 
+    /**
+     * Obtener estadísticas generales filtradas.
+     *
+     * @param array $filters Filtros (zona, distrito, institucion_id, amie).
+     * @return array Estadísticas (total_tests, tests_by_month, average_scores).
+     */
     public function getStatistics($filters = [])
     {
         $stats = [];
-        $params = [];
-        $where = "u.rol = 'estudiante'";
+        $mappings = [
+            'zona' => 'ie.zona',
+            'distrito' => 'ie.distrito',
+            'institucion_id' => 'u.institucion_id',
+            'amie' => 'ie.codigo'
+        ];
 
-        // Apply filters
-        if (!empty($filters['zona'])) {
-            $where .= " AND ie.zona = ?";
-            $params[] = $filters['zona'];
-        }
-        if (!empty($filters['distrito'])) {
-            $where .= " AND ie.distrito = ?";
-            $params[] = $filters['distrito'];
-        }
-        if (!empty($filters['institucion_id'])) {
-            $where .= " AND u.institucion_id = ?";
-            $params[] = $filters['institucion_id'];
-        }
-        if (!empty($filters['amie'])) {
-            $where .= " AND ie.codigo = ?";
-            $params[] = $filters['amie'];
-        }
+        $queryRef = QueryHelper::buildWhereClause($filters, $mappings);
+        $dynamicWhere = $queryRef['where'];
+        $params = $queryRef['params'];
 
-        // Base Query with Joins
+        // Restricción base
+        $whereClauses = array_merge(["u.rol = 'estudiante'"], $dynamicWhere);
+        $whereSql = implode(" AND ", $whereClauses);
+
+        // Consulta base con Joins
         $baseQuery = " FROM {$this->table} rt 
                        JOIN usuarios u ON rt.usuario_id = u.id 
                        LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id 
-                       WHERE {$where}";
+                       WHERE {$whereSql}";
 
         // Total tests
         $stmt = $this->db->prepare("SELECT COUNT(*) as total {$baseQuery}");
         $stmt->execute($params);
         $stats['total_tests'] = $stmt->fetch()['total'];
 
-        // Tests by month (keep for legacy or dual use if needed, but we will use Radar primarily)
-        // Note: For filtered views, we might not show the trend chart, but let's keep it compatible
+        // Tests por mes
         $stmt = $this->db->prepare("
             SELECT DATE_FORMAT(rt.fecha_test, '%Y-%m') as mes, COUNT(*) as cantidad
             {$baseQuery} AND rt.fecha_test >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
@@ -251,9 +382,7 @@ class VocationalTest extends BaseModel
         $stmt->execute($params);
         $stats['tests_by_month'] = $stmt->fetchAll();
 
-        // Average scores by area (for Radar Chart)
-        // Note: Keys in JSON are capitalized and accented as per T.C. config
-        // e.g. 'Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional'
+        // Promedios por área
         $sql = "SELECT
             AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Investigador.porcentaje')+0, 0), 100)) AS Investigador,
             AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Realista.porcentaje')+0, 0), 100)) AS Realista,
@@ -271,32 +400,26 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get recent tests with user details
+     * Obtener tests recientes con detalles de usuario y tiempos.
      */
     public function getRecentTestsWithDetails($limit = 10, $filters = [])
     {
-        $params = [];
-        $where = "u.rol = 'estudiante'";
+        $mappings = [
+            'zona' => 'ie.zona',
+            'distrito' => 'ie.distrito',
+            'institucion_id' => 'u.institucion_id',
+            'amie' => 'ie.codigo'
+        ];
 
-        // Reuse filters logic
-        if (!empty($filters['zona'])) {
-            $where .= " AND ie.zona = ?";
-            $params[] = $filters['zona'];
-        }
-        if (!empty($filters['distrito'])) {
-            $where .= " AND ie.distrito = ?";
-            $params[] = $filters['distrito'];
-        }
-        if (!empty($filters['institucion_id'])) {
-            $where .= " AND u.institucion_id = ?";
-            $params[] = $filters['institucion_id'];
-        }
-        if (!empty($filters['amie'])) {
-            $where .= " AND ie.codigo = ?";
-            $params[] = $filters['amie'];
-        }
+        $queryRef = QueryHelper::buildWhereClause($filters, $mappings);
+        $dynamicWhere = $queryRef['where'];
+        $params = $queryRef['params'];
 
-        // Include first/last answer timestamps and duration (seconds) using respuestas_detalle
+        // Restricción base
+        $whereClauses = array_merge(["u.rol = 'estudiante'"], $dynamicWhere);
+        $whereSql = implode(" AND ", $whereClauses);
+
+        // Incluir timestamps de primera/última respuesta y duración (segundos) usando respuestas_detalle
         $sql = "SELECT rt.*, u.nombre, u.apellido, u.email, u.curso, u.paralelo, ie.nombre as institucion_nombre,
                    MIN(rd.created_at) AS first_answer_at,
                    MAX(rd.created_at) AS last_answer_at,
@@ -305,7 +428,7 @@ class VocationalTest extends BaseModel
             JOIN usuarios u ON rt.usuario_id = u.id
             LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id
             LEFT JOIN respuestas_detalle rd ON rd.test_id = rt.id
-            WHERE {$where}
+            WHERE {$whereSql}
             GROUP BY rt.id
             ORDER BY rt.fecha_test DESC
             LIMIT " . (int) $limit;
@@ -316,13 +439,13 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get statistics filtered by institution for DECE dashboard
+     * Obtener estadísticas por institución para el dashboard DECE.
      */
     public function getStatisticsByInstitution($institucionId, $curso = null, $paralelo = null)
     {
         $stats = [];
 
-        // Build WHERE clause
+        // Construir cláusula WHERE
         $where = "u.institucion_id = ?";
         $params = [$institucionId];
 
@@ -336,7 +459,7 @@ class VocationalTest extends BaseModel
             $params[] = $paralelo;
         }
 
-        // Total tests for this institution
+        // Total de tests para esta institución
         $sql = "SELECT COUNT(*) as total 
                 FROM {$this->table} rt
                 JOIN usuarios u ON rt.usuario_id = u.id
@@ -345,7 +468,7 @@ class VocationalTest extends BaseModel
         $stmt->execute($params);
         $stats['total_tests'] = $stmt->fetch()['total'];
 
-        // Total students
+        // Total de estudiantes
         $sql = "SELECT COUNT(DISTINCT u.id) as total 
                 FROM usuarios u
                 WHERE {$where} AND u.rol = 'estudiante'";
@@ -353,14 +476,14 @@ class VocationalTest extends BaseModel
         $stmt->execute($params);
         $stats['total_students'] = $stmt->fetch()['total'];
 
-        // Average scores by area for this institution
+        // Promedios por área para esta institución
         $sql = "SELECT
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Investigador.porcentaje')+0, 0), 100)) AS Investigador,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Realista.porcentaje')+0, 0), 100)) AS Realista,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Social.porcentaje')+0, 0), 100)) AS Social,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Artístico.porcentaje')+0, 0), 100)) AS Artístico,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Emprendedor.porcentaje')+0, 0), 100)) AS Emprendedor,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Convencional.porcentaje')+0, 0), 100)) AS Convencional
                 FROM {$this->table} rt
                 JOIN usuarios u ON rt.usuario_id = u.id
                 WHERE {$where}";
@@ -368,7 +491,7 @@ class VocationalTest extends BaseModel
         $stmt->execute($params);
         $stats['average_scores'] = $stmt->fetch();
 
-        // Tests by month for this institution
+        // Tests por mes para esta institución
         $sql = "SELECT DATE_FORMAT(rt.fecha_test, '%Y-%m') as mes, COUNT(*) as cantidad
                 FROM {$this->table} rt
                 JOIN usuarios u ON rt.usuario_id = u.id
@@ -383,19 +506,19 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get trends by institution for DECE dashboard
+     * Obtener tendencias por institución para dashboard DECE.
      */
     public function getTrendsByInstitution($institucionId)
     {
         $sql = "SELECT 
                     DATE_FORMAT(rt.fecha_test, '%Y-%m') as mes,
                     COUNT(*) as total_tests,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Investigador.porcentaje')+0, 0), 100)) AS Investigador,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Realista.porcentaje')+0, 0), 100)) AS Realista,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Social.porcentaje')+0, 0), 100)) AS Social,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Artístico.porcentaje')+0, 0), 100)) AS Artístico,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Emprendedor.porcentaje')+0, 0), 100)) AS Emprendedor,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Convencional.porcentaje')+0, 0), 100)) AS Convencional
                 FROM {$this->table} rt
                 JOIN usuarios u ON rt.usuario_id = u.id
                 WHERE u.institucion_id = ? AND rt.fecha_test >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
@@ -408,7 +531,7 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get distribution by area for DECE dashboard
+     * Obtener distribución por área para dashboard DECE.
      */
     public function getDistributionByArea($institucionId, $curso = null, $paralelo = null)
     {
@@ -426,12 +549,12 @@ class VocationalTest extends BaseModel
         }
 
         $sql = "SELECT
-                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje') >= 70 THEN 1 ELSE 0 END) as ciencias,
-                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje') >= 70 THEN 1 ELSE 0 END) as tecnologia,
-                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje') >= 70 THEN 1 ELSE 0 END) as humanidades,
-                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.artes.porcentaje') >= 70 THEN 1 ELSE 0 END) as artes,
-                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.salud.porcentaje') >= 70 THEN 1 ELSE 0 END) as salud,
-                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje') >= 70 THEN 1 ELSE 0 END) as negocios
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.Investigador.porcentaje') >= 70 THEN 1 ELSE 0 END) as Investigador,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.Realista.porcentaje') >= 70 THEN 1 ELSE 0 END) as Realista,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.Social.porcentaje') >= 70 THEN 1 ELSE 0 END) as Social,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.Artístico.porcentaje') >= 70 THEN 1 ELSE 0 END) as Artístico,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.Emprendedor.porcentaje') >= 70 THEN 1 ELSE 0 END) as Emprendedor,
+                    SUM(CASE WHEN JSON_EXTRACT(puntajes_json, '$.Convencional.porcentaje') >= 70 THEN 1 ELSE 0 END) as Convencional
                 FROM {$this->table} rt
                 JOIN usuarios u ON rt.usuario_id = u.id
                 WHERE {$where}";
@@ -442,19 +565,19 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get performance by course for DECE dashboard
+     * Obtener rendimiento por curso para dashboard DECE.
      */
     public function getPerformanceByCourse($institucionId)
     {
         $sql = "SELECT 
                     u.curso,
                     COUNT(*) as total_tests,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Investigador.porcentaje')+0, 0), 100)) AS Investigador,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Realista.porcentaje')+0, 0), 100)) AS Realista,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Social.porcentaje')+0, 0), 100)) AS Social,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Artístico.porcentaje')+0, 0), 100)) AS Artístico,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Emprendedor.porcentaje')+0, 0), 100)) AS Emprendedor,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Convencional.porcentaje')+0, 0), 100)) AS Convencional
                 FROM {$this->table} rt
                 JOIN usuarios u ON rt.usuario_id = u.id
                 WHERE u.institucion_id = ? AND u.curso IS NOT NULL
@@ -467,19 +590,19 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get performance by paralelo for DECE dashboard
+     * Obtener rendimiento por paralelo para dashboard DECE.
      */
     public function getPerformanceByParalelo($institucionId, $curso)
     {
         $sql = "SELECT 
                     u.paralelo,
                     COUNT(*) as total_tests,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
-                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Investigador.porcentaje')+0, 0), 100)) AS Investigador,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Realista.porcentaje')+0, 0), 100)) AS Realista,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Social.porcentaje')+0, 0), 100)) AS Social,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Artístico.porcentaje')+0, 0), 100)) AS Artístico,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Emprendedor.porcentaje')+0, 0), 100)) AS Emprendedor,
+                    AVG(LEAST(IFNULL(JSON_EXTRACT(puntajes_json, '$.Convencional.porcentaje')+0, 0), 100)) AS Convencional
                 FROM {$this->table} rt
                 JOIN usuarios u ON rt.usuario_id = u.id
                 WHERE u.institucion_id = ? AND u.curso = ? AND u.paralelo IS NOT NULL
@@ -492,7 +615,7 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get student results for DECE dashboard with filters
+     * Obtener resultados de estudiantes para dashboard DECE con filtros.
      */
     public function getStudentResultsByInstitution($institucionId, $curso = null, $paralelo = null)
     {
@@ -510,7 +633,7 @@ class VocationalTest extends BaseModel
         }
 
         $sql = "SELECT 
-                    u.id, u.nombre, u.apellido, u.email, u.curso, u.paralelo, u.bachillerato,
+                    u.id, u.nombre, u.apellido, u.email, u.curso, u.paralelo,
                     rt.id as test_id, rt.fecha_test, rt.puntajes_json
                 FROM usuarios u
                 LEFT JOIN {$this->table} rt ON u.id = rt.usuario_id
@@ -523,7 +646,7 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get statistics for all institutions in a zona
+     * Obtener estadísticas para todas las instituciones en una zona.
      */
     public function getStatisticsByZona($zona, $institucionId = null, $curso = null, $paralelo = null, $amie = null)
     {
@@ -531,12 +654,12 @@ class VocationalTest extends BaseModel
             SELECT 
                 COUNT(DISTINCT rt.id) as total_tests,
                 COUNT(DISTINCT rt.usuario_id) as total_students,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Investigador.porcentaje')+0, 0), 100)) AS Investigador,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Realista.porcentaje')+0, 0), 100)) AS Realista,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Social.porcentaje')+0, 0), 100)) AS Social,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Artístico.porcentaje')+0, 0), 100)) AS Artístico,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Emprendedor.porcentaje')+0, 0), 100)) AS Emprendedor,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Convencional.porcentaje')+0, 0), 100)) AS Convencional
             FROM {$this->table} rt
             INNER JOIN usuarios u ON rt.usuario_id = u.id
             INNER JOIN instituciones_educativas ie ON u.institucion_id = ie.id
@@ -570,19 +693,19 @@ class VocationalTest extends BaseModel
         $stats = $stmt->fetch();
 
         $stats['average_scores'] = [
-            'ciencias' => $stats['ciencias'] ?? 0,
-            'tecnologia' => $stats['tecnologia'] ?? 0,
-            'humanidades' => $stats['humanidades'] ?? 0,
-            'artes' => $stats['artes'] ?? 0,
-            'salud' => $stats['salud'] ?? 0,
-            'negocios' => $stats['negocios'] ?? 0
+            'Investigador' => $stats['Investigador'] ?? 0,
+            'Realista' => $stats['Realista'] ?? 0,
+            'Social' => $stats['Social'] ?? 0,
+            'Artístico' => $stats['Artístico'] ?? 0,
+            'Emprendedor' => $stats['Emprendedor'] ?? 0,
+            'Convencional' => $stats['Convencional'] ?? 0
         ];
 
         return $stats;
     }
 
     /**
-     * Get performance comparison by institution within a zona
+     * Obtener comparación de rendimiento por institución dentro de una zona.
      */
     public function getPerformanceByInstitution($zona)
     {
@@ -592,12 +715,12 @@ class VocationalTest extends BaseModel
                 ie.nombre as institucion_nombre,
                 ie.codigo as institucion_codigo,
                 COUNT(DISTINCT rt.id) as total_tests,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.ciencias.porcentaje')+0, 0), 100)) AS ciencias,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.tecnologia.porcentaje')+0, 0), 100)) AS tecnologia,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.humanidades.porcentaje')+0, 0), 100)) AS humanidades,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.artes.porcentaje')+0, 0), 100)) AS artes,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.salud.porcentaje')+0, 0), 100)) AS salud,
-                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.negocios.porcentaje')+0, 0), 100)) AS negocios
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Investigador.porcentaje')+0, 0), 100)) AS Investigador,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Realista.porcentaje')+0, 0), 100)) AS Realista,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Social.porcentaje')+0, 0), 100)) AS Social,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Artístico.porcentaje')+0, 0), 100)) AS Artístico,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Emprendedor.porcentaje')+0, 0), 100)) AS Emprendedor,
+                AVG(LEAST(IFNULL(JSON_EXTRACT(rt.puntajes_json, '$.Convencional.porcentaje')+0, 0), 100)) AS Convencional
             FROM instituciones_educativas ie
             LEFT JOIN usuarios u ON ie.id = u.institucion_id
             LEFT JOIN {$this->table} rt ON u.id = rt.usuario_id
@@ -612,7 +735,7 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get ALL results filtered by detailed criteria (for group reports)
+     * Obtener TODOS los resultados filtrados por criterio detallado (para reportes grupales).
      */
     public function getGroupResults($filters = [])
     {
@@ -660,7 +783,7 @@ class VocationalTest extends BaseModel
     }
 
     /**
-     * Get student results for zona with optional filters
+     * Obtener resultados de estudiantes para una zona con filtros opcionales.
      */
     public function getStudentResultsByZona($zona, $institucionId = null, $curso = null, $paralelo = null, $amie = null)
     {
@@ -672,7 +795,7 @@ class VocationalTest extends BaseModel
                 u.email,
                 u.curso,
                 u.paralelo,
-                u.bachillerato,
+
                 ie.nombre as institucion_nombre,
                 ie.codigo as institucion_codigo,
                 rt.id as test_id,

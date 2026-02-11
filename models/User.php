@@ -6,6 +6,12 @@ class User extends BaseModel
     // ID del último usuario cuya contraseña fue rehasheada de MD5 a bcrypt
     private $lastRehashedUserId = null;
 
+    /**
+     * Busca un usuario por su nombre de usuario.
+     *
+     * @param string $username Nombre de usuario.
+     * @return array|false Datos del usuario o false si no existe.
+     */
     public function findByUsername($username)
     {
         // Búsqueda case-insensitive para evitar problemas con mayúsculas/minúsculas
@@ -14,6 +20,12 @@ class User extends BaseModel
         return $stmt->fetch();
     }
 
+    /**
+     * Busca un usuario por su correo electrónico.
+     *
+     * @param string $email Correo electrónico.
+     * @return array|false Datos del usuario o false si no existe.
+     */
     public function findByEmail($email)
     {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE email = ?");
@@ -21,6 +33,13 @@ class User extends BaseModel
         return $stmt->fetch();
     }
 
+    /**
+     * Crea un nuevo usuario.
+     *
+     * @param array $data Datos del usuario.
+     * @return string ID del usuario creado.
+     * @throws Exception Si hay errores de validación.
+     */
     public function createUser($data)
     {
         // Trim y normalizar username (solo quitar espacios en los extremos)
@@ -43,7 +62,7 @@ class User extends BaseModel
             throw new Exception("El email ya está registrado");
         }
 
-        // If role 'dece' is requested, only allow if current session user is administrador
+        // Si se solicita el rol 'dece', solo permitir si el usuario de la sesión actual es administrador
         if (!empty($data['rol']) && $data['rol'] === 'dece') {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
@@ -63,38 +82,33 @@ class User extends BaseModel
             'rol' => $data['rol'] ?? 'estudiante'
         ];
 
-        // Optional institution association
+        // Asociación de institución opcional
         if (!empty($data['institucion_id'])) {
             $insertData['institucion_id'] = $data['institucion_id'];
         }
 
-        // Optional curso
+        // Curso opcional
         if (!empty($data['curso'])) {
             $insertData['curso'] = $data['curso'];
         }
 
-        // Optional paralelo
+        // Paralelo opcional
         if (!empty($data['paralelo'])) {
             $insertData['paralelo'] = $data['paralelo'];
         }
 
-        // Optional bachillerato type
-        if (!empty($data['bachillerato'])) {
-            $insertData['bachillerato'] = $data['bachillerato'];
-        }
-
-        // Optional phone number
+        // Número de teléfono opcional
         if (!empty($data['telefono'])) {
             $insertData['telefono'] = $data['telefono'];
         }
 
-        // Optional fecha de nacimiento
+        // Fecha de nacimiento opcional
         if (!empty($data['fecha_nacimiento'])) {
-            // Expecting YYYY-MM-DD, but allow whatever and let DB validate if needed
+            // Esperando YYYY-MM-DD, pero permitir lo que sea y dejar que la BD valide
             $insertData['fecha_nacimiento'] = $data['fecha_nacimiento'];
         }
 
-        // Optional zona_id for zonal users
+        // zona_id opcional para usuarios zonales
         if (!empty($data['zona_id'])) {
             $insertData['zona_id'] = $data['zona_id'];
         }
@@ -102,6 +116,13 @@ class User extends BaseModel
         return $this->create($insertData);
     }
 
+    /**
+     * Autentica un usuario y maneja la actualización de contraseñas legacy.
+     *
+     * @param string $username Nombre de usuario.
+     * @param string $password Contraseña.
+     * @return array|false Datos del usuario o false si falla.
+     */
     public function authenticate($username, $password)
     {
         $user = $this->findByUsername($username);
@@ -134,6 +155,12 @@ class User extends BaseModel
         return false;
     }
 
+    /**
+     * Obtiene todos los estudiantes de un curso específico.
+     *
+     * @param string|null $course Nombre del curso.
+     * @return array Lista de estudiantes.
+     */
     public function getStudentsByCourse($course = null)
     {
         $sql = "SELECT * FROM {$this->table} WHERE rol = 'estudiante'";
@@ -151,26 +178,19 @@ class User extends BaseModel
         return $stmt->fetchAll();
     }
 
-    public function getStudentsByEspecialidad($especialidad = null)
-    {
-        $sql = "SELECT * FROM {$this->table} WHERE rol = 'estudiante'";
-        $params = [];
 
-        if ($especialidad) {
-            $sql .= " AND bachillerato = ?";
-            $params[] = $especialidad;
-        }
 
-        $sql .= " ORDER BY apellido, nombre";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll();
-    }
-
+    /**
+     * Actualiza el rol de un usuario.
+     *
+     * @param int $userId ID del usuario.
+     * @param string $role Nuevo rol.
+     * @return bool Resultado de la actualización.
+     * @throws Exception Si el rol es inválido.
+     */
     public function updateRole($userId, $role)
     {
-        $allowed = ['administrador', 'zonal', 'dece', 'estudiante'];
+        $allowed = ['administrador', 'zonal', 'dece', 'estudiante', 'directivo'];
         if (!in_array($role, $allowed, true)) {
             throw new Exception('Rol inválido');
         }
@@ -180,7 +200,7 @@ class User extends BaseModel
     }
 
     /**
-     * Get all students from a specific institution
+     * Obtener todos los estudiantes de una institución específica.
      */
     public function getStudentsByInstitution($institucionId, $curso = null, $paralelo = null)
     {
@@ -205,7 +225,7 @@ class User extends BaseModel
     }
 
     /**
-     * Get unique courses in an institution
+     * Obtener cursos únicos en una institución.
      */
     public function getCoursesByInstitution($institucionId)
     {
@@ -218,7 +238,7 @@ class User extends BaseModel
     }
 
     /**
-     * Get paralelos for a specific course in an institution
+     * Obtener paralelos para un curso específico en una institución.
      */
     public function getParalelosByCourse($institucionId, $curso)
     {
@@ -231,7 +251,7 @@ class User extends BaseModel
     }
 
     /**
-     * Update zona assignment for a user
+     * Actualizar asignación de zona para un usuario.
      */
     public function updateZona($userId, $zonaId)
     {
@@ -239,18 +259,18 @@ class User extends BaseModel
             $stmt = $this->db->prepare("UPDATE {$this->table} SET zona_id = ? WHERE id = ?");
             return $stmt->execute([$zonaId, $userId]);
         } catch (PDOException $e) {
-            // If the error is "Column not found" and we are trying to set NULL (clear the field), 
-            // we can safely ignore it because the field essentially doesn't exist, so it's "cleared" by definition.
+            // Si el error es "Columna no encontrada" y estamos intentando establecer NULL (limpiar el campo),
+            // podemos ignorarlo con seguridad porque el campo esencialmente no existe, así que está "limpio" por definición.
             if (strpos($e->getMessage(), 'Column not found') !== false && $zonaId === null) {
                 return true;
             }
-            // Otherwise, rethrow the exception
+            // De lo contrario, relanzar la excepción
             throw $e;
         }
     }
 
     /**
-     * Update institution assignment for a user
+     * Actualizar asignación de institución para un usuario.
      */
     public function updateInstitucion($userId, $institucionId)
     {
@@ -259,7 +279,7 @@ class User extends BaseModel
     }
 
     /**
-     * Find the DECE professional for a specific institution
+     * Buscar el profesional DECE para una institución específica.
      */
     public function getDeceByInstitution($institucionId)
     {
@@ -269,7 +289,7 @@ class User extends BaseModel
     }
 
     /**
-     * Unassign an institution from any user with the DECE role
+     * Desasignar una institución de cualquier usuario con el rol DECE.
      */
     public function unassignInstitutionFromDece($institucionId)
     {
@@ -310,7 +330,7 @@ class User extends BaseModel
     }
 
     /**
-     * Create a password reset token
+     * Crear un token de restablecimiento de contraseña
      */
     public function createPasswordResetToken($userId, $expiryHours = 1)
     {
@@ -356,7 +376,7 @@ class User extends BaseModel
     }
 
     /**
-     * Validate password reset token
+     * Validar token de restablecimiento de contraseña
      */
     public function validatePasswordResetToken($token)
     {
@@ -388,7 +408,7 @@ class User extends BaseModel
     }
 
     /**
-     * Use password reset token (mark as used)
+     * Usar token de restablecimiento de contraseña (marcar como usado)
      */
     public function usePasswordResetToken($tokenHash)
     {
@@ -407,7 +427,7 @@ class User extends BaseModel
     }
 
     /**
-     * Clean up expired tokens (run periodically)
+     * Limpiar tokens expirados (ejecutar periódicamente)
      */
     public function cleanupExpiredTokens()
     {
@@ -425,7 +445,7 @@ class User extends BaseModel
     }
 
     /**
-     * Get all users with details (institution, etc) and filtering support, with pagination
+     * Obtener todos los usuarios con detalles (institución, etc.) y soporte de filtrado, con paginación
      */
     public function findAllWithDetails($filters = [], $limit = null, $offset = 0)
     {
@@ -433,52 +453,24 @@ class User extends BaseModel
                 FROM {$this->table} u 
                 LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id";
 
-        $where = [];
-        $params = [];
+        $mappings = [
+            'rol' => 'u.rol',
+            'institucion_id' => 'u.institucion_id',
+            'search' => [
+                'col' => ['u.username', 'u.nombre', 'u.apellido', 'u.email'],
+                'op' => 'LIKE',
+                'wrapper' => '%%%s%%',
+                'use_or' => true
+            ],
+            'curso' => 'u.curso',
+            'paralelo' => 'u.paralelo',
+            'zona' => 'ie.zona',
+            'distrito' => 'ie.distrito'
+        ];
 
-        if (!empty($filters['rol'])) {
-            $where[] = "u.rol = ?";
-            $params[] = $filters['rol'];
-        }
-
-        if (!empty($filters['institucion_id'])) {
-            $where[] = "u.institucion_id = ?";
-            $params[] = $filters['institucion_id'];
-        }
-
-        if (!empty($filters['search'])) {
-            $s = "%" . $filters['search'] . "%";
-            $where[] = "(u.username LIKE ? OR u.nombre LIKE ? OR u.apellido LIKE ? OR u.email LIKE ?)";
-            $params[] = $s;
-            $params[] = $s;
-            $params[] = $s;
-            $params[] = $s;
-        }
-
-        if (!empty($filters['curso'])) {
-            $where[] = "u.curso = ?";
-            $params[] = $filters['curso'];
-        }
-
-        if (!empty($filters['paralelo'])) {
-            $where[] = "u.paralelo = ?";
-            $params[] = $filters['paralelo'];
-        }
-
-        if (!empty($filters['bachillerato'])) {
-            $where[] = "u.bachillerato = ?";
-            $params[] = $filters['bachillerato'];
-        }
-
-        if (!empty($filters['zona'])) {
-            $where[] = "ie.zona = ?";
-            $params[] = $filters['zona'];
-        }
-
-        if (!empty($filters['distrito'])) {
-            $where[] = "ie.distrito = ?";
-            $params[] = $filters['distrito'];
-        }
+        $queryRef = QueryHelper::buildWhereClause($filters, $mappings);
+        $where = $queryRef['where'];
+        $params = $queryRef['params'];
 
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
@@ -496,59 +488,31 @@ class User extends BaseModel
     }
 
     /**
-     * Count users matching filters
+     * Contar usuarios que coinciden con los filtros
      */
     public function countAllWithFilters($filters = [])
     {
         $sql = "SELECT COUNT(*) FROM {$this->table} u 
                 LEFT JOIN instituciones_educativas ie ON u.institucion_id = ie.id";
 
-        $where = [];
-        $params = [];
+        $mappings = [
+            'rol' => 'u.rol',
+            'institucion_id' => 'u.institucion_id',
+            'search' => [
+                'col' => ['u.username', 'u.nombre', 'u.apellido', 'u.email'],
+                'op' => 'LIKE',
+                'wrapper' => '%%%s%%',
+                'use_or' => true
+            ],
+            'curso' => 'u.curso',
+            'paralelo' => 'u.paralelo',
+            'zona' => 'ie.zona',
+            'distrito' => 'ie.distrito'
+        ];
 
-        if (!empty($filters['rol'])) {
-            $where[] = "u.rol = ?";
-            $params[] = $filters['rol'];
-        }
-
-        if (!empty($filters['institucion_id'])) {
-            $where[] = "u.institucion_id = ?";
-            $params[] = $filters['institucion_id'];
-        }
-
-        if (!empty($filters['search'])) {
-            $s = "%" . $filters['search'] . "%";
-            $where[] = "(u.username LIKE ? OR u.nombre LIKE ? OR u.apellido LIKE ? OR u.email LIKE ?)";
-            $params[] = $s;
-            $params[] = $s;
-            $params[] = $s;
-            $params[] = $s;
-        }
-
-        if (!empty($filters['curso'])) {
-            $where[] = "u.curso = ?";
-            $params[] = $filters['curso'];
-        }
-
-        if (!empty($filters['paralelo'])) {
-            $where[] = "u.paralelo = ?";
-            $params[] = $filters['paralelo'];
-        }
-
-        if (!empty($filters['bachillerato'])) {
-            $where[] = "u.bachillerato = ?";
-            $params[] = $filters['bachillerato'];
-        }
-
-        if (!empty($filters['zona'])) {
-            $where[] = "ie.zona = ?";
-            $params[] = $filters['zona'];
-        }
-
-        if (!empty($filters['distrito'])) {
-            $where[] = "ie.distrito = ?";
-            $params[] = $filters['distrito'];
-        }
+        $queryRef = QueryHelper::buildWhereClause($filters, $mappings);
+        $where = $queryRef['where'];
+        $params = $queryRef['params'];
 
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);

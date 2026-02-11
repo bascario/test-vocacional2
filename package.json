@@ -1,0 +1,19 @@
+{
+    "name": "test-vocacional",
+    "version": "1.0.0",
+    "description": "Sistema de Test Vocacional",
+    "main": "index.php",
+    "scripts": {
+        "start": "php -S localhost:8000",
+        "db:import": "node scripts/db-import.js",
+        "install:php": "composer install",
+        "setup": "npm install && npm run install:php && npm run db:import",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "mysql2": "^3.9.1"
+    }
+}

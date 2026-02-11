@@ -1,19 +1,31 @@
 <?php
 require_once 'models/Institucion.php';
+require_once __DIR__ . '/../services/InstitutionService.php';
+require_once __DIR__ . '/../services/UserService.php';
+require_once __DIR__ . '/../services/ReportService.php';
 
+/**
+ * Controlador de Administración.
+ * Maneja el panel principal, la gestión de usuarios e instituciones, y la generación de reportes.
+ */
 class AdminController
 {
-    private $userModel;
     private $testModel;
-    private $institucionModel;
+    private $institutionService;
+    private $userService;
+    private $reportService;
 
     public function __construct()
     {
-        $this->userModel = new User();
         $this->testModel = new VocationalTest();
-        $this->institucionModel = new Institucion();
+        $this->institutionService = new InstitutionService();
+        $this->userService = new UserService();
+        $this->reportService = new ReportService();
     }
 
+    /**
+     * Muestra el panel principal de administración con estadísticas y filtros.
+     */
     public function index()
     {
         // Filtros
@@ -25,280 +37,48 @@ class AdminController
         ];
 
         // Obtener opciones de filtro
-        $zonas = $this->institucionModel->getZonaList();
-        $distritos = $filters['zona'] ? $this->institucionModel->getDistritoList($filters['zona']) : []; // Cargar distritos dependientes si se seleccionó zona.
+        $zonas = $this->institutionService->getZonas();
+        $distritos = $filters['zona'] ? $this->institutionService->getDistritos($filters['zona']) : [];
 
         $instituciones = [];
         if ($filters['distrito']) {
-            $instituciones = $this->institucionModel->getByDistrito($filters['distrito']);
+            $instituciones = $this->institutionService->getByDistrito($filters['distrito']);
         } elseif ($filters['zona']) {
-            $instituciones = $this->institucionModel->getByZona($filters['zona']);
+            $instituciones = $this->institutionService->getByZona($filters['zona']);
         }
 
         // Obtener estadísticas
         $stats = $this->testModel->getStatistics($filters);
-
-        // Obtener últimos tests (pueden estar filtrados según necesidad)
-        // Actualmente obtenemos los tests recientes con detalles mediante el modelo.
-        // I don't see a filterable findAll in my previous reads.
 
         $recentTests = $this->testModel->getRecentTestsWithDetails(10, $filters);
 
         require_once 'views/admin_dashboard.php';
     }
 
-    // Generar y mostrar/descargar reporte individual en HTML/PDF
-    public function generateIndividualReport()
-    {
-        $studentId = $_GET['student_id'] ?? null;
 
-        if (!$studentId) {
-            $_SESSION['error'] = "ID de estudiante no proporcionado";
-            header('Location: /test-vocacional/admin');
-            exit;
-        }
 
-        try {
-            $currentUserId = $_SESSION['user_id'] ?? null;
-            $currentUserRole = $_SESSION['user_role'] ?? null;
-
-            // Permitir si: administrador, dece de la misma institución, zonal de su zona, o el estudiante
-            $isOwn = ($currentUserId == $studentId);
-            $isAdmin = ($currentUserRole === 'administrador');
-            $isDece = ($currentUserRole === 'dece');
-            $isZonal = ($currentUserRole === 'zonal');
-
-            if (!$isOwn && !$isAdmin && !$isDece && !$isZonal) {
-                throw new Exception('Acceso denegado: no tienes permiso para descargar este reporte');
-            }
-
-            // Si el usuario actual es DECE, solo permitir reportes de estudiantes de la misma institución
-            if ($isDece && !$isOwn) {
-                $current = $this->userModel->find($currentUserId);
-                if (empty($current) || empty($current['institucion_id'])) {
-                    throw new Exception('Acceso denegado: tu cuenta no está vinculada a una institución');
-                }
-
-                // Check that the requested student belongs to the same institucion
-                $student = $this->userModel->find($studentId);
-                if (empty($student) || ($student['institucion_id'] ?? null) != $current['institucion_id']) {
-                    throw new Exception('Acceso denegado: el estudiante no pertenece a su institución');
-                }
-            }
-
-            // Si el usuario actual es Zonal, permitir si el estudiante es de su zona
-            if ($isZonal && !$isOwn) {
-                $current = $this->userModel->find($currentUserId);
-                if (empty($current) || empty($current['zona_id'])) {
-                    throw new Exception('Acceso denegado: tu cuenta no está vinculada a una zona');
-                }
-
-                $student = $this->userModel->find($studentId);
-                if (empty($student) || empty($student['institucion_id'])) {
-                    throw new Exception('Acceso denegado: el estudiante no está vinculado a una institución');
-                }
-
-                $studentInst = $this->institucionModel->find($student['institucion_id']);
-                if (empty($studentInst) || ($studentInst['zona'] ?? null) != $current['zona_id']) {
-                    throw new Exception('Acceso denegado: el estudiante no pertenece a su zona');
-                }
-            }
-
-            $results = $this->testModel->getResultsByUser($studentId);
-
-            if (empty($results)) {
-                throw new Exception("No se encontraron resultados para este estudiante");
-            }
-
-            $latestResult = $results[0];
-            $result = $latestResult;
-            $scores = json_decode($latestResult['puntajes_json'], true);
-
-            // Obtener profesional DECE y datos de la institución
-            $studentInfo = $this->userModel->find($studentId);
-            $deceUser = null;
-            $institution = null;
-            if (!empty($studentInfo['institucion_id'])) {
-                $deceUser = $this->userModel->getDeceByInstitution($studentInfo['institucion_id']);
-                $institution = $this->institucionModel->find($studentInfo['institucion_id']);
-            }
-
-            // Calcular datos adicionales para el informe detallado
-            require_once 'utils/ReportHelper.php';
-
-            // Normalizar puntajes a etiquetas esperadas (RIASEC)
-            $normalizedScores = ReportHelper::normalizeScores($scores);
-
-            // Calcular métricas derivadas
-            $differentiation = ReportHelper::calculateDifferentiation($normalizedScores);
-            $competence = ReportHelper::calculateCompetence($normalizedScores);
-            $topAreas = ReportHelper::getTopAreas($normalizedScores, 3);
-
-            // Generar validación QR
-            $validationUrl = ReportHelper::getValidationUrl($latestResult['id']);
-            $qrCodeBase64 = ReportHelper::generateQRCodeBase64($validationUrl);
-
-            // Renderizar la vista imprimible
-            // No se envían cabeceras PDF aquí, solo HTML
-            require 'views/report_individual_print.php';
-            exit;
-
-        } catch (Exception $e) {
-            $_SESSION['error'] = "Error al generar reporte: " . $e->getMessage();
-            header('Location: /test-vocacional/admin');
-            exit;
-        }
-    }
-
-    // Generar reporte grupal en PDF o Excel según el parámetro
-    public function generateGroupReport()
-    {
-        $filters = [
-            'zona' => $_GET['zona'] ?? null,
-            'distrito' => $_GET['distrito'] ?? null,
-            'institucion_id' => $_GET['institucion_id'] ?? null,
-            'curso' => $_GET['course'] ?? null,
-            'amie' => $_GET['amie'] ?? null
-        ];
-        $format = $_GET['format'] ?? 'pdf';
-
-        try {
-            // Verificación de permisos para DECE
-            if (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'dece') {
-                $current = $this->userModel->find($_SESSION['user_id']);
-                if (empty($current) || empty($current['institucion_id'])) {
-                    throw new Exception('Acceso denegado: tu cuenta no está vinculada a una institución');
-                }
-                // Force filter to own institution
-                $filters['institucion_id'] = $current['institucion_id'];
-            }
-
-            // Obtener resultados según filtros
-            $results = $this->testModel->getGroupResults($filters);
-
-            if (empty($results)) {
-                // Si no hay datos con los filtros seleccionados, lanzar excepción
-                throw new Exception("No se encontraron resultados con los filtros seleccionados");
-            }
-
-            // Prepare Filter Info for View
-            $filterInfo = [
-                'zona' => $filters['zona'],
-                'distrito' => $filters['distrito'],
-                'institution' => $filters['institucion_id'] ? ($this->institucionModel->find($filters['institucion_id'])['nombre'] ?? 'Desconocida') : 'Todas las Instituciones',
-                'course' => $filters['curso'],
-                'amie' => $filters['amie']
-            ];
-
-            if ($format === 'excel') {
-                // Generate Excel (Legacy/Existing) - Assuming ExcelGenerator method signature matches or needs update.
-                // Previous call: $excelGenerator->generateGroupReport($results); 
-                // We need to check if $results format matches what ExcelGenerator expects.
-                // Assuming result array is similar (list of rows) it should be fine.
-                // Actually, the previous getResultsByCourse might have returned different columns.
-                // My new getGroupResults returns rt.*, u.*, ie.nombre.
-                // Let's assume compatibility or fix ExcelGenerator if needed. for now we leave it.
-
-                require_once 'utils/ExcelGenerator.php';
-                $excelGenerator = new ExcelGenerator();
-                $excelContent = $excelGenerator->generateGroupReport($results);
-
-                header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-                header('Content-Disposition: attachment; filename="reporte_grupal_' . date('Y-m-d') . '.xlsx"');
-                echo $excelContent;
-                exit;
-            } else {
-                // Generar vista PDF/HTML
-                // Calcular estadísticas grupales para el gráfico radar
-                $totals = ['Realista' => 0, 'Investigador' => 0, 'Artístico' => 0, 'Social' => 0, 'Emprendedor' => 0, 'Convencional' => 0];
-                $counts = ['Realista' => 0, 'Investigador' => 0, 'Artístico' => 0, 'Social' => 0, 'Emprendedor' => 0, 'Convencional' => 0]; // actually count tests
-
-                // To match individual logic:
-                // We sum the percentages for each category across all students, then divide by N
-                foreach ($results as $row) {
-                    $scores = json_decode($row['puntajes_json'], true);
-                    if (is_array($scores)) {
-                        foreach ($totals as $cat => $val) {
-                            // Extract percentage. Keys in JSON are e.g. "Realista".
-                            // Handle if key exists
-                            $pct = 0;
-                            if (isset($scores[$cat])) {
-                                if (is_array($scores[$cat]))
-                                    $pct = $scores[$cat]['porcentaje'] ?? 0;
-                                else
-                                    $pct = $scores[$cat];
-                            }
-                            $totals[$cat] += $pct;
-                            $counts[$cat]++;
-                        }
-                    }
-                }
-
-                $groupAverages = [];
-                $numStudents = count($results);
-                if ($numStudents > 0) {
-                    foreach ($totals as $cat => $sum) {
-                        $groupAverages[$cat] = round($sum / $numStudents, 2);
-                    }
-                }
-
-                // Identify Top Area
-                $topAreaName = null;
-                $topAreaScore = -1;
-                foreach ($groupAverages as $cat => $avg) {
-                    if ($avg > $topAreaScore) {
-                        $topAreaScore = $avg;
-                        $topAreaName = $cat;
-                    }
-                }
-
-                // Prepare View Data for Footer
-                // Ensure we have current user data for signature
-                if (!isset($current)) {
-                    $current = $this->userModel->find($_SESSION['user_id']);
-                }
-                $deceUser = $current;
-                $reportTitle = "Reporte Grupal - Administrador";
-
-                // Generar validación QR (para el grupo/institución si aplica, o test individual de referencia)
-                // Usamos el ID de la institución o un identificador único si subiera a BD, pero por ahora
-                // como es dinámico, podemos usar un hash de los filtros o simplemente omitir si no es individual.
-                // Sin embargo, el usuario pidió para TODOS. Usaremos una URL general de la institución si hay institucion_id.
-                $validationData = $filters['institucion_id'] ?? 'group_report';
-                $validationUrl = ReportHelper::getValidationUrl($validationData);
-                $qrCodeBase64 = ReportHelper::generateQRCodeBase64($validationUrl);
-
-                // Render Update View
-                // No headers needed as we output HTML to browser directly
-                require 'views/report_group_print.php';
-                exit;
-            }
-
-        } catch (Exception $e) {
-            $_SESSION['error'] = "Error al generar reporte grupal: " . $e->getMessage();
-            header('Location: /test-vocacional/admin');
-            exit;
-        }
-    }
-
-    // Institutions management
+    // gestior de instituciones 
+    /**
+     * Gestiona las instituciones educativas (listar, crear, editar, eliminar).
+     * Requiere rol 'administrador' o 'dece'.
+     */
     public function institutions()
     {
-        // Only admins and dece
+        // Solo administradores y dece
         if (empty($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['administrador', 'dece'])) {
             $_SESSION['error'] = 'Acceso no autorizado';
             header('Location: /test-vocacional/admin');
             exit;
         }
 
-        // Handle delete
+        // Manejar eliminación
         if (isset($_GET['delete'])) {
             try {
-                // Only admin can delete
+                // Solo admin puede eliminar
                 if ($_SESSION['user_role'] !== 'administrador') {
                     throw new Exception('Sólo el administrador puede eliminar instituciones');
                 }
-                $this->institucionModel->delete($_GET['delete']);
+                $this->institutionService->delete($_GET['delete']);
                 $_SESSION['success'] = 'Institución eliminada exitosamente';
                 header('Location: /test-vocacional/admin/institutions');
                 exit;
@@ -307,36 +87,11 @@ class AdminController
             }
         }
 
-        // Handle create/update
+        // Manejar creación/actualización
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $id = $_POST['id'] ?? null;
-            $nombre = $_POST['nombre'] ?? '';
-            $codigo = $_POST['codigo'] ?? '';
-            $tipo = $_POST['tipo'] ?? '';
-            $provincia = $_POST['provincia'] ?? '';
-            $canton = $_POST['canton'] ?? '';
-            $zona = $_POST['zona'] ?? '';
-            $distrito = $_POST['distrito'] ?? '';
-
             try {
-                $data = [
-                    'nombre' => $nombre,
-                    'codigo' => $codigo,
-                    'tipo' => $tipo,
-                    'provincia' => $provincia,
-                    'canton' => $canton,
-                    'zona' => $zona,
-                    'distrito' => $distrito
-                ];
-
-                if ($id) {
-                    $this->institucionModel->updateInstitution($id, $data);
-                    $_SESSION['success'] = 'Institución actualizada exitosamente';
-                } else {
-                    $this->institucionModel->createInstitution($data);
-                    $_SESSION['success'] = 'Institución agregada exitosamente';
-                }
-
+                $this->institutionService->save($_POST);
+                $_SESSION['success'] = isset($_POST['id']) && $_POST['id'] ? 'Institución actualizada exitosamente' : 'Institución agregada exitosamente';
                 header('Location: /test-vocacional/admin/institutions');
                 exit;
             } catch (Exception $e) {
@@ -344,7 +99,7 @@ class AdminController
             }
         }
 
-        // Pagination and Filtering settings
+        // Configuración de paginación y filtros
         $perPage = 20;
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         if ($page < 1)
@@ -360,44 +115,40 @@ class AdminController
             'tipo' => $_GET['tipo'] ?? null,
         ];
 
-        // If DECE, show only the institution linked to the user (but allow creation)
+        // Si es DECE, mostrar solo la institución vinculada al usuario
         if (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'dece') {
-            $current = $this->userModel->find($_SESSION['user_id']);
+            $current = $this->userService->find($_SESSION['user_id']);
             $institutions = [];
             if (!empty($current['institucion_id'])) {
-                $inst = $this->institucionModel->find($current['institucion_id']);
+                $inst = $this->institutionService->find($current['institucion_id']);
                 if ($inst)
                     $institutions[] = $inst;
             }
             $totalRecords = count($institutions);
             $totalPages = 1;
         } else {
-            $totalRecords = $this->institucionModel->countAll($filters);
+            $totalRecords = $this->institutionService->countAll($filters);
             $totalPages = ceil($totalRecords / $perPage);
-            $institutions = $this->institucionModel->getAll($perPage, $offset, $filters);
+            $institutions = $this->institutionService->getAll($perPage, $offset, $filters);
         }
 
         $currentPage = $page;
 
-        // Get unique values for filters
-        $stmt = $this->institucionModel->getDb()->query("SELECT DISTINCT provincia FROM instituciones_educativas WHERE provincia IS NOT NULL AND provincia != '' ORDER BY provincia");
-        $provinciasList = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $stmt = $this->institucionModel->getDb()->query("SELECT DISTINCT canton FROM instituciones_educativas WHERE canton IS NOT NULL AND canton != '' ORDER BY canton");
-        $cantonesList = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $stmt = $this->institucionModel->getDb()->query("SELECT DISTINCT zona FROM instituciones_educativas WHERE zona IS NOT NULL AND zona != '' ORDER BY zona");
-        $zonasInstList = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $stmt = $this->institucionModel->getDb()->query("SELECT DISTINCT distrito FROM instituciones_educativas WHERE distrito IS NOT NULL AND distrito != '' ORDER BY distrito");
-        $distritosInstList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        // Obtener valores únicos para filtros
+        $provinciasList = $this->institutionService->getUniqueValues('provincia');
+        $cantonesList = $this->institutionService->getUniqueValues('canton');
+        $zonasInstList = $this->institutionService->getUniqueValues('zona');
+        $distritosInstList = $this->institutionService->getUniqueValues('distrito');
 
         $tiposList = ['Fiscal', 'Particular', 'Fiscomisional', 'Municipal'];
 
         require_once 'views/admin_institutions.php';
     }
 
-    // Public search endpoint used by registration autocomplete
+    /**
+     * Endpoint público para búsqueda de instituciones (autocompletado en registro).
+     * Devuelve JSON.
+     */
     public function searchInstitutions()
     {
         $q = $_GET['q'] ?? '';
@@ -405,7 +156,7 @@ class AdminController
 
         try {
             if (trim($q) !== '') {
-                $rows = $this->institucionModel->search($q, 50);
+                $rows = $this->institutionService->search($q, 50);
                 foreach ($rows as $r) {
                     $results[] = [
                         'id' => $r['id'],
@@ -414,7 +165,7 @@ class AdminController
                 }
             }
         } catch (Exception $e) {
-            // ignore and return empty
+            // ignorar y devolver vacío
         }
 
         header('Content-Type: application/json');
@@ -422,17 +173,129 @@ class AdminController
         exit;
     }
 
-    // Users management: list users and allow admin to change roles
+    /**
+     * Genera y muestra/descarga el reporte individual en HTML.
+     */
+    public function generateIndividualReport()
+    {
+        $studentId = $_GET['student_id'] ?? null;
+
+        if (!$studentId) {
+            $_SESSION['error'] = "ID de estudiante no proporcionado";
+            header('Location: /test-vocacional/admin');
+            exit;
+        }
+
+        try {
+            $currentUser = [
+                'id' => $_SESSION['user_id'] ?? null,
+                'rol' => $_SESSION['user_role'] ?? null,
+                'institucion_id' => null, // Se obtendrá si es necesario
+                'zona_id' => null // Se obtendrá si es necesario
+            ];
+
+            // Validar Acceso
+            $this->reportService->validateIndividualReportAccess($currentUser, $studentId);
+
+            // Obtener Datos
+            $data = $this->reportService->getIndividualReportData($studentId);
+
+            // Desempaquetar datos para la vista
+            $result = $data['result'];
+            $student = $data['student'];
+            $institution = $data['institution'];
+            $deceUser = $data['deceUser'];
+            $normalizedScores = $data['scores'];
+
+            // Métricas
+            $differentiation = $data['metrics']['differentiation'];
+            $competence = $data['metrics']['competence'];
+            $topAreas = $data['metrics']['topAreas'];
+
+            $qrCodeBase64 = $data['qrCode'];
+
+            // Renderizar la vista imprimible
+            require 'views/report_individual_print.php';
+            exit;
+
+        } catch (Exception $e) {
+            $_SESSION['error'] = "Error al generar reporte: " . $e->getMessage();
+            header('Location: /test-vocacional/admin');
+            exit;
+        }
+    }
+
+    /**
+     * Genera el reporte grupal en PDF (Vista) o Excel según el parámetro.
+     */
+    public function generateGroupReport()
+    {
+        $filters = [
+            'zona' => $_GET['zona'] ?? null,
+            'distrito' => $_GET['distrito'] ?? null,
+            'institucion_id' => $_GET['institucion_id'] ?? null,
+            'curso' => $_GET['course'] ?? null,
+            'amie' => $_GET['amie'] ?? null
+        ];
+        $format = $_GET['format'] ?? 'pdf';
+
+        try {
+            $currentUser = [
+                'id' => $_SESSION['user_id'] ?? null,
+                'rol' => $_SESSION['user_role'] ?? null,
+                'institucion_id' => null
+            ];
+
+            // Obtener datos (Validación interna)
+            $data = $this->reportService->getGroupReportData($filters, $currentUser);
+
+            $results = $data['results'];
+            $filterInfo = $data['filterInfo'];
+
+            if ($format === 'excel') {
+                require_once 'utils/ExcelGenerator.php';
+                $excelGenerator = new ExcelGenerator();
+                $excelContent = $excelGenerator->generateGroupReport($results);
+
+                header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                header('Content-Disposition: attachment; filename="reporte_grupal_' . date('Y-m-d') . '.xlsx"');
+                echo $excelContent;
+                exit;
+            } else {
+                // Variables de vista
+                $groupAverages = $data['averages'];
+                $topAreaName = $data['topArea']['name'];
+                $topAreaScore = $data['topArea']['score'];
+                $qrCodeBase64 = $data['qrCode'];
+                $deceUser = $data['currentUser']; // Usuario firma
+                $reportTitle = "Reporte Grupal - Administrador";
+
+                require 'views/report_group_print.php';
+                exit;
+            }
+
+        } catch (Exception $e) {
+            $_SESSION['error'] = "Error al generar reporte grupal: " . $e->getMessage();
+            header('Location: /test-vocacional/admin');
+            exit;
+        }
+    }
+
+
+
+    /**
+     * Gestión de usuarios: listar usuarios y permitir al admin cambiar roles.
+     */
     public function users()
     {
-        // Only administrador
-        if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'administrador') {
+        // Solo administrador y dece
+        if (empty($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['administrador', 'dece'])) {
             $_SESSION['error'] = 'Acceso no autorizado';
             header('Location: /test-vocacional/admin');
             exit;
         }
 
-        // Handle role and assignment changes
+        // Manejar cambios de rol y asignación
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userId = $_POST['user_id'] ?? null;
             $role = $_POST['role'] ?? null;
@@ -446,27 +309,24 @@ class AdminController
             }
 
             try {
-                // Update role
-                $this->userModel->updateRole((int) $userId, $role);
+                $currentUser = [
+                    'id' => $_SESSION['user_id'] ?? null,
+                    'rol' => $_SESSION['user_role'] ?? null,
+                    'institucion_id' => null
+                ];
 
-                // Update zona_id if provided (for zonal role)
-                if ($role === 'zonal' && !empty($zonaId)) {
-                    $this->userModel->updateZona((int) $userId, $zonaId);
-                } elseif ($role !== 'zonal') {
-                    // Clear zona_id if not zonal role
-                    $this->userModel->updateZona((int) $userId, null);
+                // Obtener usuario actual completo si es DECE para asegurar tener institucion_id
+                if ($currentUser['rol'] === 'dece') {
+                    $u = $this->userService->find($currentUser['id']);
+                    $currentUser['institucion_id'] = $u['institucion_id'];
                 }
 
-                // Update institucion_id if provided (for dece role)
-                if ($role === 'dece' && !empty($institucionId)) {
-                    // First, unassign this institution from ANY OTHER user who has the 'dece' role
-                    // This ensures the institution is "moved" to the new user
-                    $this->userModel->unassignInstitutionFromDece($institucionId);
-                    $this->userModel->updateInstitucion((int) $userId, $institucionId);
-                } elseif ($role !== 'dece') {
-                    // Clear institucion_id if not dece role
-                    $this->userModel->updateInstitucion((int) $userId, null);
-                }
+                $contextData = [
+                    'zona_id' => $zonaId,
+                    'institucion_id' => $institucionId
+                ];
+
+                $this->userService->updateUserRole($currentUser, $userId, $role, $contextData);
 
                 $_SESSION['success'] = 'Usuario actualizado correctamente';
             } catch (Exception $e) {
@@ -477,7 +337,7 @@ class AdminController
             exit;
         }
 
-        // Pagination settings
+        // Configuración de paginación
         $perPage = 20;
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         if ($page < 1)
@@ -491,80 +351,51 @@ class AdminController
             'search' => $_GET['search'] ?? null,
             'curso' => $_GET['curso'] ?? null,
             'paralelo' => $_GET['paralelo'] ?? null,
-            'bachillerato' => $_GET['bachillerato'] ?? null,
             'zona' => $_GET['zona'] ?? null,
             'distrito' => $_GET['distrito'] ?? null,
         ];
 
-        // Get all users with filters and institution info
-        $totalRecords = $this->userModel->countAllWithFilters($filters);
+        // Restringir DECE a su propia institución
+        if ($_SESSION['user_role'] === 'dece') {
+            $current = $this->userService->find($_SESSION['user_id']);
+            $filters['institucion_id'] = $current['institucion_id'] ?? -1;
+            $filters['zona'] = null;
+            $filters['distrito'] = null;
+        }
+
+        // Obtener todos los usuarios con filtros e información de institución
+        $totalRecords = $this->userService->countAll($filters);
         $totalPages = ceil($totalRecords / $perPage);
-        $users = $this->userModel->findAllWithDetails($filters, $perPage, $offset);
+        $users = $this->userService->findAll($perPage, $offset, $filters);
         $currentPage = $page;
 
-        // Get institutions for filters and DECE assignment
-        require_once 'models/Institucion.php';
-        $institucionModel = new Institucion();
-        $institutions = $institucionModel->getAll();
+        // Obtener instituciones para filtros y asignación DECE
+        // Corregido: pasar int 0 en lugar de null para evitar advertencia, aunque el limite 0 usualmente significa sin limite en muchos contextos,
+        // aqui probaremos con un limite alto
+        $institutions = $this->institutionService->getAll(10000, 0, []);
 
-        // Get unique values for filters
-        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT curso FROM usuarios WHERE curso IS NOT NULL AND curso != '' ORDER BY curso");
-        $cursosList = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        // Obtener valores únicos para filtros
+        $cursosList = $this->userService->getUniqueValues('curso');
+        $paralelosList = $this->userService->getUniqueValues('paralelo');
+        $zonasList = $this->institutionService->getUniqueValues('zona');
+        $distritosList = $this->institutionService->getUniqueValues('distrito');
 
-        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT paralelo FROM usuarios WHERE paralelo IS NOT NULL AND paralelo != '' ORDER BY paralelo");
-        $paralelosList = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT bachillerato FROM usuarios WHERE bachillerato IS NOT NULL AND bachillerato != '' ORDER BY bachillerato");
-        $bachilleratosList = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT zona FROM instituciones_educativas WHERE zona IS NOT NULL AND zona != '' ORDER BY zona");
-        $zonasList = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $stmt = $this->userModel->getDb()->query("SELECT DISTINCT distrito FROM instituciones_educativas WHERE distrito IS NOT NULL AND distrito != '' ORDER BY distrito");
-        $distritosList = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        // Render view
         require_once 'views/admin_users.php';
     }
 
     /**
-     * Allow administrators to change any user's password, DECE can change passwords
-     * for users from the same institution, ZONAL can change passwords for users from their zone.
-     */
-    /**
-     * Core logic to update a user's password, callable from tests.
-     * Throws Exception on permission errors or invalid input.
+     * Permite a los administradores cambiar la contraseña de cualquier usuario.
+     * DECE puede cambiar contraseña de usuarios de su institución.
+     * Zonal puede cambiar contraseña de usuarios de su zona.
      */
     public function updateUserPassword(int $actorId, string $actorRole, int $targetUserId, string $newPassword)
     {
-        if (strlen($newPassword) < PASSWORD_MIN_LENGTH) {
-            throw new Exception('La nueva contraseña debe tener al menos ' . PASSWORD_MIN_LENGTH . ' caracteres');
-        }
-
-        // Permission checks
-        if ($actorRole === 'administrador') {
-            // ok
-        } elseif ($actorRole === 'dece') {
-            // only allow if target user belongs to same institution
-            $current = $this->userModel->find($actorId);
-            $target = $this->userModel->find($targetUserId);
-            if (empty($current['institucion_id']) || empty($target['institucion_id']) || $current['institucion_id'] != $target['institucion_id']) {
-                throw new Exception('Acceso denegado: sólo puedes cambiar contraseñas de estudiantes de tu institución');
-            }
-        } elseif ($actorRole === 'zonal') {
-            // only allow if target user belongs to same zona
-            $current = $this->userModel->find($actorId);
-            $target = $this->userModel->find($targetUserId);
-            if (empty($current['zona_id']) || empty($target['zona_id']) || $current['zona_id'] != $target['zona_id']) {
-                throw new Exception('Acceso denegado: sólo puedes cambiar contraseñas de usuarios de tu zona');
-            }
-        } else {
-            throw new Exception('Acceso denegado: no tienes permiso para cambiar contraseñas de otros usuarios');
-        }
-
-        return $this->userModel->updatePassword($targetUserId, $newPassword);
+        return $this->userService->updateUserPassword($actorId, $actorRole, $targetUserId, $newPassword);
     }
 
+    /**
+     * Procesa el formulario de cambio de contraseña.
+     */
     public function changeUserPassword()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -593,7 +424,7 @@ class AdminController
             $currentUserId = $_SESSION['user_id'] ?? null;
             $currentRole = $_SESSION['user_role'] ?? null;
 
-            $this->updateUserPassword((int) $currentUserId, $currentRole, (int) $targetUserId, $newPassword);
+            $this->userService->updateUserPassword((int) $currentUserId, $currentRole, (int) $targetUserId, $newPassword);
 
             $_SESSION['success'] = 'Contraseña actualizada correctamente';
         } catch (Exception $e) {

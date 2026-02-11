@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acta de Entrega - Test Vocacional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 60px 80px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .header h2 {
+            font-size: 18px;
+            font-weight: normal;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        
+        .acta-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 40px 0;
+            text-transform: uppercase;
+        }
+        
+        .content {
+            margin: 30px 0;
+            text-align: justify;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-indent: 40px;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            color: #1a73e8;
+        }
+        
+        .components-list {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .component-category {
+            margin-bottom: 18px;
+        }
+        
+        .component-category-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .component-item {
+            margin-left: 20px;
+            margin-bottom: 6px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .component-item:before {
+            content: "▪ ";
+            color: #1a73e8;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .signatures {
+            margin-top: 80px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .signature-block {
+            text-align: center;
+            width: 40%;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 60px;
+            padding-top: 10px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .signature-title {
+            font-size: 11px;
+            margin-top: 5px;
+            color: #666;
+        }
+        
+        .fecha-lugar {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            font-size: 12px;
+        }
+        
+        .table-deliverables {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 12px;
+        }
+        
+        .table-deliverables th {
+            background-color: #1a73e8;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #1a73e8;
+        }
+        
+        .table-deliverables td {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .table-deliverables tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .table-deliverables tr:hover {
+            background-color: #f0f0f0;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+                margin: 0;
+                padding: 40px 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h2>TECNOLÓGICO VIDA NUEVA</h2>
+            <h1>ACTA DE ENTREGA DE PROYECTO</h1>
+        </div>
+        
+        <!-- Title -->
+        <div class="acta-title">
+            Sistema de Test Vocacional
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <p>
+                En la ciudad de Quito, siendo las __________ del día __________ de febrero de 2026, 
+                se procede a la formalización de la entrega del proyecto denominado 
+                <strong>"SISTEMA DE TEST VOCACIONAL"</strong>, desarrollado bajo el modelo 
+                arquitectónico MVC (Model-View-Controller) utilizando tecnologías PHP, JavaScript 
+                y bases de datos MySQL.
+            </p>
+            
+            <p>
+                Quien suscribe, <strong>Mg. Rubèn Jaramillo</strong>, Docente del Tecnológico Vida Nueva, 
+                entrega a la <strong>Ing. Cristina López</strong>, Directora de Tecnología e Información, 
+                el proyecto mencionado con todas sus funcionalidades operativas, código fuente, 
+                documentación técnica y base de datos completamente configurada.
+            </p>
+            
+            <p>
+                El presente proyecto ha sido desarrollado con el propósito de facilitar la 
+                evaluación vocacional de los estudiantes del Tecnológico Vida Nueva, mediante 
+                un formulario integral que evalúa intereses, habilidades y valores, generando 
+                reportes personalizados tanto en formato individual como grupal.
+            </p>
+        </div>
+        
+        <!-- Deliverables -->
+        <div class="section-title">I. COMPONENTES Y ELEMENTOS ENTREGADOS</div>
+        
+        <div class="components-list">
+            
+            <div class="component-category">
+                <div class="component-category-title">1. ESTRUCTURA BASE DEL PROYECTO</div>
+                <div class="component-item">Configuración completa del proyecto PHP con Composer</div>
+                <div class="component-item">Archivo .htaccess para control de acceso web</div>
+                <div class="component-item">Punto de entrada principal: index.php</div>
+                <div class="component-item">Configuración de rutas y variables globales</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">2. DIRECTORIO DE CONFIGURACIÓN (/config)</div>
+                <div class="component-item">config.php - Configuración general del sistema</div>
+                <div class="component-item">database.php - Conexión a base de datos MySQL</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">3. CONTROLADORES (/controllers)</div>
+                <div class="component-item">AdminController.php - Gestión administrativa del sistema</div>
+                <div class="component-item">AuthController.php - Autenticación y autorización de usuarios</div>
+                <div class="component-item">DECEController.php - Funcionalidades del Departamento de Consejería</div>
+                <div class="component-item">QuestionController.php - Gestión de preguntas del test</div>
+                <div class="component-item">TestController.php - Control del flujo del test vocacional</div>
+                <div class="component-item">ZonaController.php - Gestión de zonas/secciones</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">4. MODELOS DE DATOS (/models)</div>
+                <div class="component-item">BaseModel.php - Clase base con funcionalidades comunes ORM</div>
+                <div class="component-item">User.php - Modelo de usuarios del sistema</div>
+                <div class="component-item">VocationalTest.php - Modelo del test vocacional</div>
+                <div class="component-item">Question.php - Modelo de preguntas</div>
+                <div class="component-item">TestResult.php - Modelo de resultados del test</div>
+                <div class="component-item">Institucion.php - Modelo de instituciones</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">5. SERVICIOS (/services)</div>
+                <div class="component-item">InstitutionService.php - Lógica de gestión de instituciones</div>
+                <div class="component-item">UserService.php - Lógica de gestión de usuarios</div>
+                <div class="component-item">ReportService.php - Lógica de generación de reportes</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">6. UTILIDADES (/utils)</div>
+                <div class="component-item">EmailSender.php - Envío de correos electrónicos</div>
+                <div class="component-item">PDFGenerator.php - Generación de reportes en PDF</div>
+                <div class="component-item">ExcelGenerator.php - Generación de reportes en Excel</div>
+                <div class="component-item">QueryHelper.php - Funciones auxiliares para consultas SQL</div>
+                <div class="component-item">QuestionImporter.php - Importación de preguntas del test</div>
+                <div class="component-item">Recommendations.php - Generación de recomendaciones vocacionales</div>
+                <div class="component-item">ReportHelper.php - Funciones auxiliares para reportes</div>
+                <div class="component-item">riasec_helpers.php - Funciones del sistema RIASEC (modelo vocacional)</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">7. MIDDLEWARE (/middleware)</div>
+                <div class="component-item">AuthMiddleware.php - Control de autenticación y autorización</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">8. VISTAS (/views)</div>
+                <div class="component-item">login.php - Formulario de acceso al sistema</div>
+                <div class="component-item">register.php - Registro de nuevos usuarios</div>
+                <div class="component-item">recover_password.php - Recuperación de contraseña</div>
+                <div class="component-item">reset_password.php - Restablecimiento de contraseña</div>
+                <div class="component-item">change_password.php - Cambio de contraseña</div>
+                <div class="component-item">profile.php - Perfil de usuario</div>
+                <div class="component-item">test_form.php - Formulario del test vocacional</div>
+                <div class="component-item">test_results.php - Visualización de resultados del test</div>
+                <div class="component-item">pre_test_survey.php - Encuesta previa al test</div>
+                <div class="component-item">report_individual_print.php - Reporte individual imprimible</div>
+                <div class="component-item">report_group_print.php - Reporte grupal imprimible</div>
+                <div class="component-item">verify_report.php - Verificación de reportes</div>
+                <div class="component-item">admin_dashboard.php - Panel de administrador</div>
+                <div class="component-item">admin_users.php - Gestión de usuarios (Admin)</div>
+                <div class="component-item">admin_institutions.php - Gestión de instituciones (Admin)</div>
+                <div class="component-item">admin_questions.php - Gestión de preguntas (Admin)</div>
+                <div class="component-item">dece_dashboard.php - Panel del Departamento de Consejería</div>
+                <div class="component-item">zona_dashboard.php - Panel de zona</div>
+                <div class="component-item">import_questions.php - Importación de preguntas</div>
+                <div class="component-item">politica_datos.php - Política de datos y privacidad</div>
+                <div class="component-item">layout/ - Plantillas de diseño comunes</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">9. RECURSOS ESTÁTICOS (/assets)</div>
+                <div class="component-item">css/styles.css - Estilos principales del sistema</div>
+                <div class="component-item">css/styles.css.backup - Copia de seguridad de estilos</div>
+                <div class="component-item">js/main.js - Script principal del cliente</div>
+                <div class="component-item">img/ - Directorio de imágenes del proyecto</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">10. BASE DE DATOS</div>
+                <div class="component-item">bdd.sql - Script completo de base de datos MySQL con todas las tablas y datos iniciales</div>
+                <div class="component-item">Tablas incluidas: usuarios, tests, preguntas, resultados, instituciones, etc.</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">11. DEPENDENCIAS Y LIBRERÍAS</div>
+                <div class="component-item">Composer.json y composer.lock - Gestión de dependencias PHP</div>
+                <div class="component-item">package.json y package-lock.json - Gestión de dependencias Node.js</div>
+                <div class="component-item">TCPDF 6.4+ - Generación de PDF de alta calidad</div>
+                <div class="component-item">PHPSpreadsheet 5.1+ - Generación y lectura de archivos Excel</div>
+                <div class="component-item">PHPWord 1.4+ - Generación de documentos Word</div>
+                <div class="component-item">PHPUnit 9.5 - Framework de pruebas unitarias</div>
+                <div class="component-item">Autoloader PSR-4 completamente configurado</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">12. SCRIPTS Y HERRAMIENTAS</div>
+                <div class="component-item">scripts/db-import.js - Script de importación automática de base de datos</div>
+                <div class="component-item">Scripts de configuración e instalación del proyecto</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">13. DOCUMENTACIÓN</div>
+                <div class="component-item">README.md - Documentación completa del proyecto</div>
+                <div class="component-item">Instrucciones de instalación y configuración</div>
+                <div class="component-item">Guía de prerequisitos y dependencias</div>
+                <div class="component-item">Documentación de estructura de base de datos</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">14. ALMACENAMIENTO Y BASE DE DATOS</div>
+                <div class="component-item">storage/ - Directorio para archivos generados dinámicamente</div>
+                <div class="component-item">database/ - Directorio de migraciones y scripts SQL</div>
+            </div>
+            
+        </div>
+        
+        <!-- Functionality Summary -->
+        <div class="section-title">II. FUNCIONALIDADES PRINCIPALES ENTREGADAS</div>
+        
+        <div class="components-list">
+            <div class="component-category">
+                <div class="component-category-title">Módulo de Autenticación</div>
+                <div class="component-item">Sistema de login con múltiples roles (Estudiante, DECE, Administrador)</div>
+                <div class="component-item">Registro de usuarios</div>
+                <div class="component-item">Recuperación y restablecimiento de contraseña</div>
+                <div class="component-item">Gestión segura de sesiones</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">Módulo del Test Vocacional</div>
+                <div class="component-item">Evaluación de intereses, habilidades y valores</div>
+                <div class="component-item">Encuesta previa recolección de datos contextuales</div>
+                <div class="component-item">Almacenamiento seguro de respuestas</div>
+                <div class="component-item">Cálculo de resultados según modelo RIASEC</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">Módulo de Reportes</div>
+                <div class="component-item">Generación de reportes individuales en PDF</div>
+                <div class="component-item">Generación de reportes grupales en PDF</div>
+                <div class="component-item">Exportación de datos a Excel</div>
+                <div class="component-item">Generación de recomendaciones vocacionales personalizadas</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">Panel de Administración</div>
+                <div class="component-item">Gestión de usuarios del sistema</div>
+                <div class="component-item">Gestión de instituciones</div>
+                <div class="component-item">Gestión de preguntas del test</div>
+                <div class="component-item">Importación de preguntas desde archivos externos</div>
+                <div class="component-item">Visualización de estadísticas y dashboards</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">Panel DECE (Departamento de Consejería)</div>
+                <div class="component-item">Visualización de resultados de estudiantes</div>
+                <div class="component-item">Generación de reportes de grupos</div>
+                <div class="component-item">Análisis de tendencias vocacionales</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">Características de Seguridad</div>
+                <div class="component-item">Control de acceso basado en roles (RBAC)</div>
+                <div class="component-item">Autenticación de múltiples capas</div>
+                <div class="component-item">Protección contra SQL injection</div>
+                <div class="component-item">Validación de datos en cliente y servidor</div>
+            </div>
+        </div>
+        
+        <!-- Technical Details -->
+        <div class="section-title">III. ESPECIFICACIONES TÉCNICAS</div>
+        
+        <div class="components-list">
+            <div class="component-item"><strong>Lenguaje Backend:</strong> PHP 7.4+</div>
+            <div class="component-item"><strong>Framework de Frontend:</strong> HTML5, CSS3, JavaScript Vanilla</div>
+            <div class="component-item"><strong>Base de Datos:</strong> MySQL 5.7+</div>
+            <div class="component-item"><strong>Gestión de Dependencias:</strong> Composer (PHP) y npm (JavaScript)</div>
+            <div class="component-item"><strong>Patrón de Arquitectura:</strong> MVC (Model-View-Controller)</div>
+            <div class="component-item"><strong>Estándar de Código:</strong> PSR-4 Autoloading</div>
+            <div class="component-item"><strong>Testing:</strong> PHPUnit incluido</div>
+        </div>
+        
+        <!-- Installation and Deployment -->
+        <div class="section-title">IV. INSTRUCCIONES DE INSTALACIÓN Y DESPLIEGUE</div>
+        
+        <div class="components-list">
+            <div class="component-category">
+                <div class="component-category-title">Requisitos Previos</div>
+                <div class="component-item">PHP 7.4 o superior</div>
+                <div class="component-item">MySQL 5.7 o superior</div>
+                <div class="component-item">Composer instalado</div>
+                <div class="component-item">Node.js y npm (para scripts de instalación)</div>
+            </div>
+            
+            <div class="component-category">
+                <div class="component-category-title">Proceso de Instalación</div>
+                <div class="component-item">1. Ejecutar: npm run setup (instala dependencias e importa BD)</div>
+                <div class="component-item">2. Ejecutar: npm start (inicia servidor en http://localhost:8000)</div>
+                <div class="component-item">3. Acceder a la URL: http://localhost:8000</div>
+                <div class="component-item">4. Usar credenciales de acceso proporcionadas</div>
+            </div>
+        </div>
+        
+        <!-- Observations and Notes -->
+        <div class="section-title">V. OBSERVACIONES Y NOTAS IMPORTANTES</div>
+        
+        <div class="components-list">
+            <div class="component-item">El código fuente está completamente documentado y comentado</div>
+            <div class="component-item">El proyecto incluye archivo .git con historial completo de commits</div>
+            <div class="component-item">Base de datos incluye datos de ejemplo para pruebas</div>
+            <div class="component-item">Sistema completamente funcional y listo para producción</div>
+            <div class="component-item">Se incluyen scripts de utilidad para importación de datos</div>
+            <div class="component-item">Política de privacidad y manejo de datos implementada</div>
+        </div>
+        
+        <!-- State and Condition -->
+        <div class="section-title">VI. ESTADO Y CONDICIÓN DEL SISTEMA</div>
+        
+        <div class="components-list">
+            <div class="component-item">✓ Código fuente: Completo y funcional</div>
+            <div class="component-item">✓ Base de datos: Configurada e importada</div>
+            <div class="component-item">✓ Dependencias: Instaladas y verificadas</div>
+            <div class="component-item">✓ Seguridad: Implementada según estándares</div>
+            <div class="component-item">✓ Documentación: Completa</div>
+            <div class="component-item">✓ Pruebas: Realizadas y verificadas</div>
+            <div class="component-item">✓ Listo para: Producción y despliegue inmediato</div>
+        </div>
+        
+        <!-- Final Statement -->
+        <div class="content" style="margin-top: 40px; text-align: center; font-style: italic; border-top: 2px solid #1a73e8; padding-top: 20px;">
+            <p>
+                Se entrega el presente proyecto en estado óptimo de funcionamiento, con toda la 
+                documentación técnica, código fuente, base de datos y recursos necesarios para su 
+                operación inmediata en el Tecnológico Vida Nueva.
+            </p>
+        </div>
+        
+        <!-- Date and Location -->
+        <div class="fecha-lugar">
+            <strong>Quito, _____ de febrero de 2026</strong>
+        </div>
+        
+        <!-- Signatures -->
+        <div class="signatures">
+            <div class="signature-block">
+                <div class="signature-line">_______________________________</div>
+                <div class="signature-title">Mg. Rubèn Jaramillo<br>Docente Desarrollador<br>Tecnológico Vida Nueva</div>
+            </div>
+            
+            <div class="signature-block">
+                <div class="signature-line">_______________________________</div>
+                <div class="signature-title">Ing. Cristina López<br>Directora de Tecnología e Información<br>Tecnológico Vida Nueva</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -48,41 +48,47 @@
                         <option value="">Todos los roles</option>
                         <option value="estudiante" <?= ($filters['rol'] ?? '') === 'estudiante' ? 'selected' : '' ?>>Estudiante</option>
                         <option value="dece" <?= ($filters['rol'] ?? '') === 'dece' ? 'selected' : '' ?>>DECE</option>
-                        <option value="zonal" <?= ($filters['rol'] ?? '') === 'zonal' ? 'selected' : '' ?>>Zonal</option>
-                        <option value="administrador" <?= ($filters['rol'] ?? '') === 'administrador' ? 'selected' : '' ?>>Administrador</option>
+                        <option value="directivo" <?= ($filters['rol'] ?? '') === 'directivo' ? 'selected' : '' ?>>Directivo</option>
+                        <?php if ($_SESSION['user_role'] === 'administrador'): ?>
+                            <option value="zonal" <?= ($filters['rol'] ?? '') === 'zonal' ? 'selected' : '' ?>>Zonal</option>
+                            <option value="administrador" <?= ($filters['rol'] ?? '') === 'administrador' ? 'selected' : '' ?>>Administrador</option>
+                        <?php endif; ?>
                     </select>
                 </div>
-                <div class="form-group" style="margin-bottom: 0; min-width: 250px;">
-                    <label>Institución</label>
-                    <select name="institucion_id" class="searchable-filter" onchange="this.form.submit()">
-                        <option value="">Todas las instituciones</option>
-                        <?php foreach ($institutions as $inst): ?>
-                            <option value="<?= $inst['id'] ?>" <?= ($filters['institucion_id'] ?? '') == $inst['id'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($inst['nombre']) ?> (<?= htmlspecialchars($inst['codigo']) ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                
+                <?php if ($_SESSION['user_role'] === 'administrador'): ?>
+                    <div class="form-group" style="margin-bottom: 0; min-width: 250px;">
+                        <label>Institución</label>
+                        <select name="institucion_id" class="searchable-filter" onchange="this.form.submit()">
+                            <option value="">Todas las instituciones</option>
+                            <?php foreach ($institutions as $inst): ?>
+                                <option value="<?= $inst['id'] ?>" <?= ($filters['institucion_id'] ?? '') == $inst['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($inst['nombre']) ?> (<?= htmlspecialchars($inst['codigo']) ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
 
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label>Zona</label>
-                    <select name="zona" class="form-control" onchange="this.form.submit()">
-                        <option value="">Todas</option>
-                        <?php foreach ($zonasList as $z): ?>
-                            <option value="<?= $z ?>" <?= ($filters['zona'] ?? '') === $z ? 'selected' : '' ?>><?= htmlspecialchars($z) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Zona</label>
+                        <select name="zona" class="form-control" onchange="this.form.submit()">
+                            <option value="">Todas</option>
+                            <?php foreach ($zonasList as $z): ?>
+                                <option value="<?= $z ?>" <?= ($filters['zona'] ?? '') === $z ? 'selected' : '' ?>><?= htmlspecialchars($z) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
 
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label>Distrito</label>
-                    <select name="distrito" class="form-control" onchange="this.form.submit()">
-                        <option value="">Todos</option>
-                        <?php foreach ($distritosList as $d): ?>
-                            <option value="<?= $d ?>" <?= ($filters['distrito'] ?? '') === $d ? 'selected' : '' ?>><?= htmlspecialchars($d) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Distrito</label>
+                        <select name="distrito" class="form-control" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            <?php foreach ($distritosList as $d): ?>
+                                <option value="<?= $d ?>" <?= ($filters['distrito'] ?? '') === $d ? 'selected' : '' ?>><?= htmlspecialchars($d) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif; ?>
 
                 <div class="form-group" style="margin-bottom: 0;">
                     <label>Curso</label>
@@ -104,15 +110,6 @@
                     </select>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label>Bachillerato</label>
-                    <select name="bachillerato" class="form-control" onchange="this.form.submit()">
-                        <option value="">Todos</option>
-                        <?php foreach ($bachilleratosList as $b): ?>
-                            <option value="<?= $b ?>" <?= ($filters['bachillerato'] ?? '') === $b ? 'selected' : '' ?>><?= htmlspecialchars($b) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
                 <div class="form-group" style="margin-bottom: 0; flex-grow: 1;">
                     <label>Buscar</label>
                     <input type="text" name="search" class="form-control" placeholder="Nombre, usuario o email..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
@@ -144,23 +141,22 @@
                             <td>
                                 <div><strong>Est:</strong> <?= htmlspecialchars($u['nombre']) ?></div>
                                 <div style="font-size: 0.85em; color: #666;"><strong>Rep:</strong> <?= htmlspecialchars($u['apellido']) ?></div>
-                                <?php if ($u['rol'] === 'estudiante'): ?>
+                                <?php if (in_array($u['rol'], ['estudiante', 'directivo'])): ?>
                                     <div style="font-size: 0.85em; color: #444; margin-top: 2px;">
                                         <strong>Cur:</strong> <?= htmlspecialchars($u['curso'] ?? '-') ?> | 
                                         <strong>Par:</strong> <?= htmlspecialchars($u['paralelo'] ?? '-') ?>
-                                    </div>
-                                    <div style="font-size: 0.8em; color: #777;">
-                                        <?= htmlspecialchars($u['bachillerato'] ?? '') ?>
                                     </div>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if (!empty($u['institucion_nombre'])): ?>
                                     <div style="font-weight: 500;"><?= htmlspecialchars($u['institucion_nombre']) ?></div>
-                                    <div style="font-size: 0.85em; color: #666;">
-                                        Zona: <?= htmlspecialchars($u['zona'] ?? '-') ?> | 
-                                        Dist: <?= htmlspecialchars($u['distrito'] ?? '-') ?>
-                                    </div>
+                                    <?php if ($_SESSION['user_role'] === 'administrador'): ?>
+                                        <div style="font-size: 0.85em; color: #666;">
+                                            Zona: <?= htmlspecialchars($u['zona'] ?? '-') ?> | 
+                                            Dist: <?= htmlspecialchars($u['distrito'] ?? '-') ?>
+                                        </div>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span style="color: #999;">Sin institución</span>
                                 <?php endif; ?>
@@ -170,38 +166,48 @@
                                     <select name="role" class="role-select" data-user-id="<?= $u['id'] ?>" form="user-form-<?= $u['id'] ?>">
                                         <option value="estudiante" <?= $u['rol'] === 'estudiante' ? 'selected' : '' ?>>Estudiante</option>
                                         <option value="dece" <?= $u['rol'] === 'dece' ? 'selected' : '' ?>>DECE</option>
-                                        <option value="zonal" <?= $u['rol'] === 'zonal' ? 'selected' : '' ?>>Zonal</option>
-                                        <option value="administrador" <?= $u['rol'] === 'administrador' ? 'selected' : '' ?>>Administrador</option>
+                                        <option value="directivo" <?= $u['rol'] === 'directivo' ? 'selected' : '' ?>>Directivo</option>
+                                        <?php if ($_SESSION['user_role'] === 'administrador'): ?>
+                                            <option value="zonal" <?= $u['rol'] === 'zonal' ? 'selected' : '' ?>>Zonal</option>
+                                            <option value="administrador" <?= $u['rol'] === 'administrador' ? 'selected' : '' ?>>Administrador</option>
+                                        <?php endif; ?>
                                     </select>
                             </td>
                             <td>
                                     <!-- DECE Institution Assignment -->
                                     <div class="assignment-fields dece-assignment-<?= $u['id'] ?> <?= $u['rol'] === 'dece' ? 'show' : '' ?>">
-                                        <select name="institucion_id" class="searchable-select" form="user-form-<?= $u['id'] ?>">
-                                            <option value="">Seleccionar Institución</option>
-                                            <?php foreach ($institutions as $inst): ?>
-                                                <option value="<?= $inst['id'] ?>" 
-                                                    <?= ($u['institucion_id'] ?? '') == $inst['id'] ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($inst['nombre']) ?> (<?= htmlspecialchars($inst['codigo']) ?>)
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                        <?php if ($_SESSION['user_role'] === 'administrador'): ?>
+                                            <select name="institucion_id" class="searchable-select" form="user-form-<?= $u['id'] ?>">
+                                                <option value="">Seleccionar Institución</option>
+                                                <?php foreach ($institutions as $inst): ?>
+                                                    <option value="<?= $inst['id'] ?>" 
+                                                        <?= ($u['institucion_id'] ?? '') == $inst['id'] ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($inst['nombre']) ?> (<?= htmlspecialchars($inst['codigo']) ?>)
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        <?php else: ?>
+                                            <span style="font-size: 0.9em; color: #666;"><?= htmlspecialchars($u['institucion_nombre'] ?? '—') ?></span>
+                                            <input type="hidden" name="institucion_id" value="<?= $u['institucion_id'] ?>" form="user-form-<?= $u['id'] ?>">
+                                        <?php endif; ?>
                                     </div>
 
                                     <!-- Zonal Zone Assignment -->
-                                    <div class="assignment-fields zonal-assignment-<?= $u['id'] ?> <?= $u['rol'] === 'zonal' ? 'show' : '' ?>">
-                                        <select name="zona_id" form="user-form-<?= $u['id'] ?>">
-                                            <option value="">Seleccionar Zona</option>
-                                            <?php foreach ($zonas as $zona): ?>
-                                                <option value="<?= htmlspecialchars($zona) ?>" 
-                                                    <?= ($u['zona_id'] ?? '') == $zona ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($zona) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
+                                    <?php if ($_SESSION['user_role'] === 'administrador'): ?>
+                                        <div class="assignment-fields zonal-assignment-<?= $u['id'] ?> <?= $u['rol'] === 'zonal' ? 'show' : '' ?>">
+                                            <select name="zona_id" form="user-form-<?= $u['id'] ?>">
+                                                <option value="">Seleccionar Zona</option>
+                                                <?php foreach ($zonas as $zona): ?>
+                                                    <option value="<?= htmlspecialchars($zona) ?>" 
+                                                        <?= ($u['zona_id'] ?? '') == $zona ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($zona) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    <?php endif; ?>
 
-                                    <?php if ($u['rol'] === 'estudiante' || $u['rol'] === 'administrador'): ?>
+                                    <?php if ($u['rol'] === 'estudiante' || $u['rol'] === 'directivo' || $u['rol'] === 'administrador'): ?>
                                         <span style="color: #999;">—</span>
                                     <?php endif; ?>
                             </td>
