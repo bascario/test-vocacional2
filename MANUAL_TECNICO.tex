@@ -1,0 +1,1935 @@
+% ===========================================================================
+% MANUAL TÉCNICO - TEST VOCACIONAL
+% Proyecto: test-vocacional
+% Autor: [Equipo de Desarrollo]
+% Fecha: Abril 2025
+% ===========================================================================
+
+\documentclass[12pt, a4paper]{report}
+
+% ---------------------------------------------------------------------------
+% PAQUETES BÁSICOS
+% ---------------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{verbatim}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{minted}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% ---------------------------------------------------------------------------
+% CONFIGURACIÓN DE PÁGINA
+% ---------------------------------------------------------------------------
+\geometry{
+    top=3cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\fancyfoot[C]{}
+\renewcommand{\headrulewidth}{0.5pt}
+
+% ---------------------------------------------------------------------------
+% COLORES PARA CÓDIGO
+% ---------------------------------------------------------------------------
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% ---------------------------------------------------------------------------
+% LISTINGS CONFIGURACIÓN
+% ---------------------------------------------------------------------------
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    framerule=0.6pt
+}
+
+\lstset{style=mystyle}
+
+% Configuración adicional para listings de estructura de directorios
+\lstdefinestyle{dirstyle}{
+    backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    breakatwhitespace=true,
+    frame=single,
+    framerule=0.6pt,
+    numbers=none,
+    showstringspaces=false,
+    language=bash
+}
+
+% ---------------------------------------------------------------------------
+% CONFIGURACIÓN DE SECCIONES
+% ---------------------------------------------------------------------------
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titleformat{\section}
+{\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}
+{\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+% ---------------------------------------------------------------------------
+% META DATOS DEL PDF
+% ---------------------------------------------------------------------------
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Manual Técnico - Test Vocacional},
+    pdfauthor={Equipo de Desarrollo},
+    pdfsubject={Documentación Técnica},
+    pdfkeywords={TestVocacional, RIASEC, PHP, Manual Técnico}
+}
+
+% ---------------------------------------------------------------------------
+% ESTILOS PARA DIAGRAMAS TIKZ (Corrección de estilos no definidos)
+% ---------------------------------------------------------------------------
+\tikzset{
+    entity/.style={rectangle, draw, rounded corners, fill=blue!10, minimum width=2cm, minimum height=1cm, align=center},
+    relation/.style={->, thick, >=stealth},
+    attribute/.style={ellipse, draw, fill=yellow!10}
+}
+
+% ===========================================================================
+% INICIO DEL DOCUMENTO
+% ===========================================================================
+
+\begin{document}
+
+% ---------------------------------------------------------------------------
+% PORTADA
+% ---------------------------------------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge \textbf{MANUAL TÉCNICO}}\\[0.5cm]
+    {\Huge \textbf{TEST VOCACIONAL}}\\[2cm]
+    
+    % Imagen condicional para evitar error si no existe
+   
+    
+    {\Large \textbf{Proyecto: test-vocacional}}\\[0.5cm]
+    {\large Arquitectura Full-Stack MVC}\\[1.5cm]
+    
+    \rule{\textwidth}{0.4pt}\\[1cm]
+    {\large \textbf{Stack Tecnológico}}\\
+    {\large PHP 8.2+ · MySQL · HTML5/CSS3 · JavaScript}\\[1cm]
+    {\large \textbf{Modelo RIASEC (Holland)}}\\[1cm]
+    \rule{\textwidth}{0.4pt}\\[2cm]
+    
+    {\large Versión 1.0}\\[0.5cm]
+    {\large Abril 2025}\\[3cm]
+    
+    {\normalsize \textbf{Este documento contiene:}}\\
+    {\normalsize Documentación técnica completa de arquitectura,}\\
+    {\normalsize configuración, despliegue y mantenimiento.}
+    
+    \vfill
+\end{titlepage}
+
+% ---------------------------------------------------------------------------
+% PÁGINA DE AUTORES
+% ---------------------------------------------------------------------------
+\newpage
+\thispagestyle{empty}
+\vspace*{5cm}
+\begin{flushleft}
+    {\large \textbf{Equipo de Desarrollo}}\\[0.5cm]
+    Rubén Jaramillo / Miguel Ulcuango \\[0.2cm]
+    Contacto: info@desarrollodesoftware.com.ec \\[2cm]
+    
+    {\large \textbf{Ubicación del Proyecto}}\\[0.5cm]
+    \texttt{/Users/test-vocacional} \\[2cm]
+\end{flushleft}
+
+% ---------------------------------------------------------------------------
+% RESUMEN EJECUTIVO
+% ---------------------------------------------------------------------------
+\chapter*{RESUMEN EJECUTIVO}
+\addcontentsline{toc}{chapter}{Resumen Ejecutivo}
+
+El \textbf{Test Vocacional} es una aplicación web full-stack diseñada para evaluar las aptitudes vocacionales de estudiantes mediante el modelo RIASEC de Holland. El sistema evalúa seis categorías principales: Realista, Inventivo/Investigador, Artístico, Social, Emprendedor y Convencional.
+
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Tipo:} Aplicación Web Full-Stack (PHP + MySQL + Frontend)
+    \item \textbf{Arquitectura:} Patrón MVC personalizado
+    \item \textbf{Base de Datos:} MySQL/MariaDB (5 tablas principales)
+    \item \textbf{Usuarios:} Múltiples roles (administrador, zonal, DECE, estudiante)
+    \item \textbf{Reportes:} Generación de PDF, Excel y documentos Word
+    \item \textbf{Stack:} PHP 7.4+, HTML5, CSS3, JavaScript ES6
+\end{itemize}
+
+El sistema está diseñado para instituciones educativas y permite:
+\begin{itemize}
+    \item Administración de usuarios e instituciones
+    \item Gestión de preguntas del test (importación vía Excel)
+    \item Aplicación del test vocacional en línea
+    \item Cálculo automático de perfiles RIASEC
+    \item Generación de informes individuales y grupales
+    \item Paneles específicos por rol de usuario
+\end{itemize}
+
+% ---------------------------------------------------------------------------
+% ÍNDICE
+% ---------------------------------------------------------------------------
+\tableofcontents
+\newpage
+
+\listoffigures
+\newpage
+
+\listoftables
+\newpage
+
+% ===========================================================================
+% CAPÍTULO 1: ARQUITECTURA GENERAL
+% ===========================================================================
+\chapter{ARQUITECTURA GENERAL DEL SISTEMA}
+
+\section{Visión General}
+El proyecto \texttt{test-vocacional} es una aplicación web completa que implementa un sistema de orientación vocacional basado en la teoría tipológica de John L. Holland (RIASEC). La arquitectura sigue un patrón \textbf{MVC (Model-View-Controller)} personalizado sin framework externo, lo que proporciona total control sobre la estructura y permite un fácil mantenimiento.
+
+\section{Tecnologías Principales}
+
+\subsection{Backend}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Tecnología} & \textbf{Descripción} & \textbf{Versión} \\
+\hline
+PHP & Lenguaje de programación server-side & 7.4+ \\
+MySQL & Sistema de gestión de base de datos & 5.7+/8.0 \\
+PDO & Capa de abstracción de base de datos & Native \\
+Composer & Gestor de dependencias PHP & 2.x \\
+\hline
+\end{tabularx}
+\caption{Tecnologías Backend}
+\end{table}
+
+\subsection{Frontend}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Tecnología} & \textbf{Descripción} & \textbf{Versión} \\
+\hline
+HTML5 & Estructura y semántica & Standard \\
+CSS3 & Estilos y diseño & Standard \\
+JavaScript & Lógica del lado del cliente & ES6+ \\
+TCPDF & Generación de PDFs en servidor & 6.4 \\
+PHPSpreadsheet & Generación de Excel & 5.1 \\
+PHPWord & Generación de documentos Word & 1.4 \\
+\hline
+\end{tabularx}
+\caption{Tecnologías Frontend}
+\end{table}
+
+\section{Patrones Arquitectónicos}
+
+\subsection{MVC (Model-View-Controller)}
+El sistema implementa una variante del patrón MVC:
+\begin{itemize}
+    \item \textbf{Models}: Clases que encapsulan acceso a datos (extienden \texttt{BaseModel})
+    \item \textbf{Views}: Vistas PHP que renderizan HTML embebido
+    \item \textbf{Controllers}: Clases que procesan requests y devuelven respuestas
+\end{itemize}
+
+\subsection{Singleton Database}
+Clase \texttt{Database} implementa conexión única PDO:
+\begin{lstlisting}[language=PHP, caption=Patrón Singleton Database]
+class Database {
+    private static $instance = null;
+    private $connection;
+    
+    private function __construct() {
+        $this->connection = new PDO(...);
+    }
+    
+    public static function getInstance() {
+        if (self::$instance == null) {
+            self::$instance = new Database();
+        }
+        return self::$instance;
+    }
+}
+\end{lstlisting}
+
+\subsection{Middleware de Autenticación}
+Filtro \texttt{AuthMiddleware.php} para control de acceso basado en roles.
+
+% ===========================================================================
+% CAPÍTULO 2: ESTRUCTURA DE DIRECTORIOS
+% ===========================================================================
+\chapter{ESTRUCTURA DE DIRECTORIOS}
+
+\section{Organización del Proyecto}
+\begin{lstlisting}[style=dirstyle, caption=Estructura de directorios del proyecto]
+test-vocacional2/
++-- config/              # Configuraciones globales
+|   +-- config.php      # Constantes, BD, SMTP, RIASEC
+|   +-- database.php    # Clase singleton Database (PDO)
++-- controllers/        # Controladores MVC
+|   +-- AdminController.php
+|   +-- AuthController.php
+|   +-- DECEController.php
+|   +-- QuestionController.php
+|   +-- TestController.php
+|   +-- ZonaController.php
++-- models/             # Modelos MVC
+|   +-- BaseModel.php
+|   +-- User.php
+|   +-- Question.php
+|   +-- TestResult.php
+|   +-- VocationalTest.php
+|   +-- Institucion.php
++-- views/              # Vistas (páginas PHP)
+|   +-- layout/
+|   |   +-- header.php
+|   |   +-- footer.php
+|   |   +-- sidebar.php
+|   +-- login.php
+|   +-- register.php
+|   +-- test_form.php
+|   +-- test_results.php
+|   +-- admin_users.php
+|   +-- admin_institutions.php
+|   +-- admin_questions.php
+|   +-- admin_reports.php
+|   +-- admin_dashboard.php
+|   +-- DECE_dashboard.php
+|   +-- zonal_dashboard.php
+|   +-- profile.php
++-- services/           # Servicios de negocio
+|   +-- UserService.php
+|   +-- InstitutionService.php
+|   +-- ReportService.php
++-- middleware/         # Middleware
+|   +-- AuthMiddleware.php
++-- utils/              # Utilidades
+|   +-- PDFGenerator.php
+|   +-- ExcelGenerator.php
+|   +-- EmailSender.php
+|   +-- Recommendations.php
+|   +-- QuestionImporter.php
+|   +-- riasec_helpers.php
++-- assets/             # Recursos estáticos
+|   +-- css/
+|   |   +-- styles.css (~30KB)
+|   |   +-- vendor/
+|   +-- js/
+|   |   +-- main.js
+|   +-- img/
+|       +-- logo.png
++-- storage/            # Logs y archivos temporales
++-- vendor/             # Dependencias Composer
++-- index.php           # Router principal
++-- .htaccess           # RewriteEngine (Apache)
++-- bdd.sql             # Base de datos completa
++-- composer.json       # Dependencias PHP
++-- package.json        # Dependencias Node.js
+\end{lstlisting}
+
+\section{Propósito de Directorios}
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Directorio} & \textbf{Propósito} \\
+\hline
+\texttt{config/} & Almacena configuraciones globales, constantes del sistema y conexión a base de datos \\
+\hline
+\texttt{controllers/} & Contiene los controladores que manejan las peticiones HTTP y la lógica de los endpoints \\
+\hline
+\texttt{models/} & Modelos que representan entidades de datos y operaciones CRUD \\
+\hline
+\texttt{views/} & Plantillas HTML/PHP para renderizar la interfaz de usuario \\
+\hline
+\texttt{services/} & Capa de servicios con lógica de negocio reutilizable \\
+\hline
+\texttt{middleware/} & Filtros para autenticación y autorización de rutas \\
+\hline
+\texttt{utils/} & Utilidades y helpers para generación de reportes y procesamiento \\
+\hline
+\texttt{assets/} & Archivos estáticos (CSS, JS, imágenes) para el frontend \\
+\hline
+\texttt{storage/} & Archivos temporales y logs del sistema \\
+\hline
+\texttt{vendor/} & Dependencias externas instaladas con Composer \\
+\hline
+\end{tabularx}
+\caption{Propósito de Directorios}
+\end{table}
+
+% ===========================================================================
+% CAPÍTULO 3: CONFIGURACIÓN
+% ===========================================================================
+\chapter{CONFIGURACIÓN DEL SISTEMA}
+
+\section{Archivo de Configuración Principal}
+\subsection{config/config.php}
+\begin{lstlisting}[language=PHP, caption=config/config.php]
+<?php
+// Configuración de la base de datos
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'test_vocacional');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_CHARSET', 'utf8mb4');
+
+// Configuración de la aplicación
+define('APP_URL', 'http://localhost/test-vocacional');
+define('APP_EMAIL', 'noreply@testvocacional.edu.ec');
+define('SESSION_LIFETIME', 3600); // 1 hora
+define('PASSWORD_MIN_LENGTH', 6);
+
+// Configuración del test vocacional RIASEC
+define('TEST_QUESTIONS_PER_CATEGORY', 10);
+define('TOTAL_TEST_QUESTIONS', 60);
+define('TEST_RETAKE_MONTHS', 6);
+
+// Umbrales de puntuación RIASEC
+define('APTO_THRESHOLD', 80);       // Puntaje mínimo para apto
+define('POTENCIAL_THRESHOLD', 60);  // Puntaje mínimo para potencial
+
+// Zonas geográficas (Ecuador)
+define('ZONA_COSTAL', 'costal');
+define('ZONA_SIERRA', 'sierra');
+define('ZONA_AMAZONICA', 'amazonica');
+define('ZONA_INSULAR', 'insular');
+
+// Roles del sistema
+define('ROL_ADMIN', 'administrador');
+define('ROL_ZONAL', 'zonal');
+define('ROL_DECE', 'dece');
+define('ROL_ESTUDIANTE', 'estudiante');
+
+// Configuración SMTP (opcional para emails)
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 587);
+define('SMTP_USER', '');
+define('SMTP_PASS', '');
+define('SMTP_FROM', 'Test Vocacional <noreply@testvocacional.edu.ec>');
+
+// Timezone
+date_default_timezone_set('America/Guayaquil');
+?>
+\end{lstlisting}
+
+\section{Conexión a Base de Datos}
+\subsection{config/database.php}
+\begin{lstlisting}[language=PHP, caption=config/database.php]
+<?php
+class Database {
+    private static $instance = null;
+    private $connection;
+    
+    private function __construct() {
+        try {
+            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+            $options = [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ];
+            $this->connection = new PDO($dsn, DB_USER, DB_PASS, $options);
+        } catch (PDOException $e) {
+            die("Error de conexión: " . $e->getMessage());
+        }
+    }
+    
+    public static function getInstance() {
+        if (self::$instance == null) {
+            self::$instance = new Database();
+        }
+        return self::$instance;
+    }
+    
+    public function getConnection() {
+        return $this->connection;
+    }
+    
+    public function prepare($sql) {
+        return $this->connection->prepare($sql);
+    }
+}
+?>
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 4: MODELO DE DATOS
+% ===========================================================================
+\chapter{MODELO DE DATOS}
+
+\section{Diagrama Entidad-Relación}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    scale=0.9,
+    every node/.style={transform shape},
+    entity/.style={
+        rectangle, 
+        draw, 
+        rounded corners, 
+        fill=blue!10, 
+        minimum width=2.2cm, 
+        minimum height=1.2cm, 
+        align=center,
+        font=\small
+    },
+    relation/.style={->, thick}
+]
+    % --- NODOS con coordenadas absolutas ---
+    \node[entity] (usuarios) at (0,0) {usuarios};
+    \node[entity] (instituciones) at (5,0) {instituciones\\educativas};
+    \node[entity] (preguntas) at (0,-3) {preguntas};
+    \node[entity] (detalle) at (5,-3) {respuestas\\detalle};
+    \node[entity] (resultados) at (0,-6) {resultados\\test};
+    
+    % --- RELACIONES ---
+    \draw[relation] (usuarios) -- node[above] {\small 1:N} (detalle);
+    \draw[relation] (preguntas) -- node[above] {\small 1:N} (detalle);
+    \draw[relation] (usuarios) -- node[right] {\small 1:N} (resultados);
+    \draw[relation] (detalle) -- node[right] {\small N:1} (resultados);
+    \draw[relation] (usuarios) -- node[above] {\small N:1} (instituciones);
+\end{tikzpicture}
+\caption{Diagrama ER simplificado del sistema}
+\label{fig:diagrama-er}
+\end{figure}
+
+\section{Tablas Principales}
+
+\subsection{Tabla: usuarios}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+\hline
+id & INT(11) PK AI & Identificador único \\
+cedula & VARCHAR(20) UNIQUE & Número de cédula \\
+nombre & VARCHAR(100) & Nombre completo \\
+email & VARCHAR(100) UNIQUE & Correo electrónico \\
+password & VARCHAR(255) & Contraseña hasheada \\
+rol & ENUM('administrador','zonal','dece','estudiante') & Rol del usuario \\
+institucion\_id & INT(11) FK & Referencia a institución \\
+zona & VARCHAR(50) & Zona geográfica \\
+activo & TINYINT(1) & Estado (activo/inactivo) \\
+created\_at & TIMESTAMP & Fecha de creación \\
+updated\_at & TIMESTAMP & Fecha de actualización \\
+\hline
+\end{tabularx}
+\caption{Estructura de la tabla usuarios}
+\end{table}
+
+\subsection{Tabla: preguntas}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+\hline
+id & INT(11) PK AI & Identificador único \\
+texto & TEXT & Texto de la pregunta \\
+categoria & VARCHAR(50) & Categoría RIASEC \\
+tipo & ENUM('intereses','habilidades','valores') & Tipo de pregunta \\
+orden & INT(11) & Orden de aparición \\
+activo & TINYINT(1) & Estado \\
+created\_at & TIMESTAMP & Fecha creación \\
+\hline
+\end{tabularx}
+\caption{Estructura de la tabla preguntas}
+\end{table}
+
+\subsection{Tabla: respuestas\_detalle}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+\hline
+id & INT(11) PK AI & Identificador único \\
+test\_id & INT(11) FK & Referencia al test \\
+pregunta\_id & INT(11) FK & Referencia a pregunta \\
+respuesta & INT(1) & Valor 1-5 (Likert) \\
+\hline
+\end{tabularx}
+\caption{Estructura de respuestas detalle}
+\end{table}
+
+\subsection{Tabla: resultados\_test}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+\hline
+id & INT(11) PK AI & Identificador \\
+test\_id & INT(11) FK & Referencia test \\
+usuario\_id & INT(11) FK & Usuario \\
+resultados & JSON & Puntuaciones RIASEC en JSON \\
+fecha & DATETIME & Fecha del test \\
+tiempo\_empleado & INT & Tiempo en segundos \\
+\hline
+\end{tabularx}
+\caption{Estructura de resultados de test}
+\end{table}
+
+\subsection{Tabla: instituciones\_educativas}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+\hline
+id & INT(11) PK AI & Identificador \\
+nombre & VARCHAR(255) & Nombre institución \\
+codigo & VARCHAR(50) UNIQUE & Código único \\
+tipo & VARCHAR(50) & Tipo (pública/privada) \\
+direccion & TEXT & Dirección \\
+telefono & VARCHAR(20) & Teléfono \\
+email & VARCHAR(100) & Correo \\
+representante & VARCHAR(100) & Representante \\
+zona & VARCHAR(50) & Zona geográfica \\
+activo & TINYINT(1) & Estado \\
+created\_at & TIMESTAMP & Fecha creación \\
+\hline
+\end{tabularx}
+\caption{Estructura de instituciones}
+\end{table}
+
+% ===========================================================================
+% CAPÍTULO 5: MODELO RIASEC
+% ===========================================================================
+\chapter{MODELO RIASEC (Holland)}
+
+\section{Fundamento Teórico}
+El modelo RIASEC de John L. Holland clasifica las vocaciones en seis categorías:
+\begin{enumerate}[leftmargin=2cm]
+    \item \textbf{R - Realista}: Actividades prácticas, físicas, manuales (ej: ingeniería, construcción)
+    \item \textbf{I - Investigador}: Actividades intelectuales, analíticas, científicas
+    \item \textbf{A - Artístico}: Actividades creativas, expresivas, estéticas
+    \item \textbf{S - Social}: Actividades de servicio, enseñanza, ayuda
+    \item \textbf{E - Emprendedor}: Actividades de liderazgo, persuasivas, comerciales
+    \item \textbf{C - Convencional}: Actividades organizativas, administrativas, detallistas
+\end{enumerate}
+
+\section{Implementación en el Sistema}
+Cada categoría evalúa tres dimensiones:
+\begin{itemize}
+    \item \textbf{Intereses}: Actividades que disfrutaría hacer
+    \item \textbf{Habilidades}: Capacidades naturales
+    \item \textbf{Valores}: Principios y creencias laborales
+\end{itemize}
+
+\section{Cálculo de Puntuaciones}
+\begin{lstlisting}[language=PHP, caption=Algoritmo de cálculo RIASEC]
+class VocationalTest {
+    private $categories = ['R', 'I', 'A', 'S', 'E', 'C'];
+    
+    public function calculate($answers) {
+        $scores = [];
+        foreach ($this->categories as $cat) {
+            $scores[$cat] = 0;
+        }
+        
+        foreach ($answers as $answer) {
+            $question = Question::find($answer['pregunta_id']);
+            $category = $question->categoria; // R, I, A, S, E, C
+            $value = $answer['respuesta'];     // 1-5 Likert
+            $scores[$category] += $value;
+        }
+        
+        // Normalizar a 100%
+        $total = array_sum($scores);
+        foreach ($scores as &$score) {
+            $score = round(($score / $total) * 100, 2);
+        }
+        
+        return $scores;
+    }
+}
+\end{lstlisting}
+
+\section{Interpretación de Resultados}
+Según los puntajes, el sistema determina:
+\begin{itemize}
+    \item \textbf{Apto}: Puntaje ≥ 80\% en al menos una categoría
+    \item \textbf{Potencial}: Puntaje ≥ 60\% en al menos una categoría
+    \item \textbf{En desarrollo}: Puntaje < 60\%
+\end{itemize}
+
+% ===========================================================================
+% CAPÍTULO 6: CONTROLADORES
+% ===========================================================================
+\chapter{CONTROLADORES (Controllers)}
+
+\section{Controller Base}
+Todos los controladores extienden de una clase base con métodos comunes:
+\begin{itemize}
+    \item \textbf{redirect()}: Redirecciones
+    \item \textbf{view()}: Renderizado de vistas
+    \item \textbf{json()}: Respuestas JSON
+    \item \textbf{authCheck()}: Verificación de autenticación
+\end{itemize}
+
+\section{AuthController.php}
+Maneja registro, login y recuperación de contraseñas.
+\begin{lstlisting}[language=PHP, caption=AuthController.php - Métodos principales]
+class AuthController {
+    // POST /register
+    public function register() {
+        Validación de datos → User::createUser() → envío email → login()
+    }
+    
+    // POST /login
+    public function login() {
+        Verificar credenciales → crear sesión → redirect según rol
+    }
+    
+    // POST /logout
+    public function logout() {
+        Destruir sesión → redirect a login
+    }
+    
+    // GET/POST /recover
+    public function recoverPassword() {
+        Generar token → enviar email de recuperación
+    }
+}
+\end{lstlisting}
+
+\section{TestController.php}
+Gestiona el test vocacional y resultados.
+\begin{lstlisting}[language=PHP, caption=TestController.php - Flujo del test]
+class TestController {
+    // GET /test
+    public function showTest() {
+        Cargar preguntas filtradas por categoría → mostrar formulario
+    }
+    
+    // POST /test/submit
+    public function submit() {
+        Validar respuestas → VocationalTest::calculate()
+        → Guardar resultados → Generar PDF
+        → Redirect /results
+    }
+    
+    // GET /results
+    public function showResults() {
+        Obtener resultados del usuario → Calcular recomendaciones
+        → Mostrar gráfico RIASEC → Enlaces a ReportService
+    }
+}
+\end{lstlisting}
+
+\section{AdminController.php}
+Panel de administración completo.
+\begin{lstlisting}[language=PHP, caption=AdminController.php - Funcionalidades]
+class AdminController {
+    // GET /admin/dashboard
+    public function dashboard() {
+        Estadísticas globales: usuarios, tests, instituciones
+    }
+    
+    // CRUD /admin/users
+    public function users() {
+        Listar, crear, editar, eliminar, activar/desactivar usuarios
+    }
+    
+    // CRUD /admin/institutions
+    public function institutions() {
+        Gestión completa de instituciones educativas
+    }
+    
+    // CRUD /admin/questions
+    public function questions() {
+        Gestión del banco de preguntas RIASEC
+        Importación desde Excel → QuestionImporter
+    }
+    
+    // Reports /admin/reports/*
+    public function reports() {
+        Reportes individuales y grupales via ReportService
+        Exportación PDF/Excel
+    }
+}
+\end{lstlisting}
+
+\section{DECEController.php - ZonaController.php}
+Paneles específicos con funcionalidades limitadas.
+
+% ===========================================================================
+% CAPÍTULO 7: MODELOS (Models)
+% ===========================================================================
+\chapter{MODELOS (Models)}
+
+\section{BaseModel.php}
+Clase base con operaciones CRUD genéricas.
+\begin{lstlisting}[language=PHP, caption=BaseModel.php]
+abstract class BaseModel {
+    protected $db;
+    protected $table;
+    protected $primaryKey = 'id';
+    
+    public function __construct() {
+        $this->db = Database::getInstance()->getConnection();
+    }
+    
+    public function findAll($conditions = [], $orderBy = null) {
+        $sql = "SELECT * FROM {$this->table}";
+        // ... WHERE conditions
+        // ... ORDER BY
+    }
+    
+    public function findById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table}
+                                    WHERE {$this->primaryKey} = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+    
+    public function save($data) {
+        if(isset($data[$this->primaryKey])) {
+            return $this->update($data);
+        } else {
+            return $this->insert($data);
+        }
+    }
+    
+    public function delete($id) {
+        $stmt = $this->db->prepare("DELETE FROM {$this->table}
+                                    WHERE {$this->primaryKey} = ?");
+        return $stmt->execute([$id]);
+    }
+}
+\end{lstlisting}
+
+\section{Modelos Específicos}
+
+\subsection{User.php}
+\begin{lstlisting}[language=PHP]
+class User extends BaseModel {
+    protected $table = 'usuarios';
+    
+    public function findByUsername($username) {
+        $stmt = $this->db->prepare("SELECT * FROM usuarios 
+                                    WHERE email = ? OR cedula = ?");
+        $stmt->execute([$username, $username]);
+        return $stmt->fetch();
+    }
+    
+    public function verifyPassword($password, $hash) {
+        return password_verify($password, $hash);
+    }
+    
+    public function hashPassword($password) {
+        return password_hash($password, PASSWORD_BCRYPT);
+    }
+    
+    public function getByRole($rol) {
+        return $this->findAll(['rol' => $rol]);
+    }
+    
+    public function canTakeTest() {
+        // Verifica si han pasado 6 meses desde último test
+    }
+}
+\end{lstlisting}
+
+\subsection{VocationalTest.php}
+Manejo de tests y cálculos RIASEC.
+\begin{lstlisting}[language=PHP]
+class VocationalTest extends BaseModel {
+    protected $table = 'resultados_test';
+    
+    public function calculateResults($answers) {
+        $categories = ['R','I','A','S','E','C'];
+        $scores = array_fill_keys($categories, 0);
+        
+        foreach($answers as $answer) {
+            $question = Question::find($answer['pregunta_id']);
+            $cat = $question['categoria'];
+            $scores[$cat] += $answer['respuesta'];
+        }
+        
+        // Normalización y clasificación
+        return $this->normalizeScores($scores);
+    }
+    
+    public function getRecommendations($scores) {
+        // Lógica de recomendaciones basada en puntajes
+        $maxCat = array_search(max($scores), $scores);
+        return $this->generateProfile($maxCat);
+    }
+}
+\end{lstlisting}
+
+\subsection{Question.php}
+\begin{lstlisting}[language=PHP]
+class Question extends BaseModel {
+    protected $table = 'preguntas';
+    
+    public function getByCategory($category) {
+        return $this->findAll(['categoria' => $category, 'activo' => 1]);
+    }
+    
+    public function importFromExcel($filePath) {
+        // Importación masiva de preguntas
+        $importer = new QuestionImporter();
+        return $importer->import($filePath);
+    }
+}
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 8: VISTAS (Views)
+% ===========================================================================
+\chapter{VISTAS (Views)}
+
+\section{Estructura de Vistas}
+Las vistas están organizadas en:
+\begin{itemize}
+    \item \textbf{layout/}: Componentes comunes (header, footer, sidebar)
+    \item \textbf{login/register}: Autenticación
+    \item \textbf{test/}: Formulario y resultados del test
+    \item \textbf{admin/}: Panel administrativo
+    \item \textbf{DECE/}: Panel de bienestar estudiantil
+    \item \textbf{zonal/}: Reportes por zona
+\end{itemize}
+
+\section{Layout Principal}
+\begin{lstlisting}[language=HTML, caption=views/layout/header.php]
+<header class="main-header">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="/assets/img/logo.png" alt="Test Vocacional">
+            </a>
+            <div class="navbar-nav ms-auto">
+                <?php if(isset($_SESSION['user_id'])): ?>
+                    <span class="nav-link">Bienvenido, <?= $_SESSION['nombre'] ?></span>
+                    <a href="/logout" class="btn btn-outline-danger">Cerrar Sesión</a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </nav>
+</header>
+\end{lstlisting}
+
+\section{Vista del Test (test\_form.php)}
+\begin{lstlisting}[language=HTML, caption=views/test_form.php - Fragmento]
+<div class="test-container">
+    <div class="progress-bar">
+        <div class="progress" style="width: <?= ($currentQuestion/60)*100 ?>%"></div>
+    </div>
+    
+    <?php foreach($categories as $cat): ?>
+        <section class="category-section" id="cat-<?= $cat ?>">
+            <h3><?= $categoryLabels[$cat] ?></h3>
+            <?php foreach($questions[$cat] as $q): ?>
+                <div class="question-card">
+                    <p><?= htmlspecialchars($q['texto']) ?></p>
+                    <div class="likert-scale">
+                        <input type="radio" name="q<?= $q['id'] ?>" value="1">
+                        <input type="radio" name="q<?= $q['id'] ?>" value="2">
+                        <input type="radio" name="q<?= $q['id'] ?>" value="3">
+                        <input type="radio" name="q<?= $q['id'] ?>" value="4">
+                        <input type="radio" name="q<?= $q['id'] ?>" value="5">
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </section>
+    <?php endforeach; ?>
+</div>
+\end{lstlisting}
+
+\section{Vista de Resultados (test\_results.php)}
+Muestra:
+\begin{itemize}
+    \item Gráfico de barras con puntajes RIASEC (Chart.js)
+    \item Top 3 categorías
+    \item Carreras recomendadas
+    \item Botones de exportación (PDF, Excel)
+\end{itemize}
+
+% ===========================================================================
+% CAPÍTULO 9: SERVICIOS (Services)
+% ===========================================================================
+\chapter{SERVICIOS (Business Logic)}
+
+\section{ReportService.php}
+Genera informes en múltiples formatos.
+\begin{lstlisting}[language=PHP, caption=ReportService.php]
+class ReportService {
+    private $pdfGenerator;
+    private $excelGenerator;
+    private $wordGenerator;
+    
+    public function __construct() {
+        $this->pdfGenerator = new PDFGenerator();
+        $this->excelGenerator = new ExcelGenerator();
+        $this->wordGenerator = new WordGenerator();
+    }
+    
+    public function generateIndividualReport($userId) {
+        $user = User::find($userId);
+        $results = $this->getLatestResults($userId);
+        $recommendations = $this->getRecommendations($results);
+        
+        // Generar PDF
+        return $this->pdfGenerator->generate(
+            'reporte_individual',
+            compact('user','results','recommendations')
+        );
+    }
+    
+    public function generateGroupReport($institutionId) {
+        $students = User::getByInstitution($institutionId);
+        $stats = $this->calculateGroupStats($students);
+        
+        return $this->excelGenerator->generateGroupReport(
+            $stats,
+            $institutionId
+        );
+    }
+}
+\end{lstlisting}
+
+\section{UserService.php}
+Lógica de negocio para gestión de usuarios.
+\begin{lstlisting}[language=PHP]
+class UserService {
+    public function register($data) {
+        // Validaciones
+        if($this->userExists($data['email'], $data['cedula'])) {
+            throw new Exception("Usuario ya existe");
+        }
+        
+        $user = new User();
+        $hashed = $user->hashPassword($data['password']);
+        $data['password'] = $hashed;
+        
+        return $user->create($data);
+    }
+    
+    public function authenticate($email, $password) {
+        $user = new User();
+        $found = $user->findByUsername($email);
+        
+        if($found && $user->verifyPassword($password, $found['password'])) {
+            return $found;
+        }
+        return false;
+    }
+}
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 10: UTILIDADES (Utils)
+% ===========================================================================
+\chapter{UTILIDADES (Utils)}
+
+\section{PDFGenerator.php}
+Generación de reportes en PDF usando TCPDF.
+\begin{lstlisting}[language=PHP]
+class PDFGenerator {
+    private $pdf;
+    
+    public function __construct() {
+        $this->pdf = new TCPDF();
+        $this->pdf->SetCreator(PDF_CREATOR);
+        $this->pdf->SetAuthor('Test Vocacional');
+        $this->pdf->SetMargins(20, 20, 20);
+    }
+    
+    public function generate($template, $data) {
+        ob_start();
+        include __DIR__ . "/../views/reports/{$template}.php";
+        $html = ob_get_clean();
+        
+        $this->pdf->AddPage();
+        $this->pdf->writeHTML($html, true, false, true, false, '');
+        
+        return $this->pdf->Output('reporte.pdf', 'D');
+    }
+}
+\end{lstlisting}
+
+\section{ExcelGenerator.php}
+Generación de hojas de cálculo con PHPSpreadsheet.
+\begin{lstlisting}[language=PHP]
+class ExcelGenerator {
+    public function generateGroupReport($stats, $institutionId) {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Encabezados
+        $sheet->setCellValue('A1', 'Institución');
+        $sheet->setCellValue('B1', $stats['institution_name']);
+        
+        // Estadísticas por categoría
+        $row = 3;
+        foreach($stats['categories'] as $cat => $data) {
+            $sheet->setCellValue("A{$row}", $cat);
+            $sheet->setCellValue("B{$row}", $data['avg']);
+            $sheet->setCellValue("C{$row}", $data['count']);
+            $row++;
+        }
+        
+        return $spreadsheet->writeToFile('reporte.xlsx');
+    }
+}
+\end{lstlisting}
+
+\section{EmailSender.php}
+Envío de correos electrónicos.
+\begin{lstlisting}[language=PHP]
+class EmailSender {
+    private $smtp;
+    
+    public function send($to, $subject, $body, $isHtml = true) {
+        $mail = new PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host = SMTP_HOST;
+        $mail->SMTPAuth = true;
+        $mail->Username = SMTP_USER;
+        $mail->Password = SMTP_PASS;
+        
+        $mail->setFrom(SMTP_FROM);
+        $mail->addAddress($to);
+        $mail->Subject = $subject;
+        $mail->Body = $body;
+        $mail->isHTML($isHtml);
+        
+        return $mail->send();
+    }
+}
+\end{lstlisting}
+
+\section{QuestionImporter.php}
+Importación masiva de preguntas desde Excel.
+\begin{lstlisting}[language=PHP]
+class QuestionImporter {
+    public function import($filePath) {
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $spreadsheet = $reader->load($filePath);
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        $imported = 0;
+        foreach($sheet->getRowIterator(2) as $row) {
+            $data = $this->extractRowData($row);
+            Question::create($data);
+            $imported++;
+        }
+        
+        return $imported;
+    }
+}
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 11: MIDDLEWARE
+% ===========================================================================
+\chapter{MIDDLEWARE}
+
+\section{AuthMiddleware.php}
+Control de acceso basado en roles.
+\begin{lstlisting}[language=PHP, caption=AuthMiddleware.php]
+class AuthMiddleware {
+    private $allowedRoles = [];
+    
+    public function __construct($roles = []) {
+        $this->allowedRoles = $roles;
+    }
+    
+    public function handle() {
+        session_start();
+        
+        if(!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit;
+        }
+        
+        if(!empty($this->allowedRoles)) {
+            if(!in_array($_SESSION['rol'], $this->allowedRoles)) {
+                http_response_code(403);
+                die("Acceso denegado");
+            }
+        }
+    }
+    
+    public static function requireLogin() {
+        $auth = new AuthMiddleware();
+        $auth->handle();
+    }
+}
+\end{lstlisting}
+
+\section{Uso en Controladores}
+\begin{lstlisting}[language=PHP]
+// En cada controlador
+AuthMiddleware::requireLogin();
+
+// O con roles específicos
+$auth = new AuthMiddleware(['administrador', 'zonal']);
+$auth->handle();
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 12: RUTEO Y .HTACCESS
+% ===========================================================================
+\chapter{RUTEO Y CONFIGURACIÓN WEB}
+
+\section{index.php - Router Principal}
+\begin{lstlisting}[language=PHP, caption=index.php - Enrutador]
+<?php
+session_start();
+require_once 'config/database.php';
+require_once 'controllers/AuthController.php';
+require_once 'controllers/TestController.php';
+require_once 'controllers/AdminController.php';
+// ... otros
+
+$request = $_SERVER['REQUEST_URI'];
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Remover /test-vocacional/ del path
+$path = str_replace('/test-vocacional', '', $request);
+
+// Router switch
+switch($path) {
+    case '/':
+        require_once 'views/home.php';
+        break;
+        
+    case '/login':
+        if($method == 'POST') {
+            $controller = new AuthController();
+            $controller->login();
+        } else {
+            require_once 'views/login.php';
+        }
+        break;
+        
+    case '/test':
+        if($method == 'POST') {
+            $controller = new TestController();
+            $controller->submit();
+        } else {
+            $controller = new TestController();
+            $controller->showTest();
+        }
+        break;
+        
+    case '/admin/users':
+        $auth = new AuthMiddleware(['administrador']);
+        $auth->handle();
+        $controller = new AdminController();
+        $controller->users();
+        break;
+        
+    // ... más rutas
+}
+\end{lstlisting}
+
+\section{.htaccess - URL Amigables}
+\begin{lstlisting}[language=Apache, caption=.htaccess]
+RewriteEngine On
+RewriteBase /test-vocacional/
+
+# Reglas de reescritura
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+# Protección de directorios
+<Files "config">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+<Files "database.php">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# UTF-8
+AddDefaultCharset UTF-8
+
+# Security headers
+Header set X-Content-Type-Options nosniff
+Header set X-Frame-Options DENY
+Header set X-XSS-Protection "1; mode=block"
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 13: BASE DE DATOS - DETALLES
+% ===========================================================================
+\chapter{BASE DE DATOS - DETALLES COMPLETOS}
+
+\section{Script SQL Completo (bdd.sql)}
+% Nota: Reemplazar con captura real o eliminar si no existe
+% \includegraphics[width=\textwidth]{bdd_sql_sample.png}
+
+\section{Script de Creación}
+Ver archivo \texttt{bdd.sql} adjunto. Estructura mínima:
+\begin{lstlisting}[language=SQL]
+CREATE DATABASE IF NOT EXISTS test_vocacional;
+USE test_vocacional;
+
+-- Tabla usuarios
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cedulaa VARCHAR(8) UNIQUE NOT NULL,
+    nombree VARCHAR(10) NOT NULL,
+    email VARCHAR(10) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    institucion_id INT,
+    zona VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (institucion_id) REFERENCES instituciones_educativas(id)
+);
+
+-- Tabla preguntas
+CREATE TABLE preguntas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    texto TEXT NOT NULL,
+    activo TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla respuestas_detalle
+CREATE TABLE respuestas_detalle (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    test_id INT NOT NULL,
+    pregunta_id INT NOT NULL,
+    FOREIGN KEY (pregunta_id) REFERENCES preguntas(id)
+);
+
+-- Tabla resultados_test
+CREATE TABLE resultados_test (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    test_id INT UNIQUE,
+    usuario_id INT NOT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+-- Tabla instituciones_educativas
+CREATE TABLE instituciones_educativas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    codigo VARCHAR(50) UNIQUE,
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    representante VARCHAR(100),
+    zona VARCHAR(50),
+    activo TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\section{Índices Recomendados}
+\begin{lstlisting}[language=SQL]
+-- Para búsquedas rápidas por usuario
+CREATE INDEX idx_usuarios_email ON usuarios(email);
+CREATE INDEX idx_usuarios_cedula ON usuarios(cedula);
+CREATE INDEX idx_usuarios_rol ON usuarios(rol);
+
+-- Para consultas de preguntas
+CREATE INDEX idx_preguntas_categoria ON preguntas(categoria);
+CREATE INDEX idx_preguntas_tipo ON preguntas(tipo);
+
+-- Para reportes
+CREATE INDEX idx_resultados_usuario ON resultados_test(usuario_id);
+CREATE INDEX idx_resultados_fecha ON resultados_test(fecha);
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 14: SEGURIDAD
+% ===========================================================================
+\chapter{SEGURIDAD DEL SISTEMA}
+
+\section{Medidas Implementadas}
+
+\subsection{Autenticación}
+\begin{itemize}
+    \item \textbf{Password hashing}: bcrypt (PASSWORD\_BCRYPT)
+    \item \textbf{Sesiones PHP}: config.session\_lifetime = 3600s
+    \item \textbf{CSRF Token}: Implementado en formularios críticos
+    \item \textbf{Login attempts}: Límite configurable
+\end{itemize}
+
+\subsection{Autorización}
+\begin{itemize}
+    \item Middleware de roles por endpoint
+    \item Validación de propiedad de recursos
+    \item Principio de mínimo privilegio
+\end{itemize}
+
+\subsection{Protección de Datos}
+\begin{itemize}
+    \item \textbf{SQL Injection}: Prepared statements con PDO
+    \item \textbf{XSS}: htmlspecialchars() en output
+    \item \textbf{File Upload}: Validación de tipos y extensiones
+\end{itemize}
+
+\section{Código de Seguridad}
+\subsection{Protección CSRF}
+\begin{lstlisting}[language=PHP]
+class CSRFProtection {
+    public static function generateToken() {
+        if(!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+    
+    public static function validate($token) {
+        return hash_equals($_SESSION['csrf_token'], $token);
+    }
+}
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 15: API Y ENDPOINTS
+% ===========================================================================
+\chapter{API Y ENDPOINTS}
+
+\section{Endpoints HTTP}
+
+\subsection{Autenticación}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
+\hline
+\textbf{Ruta} & \textbf{Método} & \textbf{Controlador} & \textbf{Descripción} \\
+\hline
+/login & POST & AuthController & Autenticación de usuario \\
+/login & GET & AuthController & Formulario de login \\
+/register & POST & AuthController & Registro de nuevo usuario \\
+/register & GET & AuthController & Formulario de registro \\
+/logout & GET & AuthController & Cerrar sesión \\
+/recover & POST & AuthController & Recuperar contraseña \\
+/recover & GET & AuthController & Formulario recuperación \\
+\hline
+\end{tabularx}
+\caption{Endpoints de autenticación}
+\end{table}
+
+\subsection{Test Vocacional}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
+\hline
+/test & GET & TestController & Mostrar formulario del test \\
+/test/submit & POST & TestController & Enviar respuestas y calcular resultados \\
+/results & GET & TestController & Ver resultados del test \\
+/results/export/pdf & GET & TestController & Exportar PDF individual \\
+/results/export/excel & GET & TestController & Exportar Excel individual \\
+/test/retake & POST & TestController & Repetir test (verifica 6 meses) \\
+\hline
+\end{tabularx}
+\caption{Endpoints del test}
+\end{table}
+
+\subsection{Administración}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
+\hline
+/admin & GET & AdminController & Dashboard administrativo \\
+/admin/users & GET & AdminController & Listar usuarios \\
+/admin/users/create & POST & AdminController & Crear usuario \\
+/admin/users/{id}/edit & POST & AdminController & Editar usuario \\
+/admin/users/{id}/delete & POST & AdminController & Eliminar usuario \\
+/admin/institutions & GET & AdminController & Gestionar instituciones \\
+/admin/questions & GET & AdminController & Banco de preguntas \\
+/admin/questions/import & POST & AdminController & Importar preguntas Excel \\
+/admin/reports/individual & GET & AdminController & Reporte individual \\
+/admin/reports/group & GET & AdminController & Reporte grupal \\
+/admin/reports/generate & POST & AdminController & Generar reportes \\
+\hline
+\end{tabularx}
+\caption{Endpoints de administración}
+\end{table}
+
+\subsection{Paneles Específicos}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
+\hline
+/dece & GET & DECEController & Dashboard DECE \\
+/dece/students & GET & DECEController & Estudiantes asignados \\
+/dece/follow-up & GET & DECEController & Seguimiento \\
+/zona & GET & ZonaController & Dashboard zonal \\
+/zona/reports & GET & ZonaController & Reportes por zona \\
+/zona/institutions & GET & ZonaController & Instituciones zona \\
+/profile & GET & - & Perfil de usuario \\
+/profile/update & POST & - & Actualizar perfil \\
+/profile/change-password & POST & - & Cambiar contraseña \\
+\hline
+\end{tabularx}
+\caption{Endpoints de paneles específicos}
+\end{table}
+
+\section{Esquema de Respuestas HTTP}
+
+\subsection{200 OK - Éxito}
+\begin{lstlisting}[language=JSON]
+{
+    "success": true,
+    "data": { /* contenido */ },
+    "message": "Operación exitosa"
+}
+\end{lstlisting}
+
+\subsection{400 Bad Request - Error de validación}
+\begin{lstlisting}[language=JSON]
+{
+    "success": false,
+    "error": "VALIDATION_ERROR",
+    "message": "Los datos ingresados no son válidos",
+    "details": {
+        "field": "email",
+        "reason": "Formato de email inválido"
+    }
+}
+\end{lstlisting}
+
+\subsection{401 Unauthorized - No autenticado}
+\begin{lstlisting}[language=JSON]
+{
+    "success": false,
+    "error": "UNAUTHORIZED",
+    "message": "Debe iniciar sesión para acceder"
+}
+\end{lstlisting}
+
+\subsection{403 Forbidden - Sin permisos}
+\begin{lstlisting}[language=JSON]
+{
+    "success": false,
+    "error": "FORBIDDEN",
+    "message": "No tiene permisos para acceder a este recurso"
+}
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 16: DESPLIEGUE
+% ===========================================================================
+\chapter{DESPLIEGUE Y CONFIGURACIÓN}
+
+\section{Requisitos del Sistema}
+
+\subsection{Entorno de Producción}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Componente} & \textbf{Requisitos} & \textbf{Versión} \\
+\hline
+Servidor Web & Apache 2.4+ (con mod\_rewrite) / Nginx & - \\
+PHP & Intérprete con extensiones & 7.4 o superior \\
+MySQL & Base de datos & 5.7+ u 8.0 \\
+Memoria & RAM mínima & 512 MB \\
+Espacio & Almacenamiento & 500 MB \\
+\hline
+\end{tabularx}
+\caption{Requisitos de infraestructura}
+\end{table}
+
+\subsection{Extensiones PHP Requeridas}
+\begin{lstlisting}[language=Bash]
+php -m | grep -E "pdo|pdo_mysql|mysqli|mbstring|openssl|gd|zip|xml|json|curl"
+\end{lstlisting}
+Extensiones necesarias:
+\begin{itemize}
+    \item \textbf{pdo} y \textbf{pdo\_mysql}: Acceso a base de datos
+    \item \textbf{mbstring}: Soporte UTF-8
+    \item \textbf{openssl}: Encriptación y hashing
+    \item \textbf{zip/gd}: Manipulación de imágenes y archivos
+    \item \textbf{json}: Respuestas API
+\end{itemize}
+
+\section{Instalación Paso a Paso}
+
+\subsection{1. Clonar Repositorio}
+\begin{lstlisting}[language=Bash]
+cd /var/www/html
+git clone <repository-url> test-vocacional
+cd test-vocacional
+\end{lstlisting}
+
+\subsection{2. Instalar Dependencias PHP}
+\begin{lstlisting}[language=Bash]
+composer install --no-dev --optimize-autoloader
+\end{lstlisting}
+
+\subsection{3. Configurar Base de Datos}
+\begin{lstlisting}[language=Bash]
+mysql -u root -p < bdd.sql
+\end{lstlisting}
+Modificar \texttt{config/config.php} con credenciales reales.
+
+\subsection{4. Permisos de Archivos}
+\begin{lstlisting}[language=Bash]
+chmod 755 storage/
+chmod 644 .htaccess config/*.php
+\end{lstlisting}
+
+\subsection{5. Configurar Virtual Host (Apache)}
+\begin{lstlisting}[language=Apache]
+<VirtualHost *:80>
+    ServerName testvocacional.edu.ec
+    DocumentRoot /var/www/html/test-vocacional
+    <Directory /var/www/html/test-vocacional>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+\end{lstlisting}
+
+\subsection{6. Habilitar HTTPS (Opcional)}
+\begin{lstlisting}[language=Bash]
+# Con Let's Encrypt
+certbot --apache -d testvocacional.edu.ec
+\end{lstlisting}
+
+\section{Configuración de Producción}
+
+\subsection{config/config.php - Producción}
+\begin{lstlisting}[language=PHP]
+// Desactivar errores en producción
+ini_set('display_errors', 0);
+error_reporting(0);
+
+// Configuraciones de seguridad
+session.cookie_httponly = 1
+session.cookie_secure = 1  // si HTTPS
+
+// SMTP configurado para envío real
+define('SMTP_HOST', 'mail.testvocacional.edu.ec');
+define('SMTP_USER', 'no-reply@testvocacional.edu.ec');
+define('SMTP_PASS', 'secure_password');
+\end{lstlisting}
+
+\subsection{.htaccess - Seguridad}
+\begin{lstlisting}[language=Apache]
+# Protección de archivos sensibles
+<FilesMatch "(^\.|config\.php|database\.php|\.sql)">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Compresión habilitada
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript
+</IfModule>
+
+# Cacheo de assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+\end{lstlisting}
+
+\section{Comandos Útiles}
+
+\subsection{Gestión de Servicios}
+\begin{lstlisting}[language=Bash]
+# Reiniciar Apache
+sudo systemctl restart apache2
+
+# Reiniciar MySQL
+sudo systemctl restart mysql
+
+# Ver logs de PHP
+tail -f /var/log/php_errors.log
+
+# Ver logs de Apache
+tail -f /var/log/apache2/error.log
+\end{lstlisting}
+
+\subsection{Mantenimiento BD}
+\begin{lstlisting}[language=Bash]
+# Backup completo
+mysqldump -u root -p test_vocacional > backup_$(date +%Y%m%d).sql
+
+# Restaurar backup
+mysql -u root -p test_vocacional < backup_20250421.sql
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 17: TESTING
+% ===========================================================================
+\chapter{TESTING Y CALIDAD}
+
+\section{Pruebas Unitarias con PHPUnit}
+Configuración \texttt{phpunit.xml}:
+\begin{lstlisting}[language=XML]
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php">
+    <testsuites>
+        <testsuite name="Application Test Suite">
+            <directory suffix="Test.php">tests/</directory>
+        </testsuite>
+    </testsuites>
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">./</directory>
+        </include>
+    </coverage>
+</phpunit>
+\end{lstlisting}
+
+\section{Ejemplo de Test Unitario}
+\begin{lstlisting}[language=PHP]
+class UserTest extends \PHPUnit\Framework\TestCase {
+    public function testPasswordHash() {
+        $user = new User();
+        $password = "Test123!";
+        
+        $hashed = $user->hashPassword($password);
+        $this->assertNotEquals($password, $hashed);
+        $this->assertTrue($user->verifyPassword($password, $hashed));
+    }
+    
+    public function testScoreCalculation() {
+        $test = new VocationalTest();
+        $answers = [
+            ['pregunta_id'=>1, 'respuesta'=>5],
+            ['pregunta_id'=>2, 'respuesta'=>4],
+        ];
+        
+        $scores = $test->calculate($answers);
+        $this->assertArrayHasKey('R', $scores);
+        $this->assertEquals(100, array_sum($scores));
+    }
+}
+\end{lstlisting}
+
+\section{Ejecutar Tests}
+\begin{lstlisting}[language=Bash]
+# Todos los tests
+./vendor/bin/phpunit
+
+# Con cobertura
+./vendor/bin/phpunit --coverage-html coverage/
+
+# Tests específicos
+./vendor/bin/phpunit tests/UserTest.php
+\end{lstlisting}
+
+% ===========================================================================
+% CAPÍTULO 18: MANTENIMIENTO
+% ===========================================================================
+\chapter{MANTENIMIENTO Y TROUBLESHOOTING}
+
+\section{Tareas de Mantenimiento Regular}
+\begin{itemize}
+    \item \textbf{Diario}: Revisar logs de errores
+    \item \textbf{Semanal}: Backup automático de BD
+    \item \textbf{Mensual}: Limpiar sesiones inactivas, logs antiguos
+    \item \textbf{Trimestral}: Actualizar dependencias (composer update)
+    \item \textbf{Anual}: Revisión de seguridad y auditoría
+\end{itemize}
+
+\section{Logs del Sistema}
+Ubicación de logs importantes:
+\begin{lstlisting}[language=Bash]
+/var/log/apache2/error.log       # Errores Apache
+/var/log/php_errors.log          # Errores PHP
+/var/log/mysql/error.log         # Errores MySQL
+/var/www/test-vocacional/storage/logs/app.log  # Aplicación
+\end{lstlisting}
+
+\section{Problemas Comunes y Soluciones}
+
+\subsection{Error de Conexión a BD}
+\textbf{Síntomas}: "Error de conexión" en pantalla.
+\textbf{Solución}:
+\begin{enumerate}
+    \item Verificar credenciales en config.php
+    \item Comprobar que MySQL está corriendo: \texttt{systemctl status mysql}
+    \item Verificar permisos de usuario en BD
+\end{enumerate}
+
+\subsection{No carga el CSS/JS}
+\textbf{Síntomas}: Sitio sin estilos, JavaScript no funciona.
+\textbf{Solución}:
+\begin{itemize}
+    \item Verificar que \texttt{mod\_rewrite} está activado
+    \item Limpiar cache del navegador
+    \item Revisar permisos de carpeta assets/
+\end{itemize}
+
+\subsection{Error 500 Internal Server}
+\textbf{Síntomas}: Página en blanco o error 500.
+\textbf{Solución}:
+\begin{itemize}
+    \item Verificar logs de PHP: \texttt{tail -f /var/log/php_errors.log}
+    \item Comprobar versión PHP (mínimo 7.4)
+    \item Validar sintaxis de archivos recién modificados
+\end{itemize}
+
+% ===========================================================================
+% CAPÍTULO 19: MEJORAS FUTURAS
+% ===========================================================================
+\chapter{MEJORAS FUTURAS Y CONSIDERACIONES}
+
+\section{Posibles Extensiones}
+\begin{itemize}
+    \item \textbf{Mobile App}: Aplicación React Native/Flutter
+    \item \textbf{API REST}: Para integración con otros sistemas
+    \item \textbf{Machine Learning}: Modelos predictivos más precisos
+    \item \textbf{Multiidioma}: Soporte para múltiples idiomas
+    \item \textbf{Integración SIFA}: Conexión con sistema nacional
+    \item \textbf{Gamificación}: Elementos lúdicos para mayor engagement
+\end{itemize}
+
+\section{Consideraciones de Escalabilidad}
+\begin{itemize}
+    \item Implementar caché con Redis para consultas frecuentes
+    \item Migrar a Laravel/Lumen para mejor estructura
+    \item Usar colas (RabbitMQ) para reportes asíncronos
+    \item Considerar migrar a Docker para despliegue
+\end{itemize}
+
+% ===========================================================================
+% APÉNDICES
+% ===========================================================================
+\appendix
+\chapter{APÉNDICES}
+
+\section{Glosario de Términos}
+\begin{description}[leftmargin=2cm]
+    \item[RIASEC] Modelo tipológico de Holland (Realista, Investigador, Artístico, Social, Emprendedor, Convencional)
+    \item[Likert] Escala de medición ordinal (1-5)
+    \item[MVC] Model-View-Controller (patrón arquitectónico)
+    \item[PDO] PHP Data Objects (capa de abstracción de BD)
+    \item[CSRF] Cross-Site Request Forgery
+    \item[XSS] Cross-Site Scripting
+    \item[DECE] Departamento de Estudios y Consejería Estudiantil
+\end{description}
+
+\section{Tabla de Roles y Permisos}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|l|}
+\hline
+\textbf{Rol} & \textbf{Permisos} & \textbf{Endpoints} \\
+\hline
+\textbf{Administrador} & Todo el sistema & /admin/*, /users/*, /questions/* \\
+\hline
+\textbf{Zonal} & Reportes zona, ver estudiantes & /zona/*, /reports/* \\
+\hline
+\textbf{DECE} & Seguimiento, ver perfiles & /dece/*, /students/* \\
+\hline
+\textbf{Estudiante} & Realizar test, ver resultados & /test, /results, /profile \\
+\hline
+\end{tabularx}
+\caption{Matriz de permisos por rol}
+\end{table}
+
+\section{Códigos de Error}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|X|}
+\hline
+\textbf{Código} & \textbf{Tipo} & \textbf{Descripción} \\
+\hline
+E001 & Auth Error & Usuario no autenticado \\
+\hline
+E002 & Auth Error & Rol insuficiente \\
+\hline
+E003 & Validation & Datos del formulario inválidos \\
+\hline
+E004 & Database & Error de conexión a BD \\
+\hline
+E005 & Database & Registro duplicado \\
+\hline
+E006 & Test & Test ya completado (esperar 6 meses) \\
+\hline
+E007 & Import & Error importando preguntas \\
+\hline
+\end{tabularx}
+\caption{Códigos de error del sistema}
+\end{table}
+
+\section{Contacto y Soporte}
+\begin{itemize}
+    \item \textbf{Email}: soporte@desarrollodesoftware.com.ec
+    \item \textbf{Teléfono}: +593 99 590 2846
+    \item \textbf{Dirección}: cdla Quitumbe OE1420 
+    \item \textbf{Documentación en línea}: https://docs.testvocacional.edu.ec
+    \item \textbf{Repositorio}: https://github.com/bascario/test-vocacional
+\end{itemize}
+
+\section{Licencia}
+\begin{tabularx}{\textwidth}{|X|}
+\hline
+\textbf{Licencia:} Propietaria desarrollodesoftware\\
+\textbf{Copyright:} \textcopyright\ 2026
+\hline
+\end{tabularx}
+
+\section{Changelog}
+\begin{itemize}
+    \item \textbf{v1.0} (septiembre 2025): Versión inicial con funcionalidad completa
+    \item \textbf{v0.9} (diciembre 2025): Beta testing interno
+    \item \textbf{v0.5} (Febrero 2026): MVP con test básico
+\end{itemize}
+
+\end{document}

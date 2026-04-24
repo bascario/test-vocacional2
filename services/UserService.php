@@ -87,7 +87,7 @@ class UserService
             }
 
             // Solo permitir roles adecuados para la gestión escolar
-            $allowedNewRoles = ['estudiante', 'dece', 'directivo'];
+            $allowedNewRoles = ['estudiante', 'dece', 'directivo', 'cuenta_oculta'];
             if (!in_array($newRole, $allowedNewRoles)) {
                 throw new Exception('Acceso denegado: no tienes permiso para otorgar este rol');
             }
@@ -173,5 +173,28 @@ class UserService
         }
 
         return $this->userModel->updatePassword($targetUserId, $newPassword);
+    }
+
+    /**
+     * Actualiza el estado de pago de un usuario.
+     *
+     * @param array $currentUser Datos del usuario actual.
+     * @param int $targetUserId ID del usuario objetivo.
+     * @param string $paymentStatus Nuevo estado de pago.
+     * @return bool Resultado de la actualización.
+     * @throws Exception Si no tiene permiso o el estado es inválido.
+     */
+    public function updatePaymentStatus($currentUser, int $targetUserId, string $paymentStatus)
+    {
+        if (empty($currentUser['rol']) || $currentUser['rol'] !== 'cuenta_oculta') {
+            throw new Exception('Acceso denegado: no tienes permiso para actualizar el estado de pago');
+        }
+
+        $allowed = ['paid', 'unpaid'];
+        if (!in_array($paymentStatus, $allowed, true)) {
+            throw new Exception('Estado de pago inválido');
+        }
+
+        return $this->userModel->updatePaymentStatus($targetUserId, $paymentStatus);
     }
 }

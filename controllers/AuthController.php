@@ -117,6 +117,12 @@ class AuthController
                 $user = $this->userModel->authenticate($username, $password);
 
                 if ($user) {
+                    if (!$this->userModel->isPaymentAllowed($user)) {
+                        $_SESSION['error'] = 'Tu cuenta está suspendida por falta de pago. Contacta con soporte.';
+                        header('Location: /test-vocacional/cuenta-suspendida');
+                        exit;
+                    }
+
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['user_username'] = $user['username'];
                     $_SESSION['user_role'] = $user['rol'];
@@ -209,6 +215,17 @@ class AuthController
         session_destroy();
         header('Location: /test-vocacional/login');
         exit;
+    }
+
+    /**
+     * Mostrar página de cuenta suspendida.
+     */
+    public function suspended()
+    {
+        if (!empty($_SESSION['user_id'])) {
+            $user = $this->userModel->find($_SESSION['user_id']);
+        }
+        require_once 'views/cuenta_suspendida.php';
     }
 
     /**

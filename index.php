@@ -47,6 +47,12 @@ switch ($request) {
         $controller->logout();
         break;
 
+    case '/cuenta-suspendida':
+        require_once 'controllers/AuthController.php';
+        $controller = new AuthController();
+        $controller->suspended();
+        break;
+
     case '/auth/changePassword':
         require_once 'middleware/AuthMiddleware.php';
         AuthMiddleware::checkAuth();
@@ -279,6 +285,24 @@ switch ($request) {
         require_once 'controllers/AdminController.php';
         $controller = new AdminController();
         $controller->changeUserPassword();
+        break;
+
+    case '/admin/payment-status':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        AuthMiddleware::checkRole(['cuenta_oculta']);
+        require_once 'controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->paymentStatus();
+        break;
+
+    case '/admin/payment-status/update':
+        require_once 'middleware/AuthMiddleware.php';
+        AuthMiddleware::checkAuth();
+        AuthMiddleware::checkRole(['cuenta_oculta']);
+        require_once 'controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->updatePaymentStatus();
         break;
 
     case '/institutions/search':

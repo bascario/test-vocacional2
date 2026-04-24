@@ -1,0 +1,1446 @@
+% ===========================================================================
+% MANUAL DE USUARIO - TEST VOCACIONAL
+% Proyecto: test-vocacional
+% Destinatario: Usuarios finales del sistema
+% Fecha: Abril 2025
+% ===========================================================================
+
+\documentclass[12pt, a4paper]{report}
+
+% ---------------------------------------------------------------------------
+% PAQUETES BÁSICOS
+% ---------------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{verbatim}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{minted}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{pifont}        % Para símbolos checkmark/X
+\usepackage{awesomebox}    % Para iconos (nota, advertencia, peligro)
+\usepackage{tcolorbox}
+\usepackage{wrapfig}
+
+% ---------------------------------------------------------------------------
+% CONFIGURACIÓN DE PÁGINA
+% ---------------------------------------------------------------------------
+\geometry{
+    top=3cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\fancyfoot[C]{}
+\renewcommand{\headrulewidth}{0.5pt}
+
+% ---------------------------------------------------------------------------
+% COLORES PERSONALIZADOS
+% ---------------------------------------------------------------------------
+\definecolor{primaryblue}{RGB}{0, 82, 147}
+\definecolor{successgreen}{RGB}{34, 139, 34}
+\definecolor{warningorange}{RGB}{255, 140, 0}
+\definecolor{dangerred}{RGB}{220, 20, 60}
+\definecolor{infoblue}{RGB}{30, 144, 255}
+\definecolor{lightgray}{RGB}{240, 240, 240}
+
+% ---------------------------------------------------------------------------
+% LISTINGS CONFIGURACIÓN
+% ---------------------------------------------------------------------------
+\lstdefinestyle{codeStyle}{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{primaryblue},
+    commentstyle=\color{successgreen},
+    stringstyle=\color{dangerred},
+    frame=single,
+    framerule=0.5pt,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny\color{gray}
+}
+
+\lstset{style=codeStyle}
+
+% ---------------------------------------------------------------------------
+% TCOLORBOX - CAJAS DE NOTAS
+% ---------------------------------------------------------------------------
+\tcbset{colback=white, colframe=primaryblue, fonttitle=\bfseries}
+
+% ---------------------------------------------------------------------------
+% META DATOS PDF
+% ---------------------------------------------------------------------------
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryblue,
+    filecolor=magenta,
+    urlcolor=infoblue,
+    pdftitle={Manual de Usuario - Test Vocacional},
+    pdfauthor={Equipo de Desarrollo},
+    pdfsubject={Manual de Usuario},
+    pdfkeywords={Test Vocacional, Manual de Usuario, RIASEC}
+}
+
+% ===========================================================================
+% COMANDOS PERSONALIZADOS
+% ===========================================================================
+\newcommand{\roleadmin}{\textcolor{dangerred}{\textbf{Administrador}}}
+\newcommand{\rolestudent}{\textcolor{successgreen}{\textbf{Estudiante}}}
+\newcommand{\roledece}{\textcolor{primaryblue}{\textbf{DECE}}}
+\newcommand{\rolezonal}{\textcolor{warningorange}{\textbf{Zonal}}}
+\newcommand{\required}{\textcolor{dangerred}{*}}
+\newcommand{\stepicon}{\ding{51}}
+\newcommand{\warningicon}{\ding{72}}
+\newcommand{\important}{\tcblower\textbf{Nota:}}
+
+% ===========================================================================
+% INICIO DEL DOCUMENTO
+% ===========================================================================
+
+\begin{document}
+
+% ---------------------------------------------------------------------------
+% PORTADA
+% ---------------------------------------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge \textbf{MANUAL DE USUARIO}}\\[0.5cm]
+    {\Huge \textbf{TEST VOCACIONAL}}\\[2cm]
+    
+    \includegraphics[width=0.4\textwidth]{./logo.png}\\[1cm]
+    
+    {\Large \textbf{Sistema de Orientación Vocacional}}\\[0.5cm]
+    {\large Modelo RIASEC - Holland}\\[1.5cm]
+    
+    \rule{\textwidth}{0.4pt}\\[1cm]
+    {\large \textbf{Guía completa para usuarios}}\\
+    {\large Estudiantes · DECE · Zonal · Administrador}\\[1cm]
+    \rule{\textwidth}{0.4pt}\\[2cm]
+    
+    {\large Versión 1.0}\\[0.5cm]
+    {\large Abril 2025}\\[3cm]
+    
+    {\normalsize \textbf{Contenido:}}\\
+    {\normalsize Guías paso a paso, capturas de pantalla,}\\
+    {\normalsise preguntas frecuentes y procedimientos.}
+    
+    \vfill
+\end{titlepage}
+
+% ---------------------------------------------------------------------------
+% PÁGINA DE AUTORES/CONTACTO
+% ---------------------------------------------------------------------------
+\newpage
+\thispagestyle{empty}
+\vspace*{5cm}
+\begin{flushleft}
+    {\large \textbf{Información de Contacto}}\\[0.5cm]
+    \textbf{Soporte Técnico:}\\
+    Email: soporte@testvocacional.edu.ec\\
+    Teléfono: +593 2 XXX-XXXX\\[1cm]
+    
+    \textbf{Desarrollo del Sistema:}\\
+    Equipo de Desarrollo - test-vocacional\\
+    GitHub: https://github.com/[org]/test-vocacional\\[2cm]
+    
+    {\large \textbf{Ubicación del Proyecto}}\\[0.5cm]
+    \texttt{/Users/rubenjaramillo/test-vocacional2} \\
+\end{flushleft}
+
+% ---------------------------------------------------------------------------
+% RESUMEN
+% ---------------------------------------------------------------------------
+\chapter*{RESUMEN}
+\addcontentsline{toc}{chapter}{Resumen}
+
+Este Manual de Usuario describe el uso del \textbf{Sistema de Test Vocacional}, una herramienta en línea basada en el modelo RIASEC de Holland para orientar a estudiantes en su elección de carrera.
+
+\textbf{¿A quién está dirigido?}
+\begin{itemize}
+    \item \textbf{Estudiantes}: Realizan el test y consultan sus resultados
+    \item \textbf{Personal DECE}: Gestionan y monitorean estudiantes de su institución
+    \item \textbf{Coordinadores Zonales}: Supervisan resultados por zonas educativas
+    \item \textbf{Administradores}: Configuran el sistema y gestionan contenido
+\end{itemize}
+
+\textbf{Contenido del manual:}
+\begin{enumerate}
+    \item Introducción al sistema y modelo RIASEC
+    \item Acceso y configuración inicial
+    \item Guías por rol (Estudiante, DECE, Zonal, Admin)
+    \item Procesos paso a paso con capturas ilustrativas
+    \item Preguntas frecuentes y solución de problemas
+    \item Glosario de términos técnicos
+\end{enumerate}
+
+\section*{Cómo usar este manual}
+Este manual está organizado por \textbf{roles de usuario}. Comience por el capítulo correspondiente a su función en el sistema. Cada sección incluye:
+\begin{itemize}
+    \item \textbf{Objetivo}: Qué logrará con esa funcionalidad
+    \item \textbf{Paso a paso}: Instrucciones numbered list
+    \item \textbf{Importante}: Notas y consideraciones
+    \item \textbf{Visual}: Descripción de lo que verá en pantalla
+\end{itemize}
+
+% ---------------------------------------------------------------------------
+% ÍNDICE
+% ---------------------------------------------------------------------------
+\tableofcontents
+\newpage
+
+\listoffigures
+\newpage
+
+% ===========================================================================
+% CAPÍTULO 1: INTRODUCCIÓN
+% ===========================================================================
+\chapter{INTRODUCCIÓN AL SISTEMA}
+
+\section{¿Qué es el Test Vocacional?}
+El Test Vocacional es una herramienta de orientación profesional que ayuda a estudiantes a identificar sus intereses, habilidades y valores laborales mediante el \textbf{modelo RIASEC} desarrollado por el psicólogo John L. Holland.
+
+\section{El Modelo RIASEC}
+RIASEC representa seis categorías vocacionales:
+
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|c|X|l|}
+\hline
+\textbf{Código} & \textbf{Tipo} & \textbf{Descripción} \\
+\hline
+\textcolor{red}{R} & \textbf{Realista} & Personas prácticas, que disfrutan trabajos manuales y físicos. Ej: ingeniería, construcción, mecánica. \\
+\hline
+\textcolor{blue}{I} & \textbf{Investigador} & Personas analíticas, científicas, curiosas. Ej: medicina, investigación, tecnología. \\
+\hline
+\textcolor{purple}{A} & \textbf{Artístico} & Personas creativas, expresivas, innovadoras. Ej: diseño, música, arquitectura. \\
+\hline
+\textcolor{green}{S} & \textbf{Social} & Personas que ayudan, enseñan, cuidan. Ej: docencia, psicología, enfermería. \\
+\hline
+\textcolor{orange}{E} & \textbf{Emprendedor} & Personas persuasivas, líderes, empresarias. Ej: administración, derecho, ventas. \\
+\hline
+\textcolor{cyan}{C} & \textbf{Convencional} & Personas organizadas, detallistas, administrativas. Ej: contabilidad, secretariado, logística. \\
+\hline
+\end{tabularx}
+\caption{Categorías del modelo RIASEC}
+\end{table}
+
+\section{¿Cómo funciona?}
+\begin{enumerate}
+    \item \textbf{Encuesta previa}: Recopila información sobre preferencias, familia y actividades
+    \item \textbf{Cuestionario}: 60 preguntas (10 por categoría) con escala Likert 1-5
+    \item \textbf{Cálculo automático}: El sistema suma puntajes por categoría
+    \item \textbf{Resultados}: Muestra gráficos, recomendaciones y carreras sugeridas
+\end{enumerate}
+
+\section{Acceso al Sistema}
+\begin{itemize}
+    \item \textbf{URL}: \texttt{http://localhost/test-vocacional} (desarrollo) o dominio institucional
+    \item \textbf{Navegadores compatibles}: Chrome, Firefox, Safari, Edge (última versión)
+    \item \textbf{Dispositivos}: Computadora, tablet (se recomienda pantalla grande para mejor experiencia)
+\end{itemize}
+
+% ===========================================================================
+% CAPÍTULO 2: ACCESO Y CUENTA
+% ===========================================================================
+\chapter{ACCESO Y GESTIÓN DE CUENTA}
+
+\section{Primer Acceso - Registro}
+
+\subsection{¿Ya tienes cuenta?}
+Si ya te han registrado (el administrador te creó una cuenta):
+\begin{enumerate}
+    \item Ve a la página de \textbf{Login}
+    \item Ingresa tu \textbf{usuario} (puede ser tu cédula o email)
+    \item Ingresa tu \textbf{contraseña}
+    \item Marca \textbf{"Recordarme"} si es un dispositivo personal
+    \item Haz clic en \textbf{"Iniciar Sesión"}
+\end{enumerate}
+
+\subsection{¿Primera vez? - Registro}
+Si no tienes cuenta, primero debes ser registrado por un administrador o DECE de tu institución. \textbf{No puedes auto-registrarte}. Contacta a:
+\begin{itemize}
+    \item Tu profesor/asesor vocacional
+    \item El departamento DECE de tu institución
+    \item El administrador del sistema
+\end{itemize}
+
+Ellos te proporcionarán:
+\begin{itemize}
+    \itemUsuario (generalmente tu número de cédula)
+    \item Contraseña temporal (que deberás cambiar al primer login)
+\end{itemize}
+
+\section{Recuperación de Contraseña}
+Si olvidaste tu contraseña:
+\begin{enumerate}
+    \item En la página de login, haz clic en \textbf{¿Olvidaste tu contraseña?}
+    \item Ingresa el \textbf{email} registrado en tu cuenta
+    \item Revisa tu correo (bandeja de entrada y spam)
+    \item Haz clic en el \textbf{enlace de recuperación} (válido por 24 horas)
+    \item Crea una nueva contraseña (mínimo 6 caracteres)
+    \item Inicia sesión con la nueva contraseña
+\end{enumerate}
+
+\section{Cambiar Contraseña}
+Una vez logueado:
+\begin{enumerate}
+    \item Haz clic en tu \textbf{nombre} (esquina superior derecha)
+    \item Selecciona \textbf{"Mi Perfil"}
+    \item Busca la sección \textbf{"Cambiar Contraseña"}
+    \item Ingresa tu contraseña actual
+    \item Ingresa la nueva contraseña (2 veces)
+    \item Haz clic en \textbf{"Guardar"}
+    \item Verás un mensaje de confirmación verde
+\end{enumerate}
+
+\section{Requisitos de Contraseña}
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Requisito} & \textbf{Detalle} \\
+\hline
+Longitud mínima & 6 caracteres \\
+Caracteres permitidos & Letras, números y símbolos \\
+Cambio forzado & Debes cambiar la contraseña temporal al primer acceso \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Cerrar Sesión}
+\begin{itemize}
+    \item Haz clic en \textbf{"Cerrar Sesión"} en el menú superior
+    \item O simplemente cierra el navegador (la sesión expira en 1 hora)
+\end{itemize}
+
+\section{Perfil de Usuario}
+En la página de \textbf{Perfil} puedes:
+\begin{itemize}
+    \item Ver tu información personal
+    \item Actualizar tu foto (si está habilitado)
+    \item Cambiar tu contraseña
+    \item Ver tu historial de tests
+\end{itemize}
+
+% ===========================================================================
+% CAPÍTULO 3: GUÍA PARA ESTUDIANTES
+% ===========================================================================
+\chapter{GUÍA PARA ESTUDIANTES (\rolestudent)}
+
+\section{¿Qué puedes hacer como Estudiante?}
+Como estudiante, tienes acceso a:
+\begin{itemize}
+    \item Realizar el test vocacional (una vez cada 6 meses)
+    \item Consultar tus resultados anteriores
+    \item Descargar tu reporte individual en PDF
+    \item Actualizar tu información básica
+\end{itemize}
+
+\section{Proceso 1: Completar el Test Vocacional}
+
+\subsection{Paso 1: Acceso al test}
+\begin{enumerate}
+    \item Inicia sesión con tu usuario y contraseña
+    \item En el \textbf{Dashboard} o página principal, verás un botón grande: \textbf{"Comenzar Test Vocacional"}
+    \item Haz clic en ese botón
+\end{enumerate}
+
+\subsection{Paso 2: Encuesta previa (OBLIGATORIA)}
+Antes del test, debes completar una breve encuesta. \textbf{No puedes omitirla}.
+
+\textbf{Secciones de la encuesta:}
+\begin{enumerate}
+    \item \textbf{Profesiones preferidas}: Selecciona 3 profesiones que más te gustaría ejercer
+    \item \textbf{Profesiones menos preferidas}: Selecciona 3 que NO te gustaría
+    \item \textbf{Datos de la madre}: Nivel de estudios y profesión
+    \item \textbf{Datos del padre}: Nivel de estudios y profesión
+    \item \textbf{Actividades de tiempo libre}: 3 actividades que disfrutas
+    \item \textbf{Características de éxito}: 3 cualidades que consideras importantes
+    \item \textbf{Importancia del éxito}: Describe qué significa para ti
+\end{enumerate}
+
+\textbf{Importante}: Todos los campos son obligatorios. Si omites uno, el sistema no te permitirá continuar.
+
+\subsection{Paso 3: Cuestionario RIASEC (60 preguntas)}
+Ahora verás el cuestionario principal. \textbf{Características:}
+\begin{itemize}
+    \item \textbf{Formato}: Preguntas presentadas como un "libro" con páginas
+    \item \textbf{Barra de progreso}: Muestra cuánto has avanzado (arriba)
+    \item \textbf{Navegación}: Botones \textbf{« Anterior} y \textbf{Siguiente »}
+    \item \textbf{Respuestas}: Escala Likert del 1 al 5
+    \begin{itemize}
+        \item \textbf{1}: Totalmente en desacuerdo
+        \item \textbf{2}: En desacuerdo
+        \item \textbf{3}: Neutral / Ni de acuerdo ni en desacuerdo
+        \item \textbf{4}: De acuerdo
+        \item \textbf{5}: Totalmente de acuerdo
+    \end{itemize}
+\end{itemize}
+
+\textbf{Flujo de respuestas:}
+\begin{enumerate}
+    \item Lee cada afirmación cuidadosamente
+    \item Selecciona el número que mejor refleje tu opinión
+    \item Haz clic en \textbf{"Siguiente"} para continuar
+    \item Puedes volver atrás (\textbf{« Anterior}) para cambiar respuestas
+\end{enumerate}
+
+\textbf{Guardado automático}: Tus respuestas se guardan en el navegador cada 30 segundos. Si cierras la ventana accidentalmente, al volver verás un botón \textbf{"Recuperar respuestas guardadas"}.
+
+\subsection{Paso 4: Finalizar y ver resultados}
+\begin{enumerate}
+    \item Al responder las 60 preguntas, el botón cambia a \textbf{"Finalizar y Ver Resultados"}
+    \item Haz clic para enviar tus respuestas
+    \item El sistema calculará tus puntajes (toma unos segundos)
+    \item Serás redirigido automáticamente a la página de \textbf{resultados}
+\end{enumerate}
+
+\textbf{Importante}: Una vez finalizado, \underline{no puedes volver a realizar el test durante 6 meses}.
+
+\section{Proceso 2: Consultar Resultados}
+
+\subsection{Vista principal de resultados}
+Al finalizar el test (o al entrar a \textbf{/results}), verás:
+
+\begin{figure}[H]
+\centering
+\begin{tcolorbox}[colback=lightgray, colframe=primaryblue, title=Vista de Resultados - Elementos Clave]
+\begin{itemize}
+    \item \textbf{Gráfico de radar}: Muestra tu perfil en las 6 áreas RIASEC
+    \item \textbf{Gráfico de barras}: Puntajes específicos (0-100\%)
+    \item \textbf{Tarjetas de categoría}: Cada área con su estado
+    \begin{itemize}
+        \item \textcolor{successgreen}{APTO (verde)}: ≥80\% - Excelente aptitud
+        \item \textcolor{warningorange}{POTENCIAL (amarillo)}: 60-79\% - Buen potencial
+        \item \textcolor{dangerred}{POR REFORZAR (rojo)}: <60\% - En desarrollo
+    \end{itemize}
+    \item \textbf{Tus 3 áreas principales}: Listado con explicación
+    \item \textbf{Carreras sugeridas}: Para universidades públicas y privadas
+    \item \textbf{Recomendaciones personalizadas} basadas en tu perfil
+    \item \textbf{Botón "Descargar PDF"} (Reporte individual)
+\end{itemize}
+\end{tcolorbox}
+\end{figure}
+
+\subsection{Interpretar tus resultados}
+\textbf{Estado APTO (verde):}
+\begin{itemize}
+    \item Tienes una \underline{alta compatibilidad} con esa área
+    \item Considera carreras de esa categoría como primera opción
+    \item Es una \textbf{fortaleza} destacada
+\end{itemize}
+
+\textbf{Estado POTENCIAL (amarillo):}
+\begin{itemize}
+    \item Tienes \underline{buen potencial} pero puedes desarrollarlo más
+    \item Puedes considerar carreras de esa área como segunda opción
+    \item Requiere \textbf{refuerzo} en algunas habilidades
+\end{itemize}
+
+\textbf{Estado POR REFORZAR (rojo):}
+\begin{itemize}
+    \item Es un área de \underline{menor afinidad}
+    \item Puedes desarrollarla con práctica y formación
+    \item No es recomendable como primera opción de carrera
+\end{itemize}
+
+\subsection{Descargar tu reporte}
+\begin{enumerate}
+    \item En la página de resultados, busca el botón azul: \textbf{"Descargar Reporte PDF"}
+    \item Haz clic en el botón
+    \item El archivo se descargará automáticamente
+    \item El PDF incluye:
+    \begin{itemize}
+        \item Tus datos personales
+        \item Gráficos de resultados
+        \item Lista de carreras recomendadas
+        \item \textbf{Código QR} para validación institucional
+        \item Fecha y hora del test
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Importante}: Guarda este PDF. Puedes enviarlo a tu escuela, universidad o asesor vocacional.
+
+\section{Preguntas Frecuentes - Estudiante}
+
+\textbf{Q: ¿Puedo realizar el test más de una vez?}\\
+A: No. El sistema permite \underline{un test cada 6 meses}. Esto asegura que los resultados reflejen un momento de reflexión genuino. Si intentas antes, verás un mensaje indicando cuántos días faltan.
+
+\textbf{Q: ¿Puedo cambiar mis respuestas después de finalizar?}\\
+A: No. Una vez enviado el test, las respuestas se guardan y no se pueden modificar. Asegúrate de revisar antes de hacer clic en "Finalizar".
+
+\textbf{Q: ¿Mis resultados son privados?}\\
+A: Sí. Solo tú, tu DECE y el personal autorizado pueden verlos. No se comparten fuera de tu institución.
+
+\textbf{Q: ¿Qué pasa si cierro el navegador a mitad del test?}\\
+A: Puedes recuperar tus respuestas guardadas. Al volver al test, busca el botón \textbf{"Recuperar respuestas guardadas"}.
+
+\section{Consejos para el Test}
+\begin{tcolorbox}[colback=infoblue!10, colframe=infoblue, title=Consejos Importantes]
+\begin{itemize}
+    \item \textbf{No apresurarse}: Lee cada afirmación con calma
+    \item \textbf{Sé honesto}: No hay respuestas "buenas" o "malas"
+    \item \textbf{Piensa en ti mismo}: No en lo que otros esperan
+    \item \textbf{No dejes preguntas en blanco}: Todas son obligatorias
+    \item \textbf{Contexto}: Responde considerando tu situación \underline{actual}
+\end{itemize}
+\end{tcolorbox}
+
+% ===========================================================================
+% CAPÍTULO 4: GUÍA PARA DECE
+% ===========================================================================
+\chapter{GUÍA PARA DECE (\roledece)}
+
+\section{¿Qué es un DECE?}
+\textbf{DECE} = Departamento de Estudios y Consejería Estudiantil. Es el personal encargado del bienestar y orientación de los estudiantes en una institución educativa.
+
+\section{¿Qué puedes hacer como DECE?}
+\begin{itemize}
+    \item Dashboards institucionales con estadísticas
+    \item Ver y gestionar estudiantes de \underline{tu institución únicamente}
+    \item Generar reportes grupales por curso o paralelo
+    \item Exportar datos a Excel
+    \item Descargar reportes individuales de estudiantes
+    \item Asignar roles a usuarios de tu institución
+    \item Seguimiento vocacional de estudiantes
+\end{itemize}
+
+\textbf{Limitación}: Solo ves estudiantes de \underline{tu institución asignada}. No puedes acceder a datos de otras instituciones.
+
+\section{Acceso al Panel DECE}
+\begin{enumerate}
+    \item Inicia sesión con tus credenciales DECE
+    \item Serás redirigido automáticamente al \textbf{Dashboard DECE}
+    \item O ve a \texttt{/admin/dece} manualmente
+\end{enumerate}
+
+\section{Dashboard DECE - Vista General}
+El dashboard muestra:
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Elemento} & \textbf{Descripción} \\
+\hline
+Estadísticas rápidas & Total estudiantes, tests realizados, promedio general \\
+\hline
+Gráfico de distribución & Cantidad de estudiantes por categoría RIASEC \\
+\hline
+Top carreras sugeridas & Las 5 carreras más recomendadas en tu institución \\
+\hline
+Últimos tests & Lista de estudiantes que realizaron test recientemente \\
+\hline
+Accesos rápidos & Botones para reportes y gestión \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Proceso 1: Gestionar Estudiantes}
+
+\subsection{Ver lista de estudiantes}
+\begin{enumerate}
+    \item En el menú lateral, haz clic en \textbf{"Estudiantes"} o \textbf{"Usuarios"}
+    \item Verás una tabla con todos los estudiantes de tu institución
+    \columnas: Nombre, Cédula, Curso, Paralelo, Fecha test, Área predominante
+    \item Puedes \textbf{filtar} por:
+    \begin{itemize}
+        \item Curso
+        \item Paralelo
+        \item Estado (activo/inactivo)
+        \item Con/sin test completado
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Buscar un estudiante específico}
+\begin{enumerate}
+    \item Usa el \textbf{campo de búsqueda} (esquina superior derecha de la tabla)
+    \item Escribe el nombre, cédula o apellido
+    \item Los resultados se filtran automáticamente
+\end{enumerate}
+
+\subsection{Ver detalle de un estudiante}
+\begin{enumerate}
+    \item En la lista, haz clic en el \textbf{icono de ojo} (ver) junto al estudiante
+    \item Se abrirá un modal con:
+    \begin{itemize}
+        \item Información personal completa
+        \item Resultados del test (si lo completó)
+        \item Gráfico personal
+        \item Historial de tests (si hubo más de uno)
+    \end{itemize}
+\end{enumerate}
+
+\section{Proceso 2: Generar Reporte Grupal Institucional}
+
+\subsection{Reporte por curso/paralelo}
+\begin{enumerate}
+    \item Ve a \textbf{Reportes} $\rightarrow$ \textbf{Grupal}
+    \item Selecciona los \textbf{filtros}:
+    \begin{itemize}
+        \item Institución: Tu institución (pre-seleccionada)
+        \item Curso: Selecciona uno o múltiples
+        \item Paralelo: Si aplica
+        \item Fecha desde/hasta: Rango temporal
+    \end{itemize}
+    \item Elige el \textbf{formato de salida}:
+    \begin{itemize}
+        \item \textbf{PDF}: Para imprimir o presentar
+        \item \textbf{Excel}: Para análisis detallado en hojas de cálculo
+    \end{itemize}
+    \item Haz clic en \textbf{"Generar Reporte"}
+    \item El archivo se descargará automáticamente
+\end{enumerate}
+
+\textbf{Contenido del reporte grupal:}
+\begin{itemize}
+    \item Resumen ejecutivo con promedios
+    \item Tabla detallada por estudiante
+    \item Gráficos de distribución por área RIASEC
+    \item Estadísticas por curso/paralelo
+\end{itemize}
+
+\section{Proceso 3: Seguimiento Individual}
+
+\subsection{Ver reporte individual de un estudiante}
+\begin{enumerate}
+    \item En la lista de estudiantes, localiza al alumno
+    \item Haz clic en el \textbf{botoón "Ver Reporte"} (icono de PDF)
+    \item Se abrirá el PDF en una nueva pestaña
+    \item Puedes:
+    \begin{itemize}
+        \item \textbf{Imprimir} para archivo físico
+        \item \textbf{Descargar} a tu computadora
+        \item \textbf{Enviar por email} (si está habilitado)
+    \end{itemize}
+\end{enumerate}
+
+\textbf{El reporte individual incluye:}
+\begin{itemize}
+    \item Datos completos del estudiante
+    \item Fecha del test
+    \item Gráfico de resultados (radar y barras)
+    \item Áreas predominantes (top 3)
+    \item Lista de carreras recomendadas
+    \item Código QR para validación oficial
+\end{itemize}
+
+\subsection{Realizar seguimiento}
+\begin{enumerate}
+    \item En el detalle del estudiante, haz clic en \textbf{"Agregar Nota"} o \textbf{Seguimiento"
+    \item Escribe observaciones sobre:
+    \begin{itemize}
+        \item Progreso académico
+        \item Intereses vocacionales declarados
+        \item Acciones de orientación realizadas
+        \item Recomendaciones adicionales
+    \end{itemize}
+    \item Guarda la nota
+    \item Puedes ver el historial completo de notas
+\end{enumerate}
+
+\section{Exportar Datos a Excel}
+\begin{enumerate}
+    \item Ve a \textbf{Reportes} $\rightarrow$ \textbf{Exportar}
+    \item Configura filtros (institución, curso, fecha)
+    \item Selecciona \textbf{Excel (.xlsx)}
+    \item Haz clic en \textbf{Exportar"}
+    \item El archivo contiene:
+    \begin{itemize}
+        \item Datos crudos de todos los tests
+        \item Columnas: Estudiante, Cédula, Curso, Paralelo, R,I,A,S,E,C scores, Fecha
+        \item Formato listo para análisis en Excel
+    \end{itemize}
+\end{enumerate}
+
+% ===========================================================================
+% CAPÍTULO 5: GUÍA PARA ZONAL
+% ===========================================================================
+\chapter{GUÍA PARA ZONAL (\rolezonal)}
+
+\section{¿Qué es un Zonal?}
+Un \textbf{Coordinador Zonal} supervisa múltiples instituciones educativas dentro de una zona geográfica definida (ej: Zona Costa, Sierra, Amazonía, Insular).
+
+\section{¿Qué puedes hacer como Zonal?}
+\begin{itemize}
+    \item Ver \textbf{todas las instituciones} de tu zona
+    \item Generar reportes zonales agregados
+    \item Filtrar por institución específica
+    \item Comparar resultados entre instituciones
+    \item Exportar datos masivos a Excel
+    \item Descargar reportes individuales de cualquier estudiante de tu zona
+\end{itemize}
+
+\textbf{Limitación}: Solo puedes ver datos de instituciones asignadas a \underline{tu zona}. No puedes ver otras zonas.
+
+\section{Acceso al Panel Zonal}
+\begin{enumerate}
+    \item Inicia sesión con credenciales de Zonal
+    \item Serás redirigido al \textbf{Dashboard Zonal}
+    \item O navega a \texttt{/admin/zona}
+\end{enumerate}
+
+\section{Dashboard Zonal - Vista General}
+El dashboard zonal muestra:
+\begin{itemize}
+    \item \textbf{Mapa de zona}: Instituciones por ubicación (si está habilitado)
+    \item \textbf{Estadísticas agregadas}:
+    \begin{itemize}
+        \item Total estudiantes en la zona
+        \item Tests realizados
+        \item Promedio general de puntajes RIASEC
+    \end{itemize}
+    \item \textbf{Gráfico comparativo}: Rendimiento por institución
+    \item \textbf{Top áreas vocacionales} de la zona
+    \item \textbf{Lista de instituciones} con enlaces rápidos
+\end{itemize}
+
+\section{Proceso 1: Reporte Zonal General}
+\begin{enumerate}
+    \item Ve a \textbf{Reportes} $\rightarrow$ \textbf{Zonal}
+    \item Selecciona:
+    \begin{itemize}
+        \item Zona (tu zona por defecto)
+        \item Rango de fechas (opcional)
+    \end{itemize}
+\item Elige formato: \textbf{PDF} o \textbf{Excel}
+\item Haz clic en \textbf{Generar}
+\item Descarga el archivo
+\end{enumerate}
+
+\textbf{Contenido del reporte zonal:}
+\begin{itemize}
+    \item Resumen de todas las instituciones de la zona
+    \item Estadísticas consolidadas por categoría RIASEC
+    \item Tabla comparativa entre instituciones
+    \item Identificación de tendencias vocacionales regionales
+    \item Gráficos de distribución
+\end{itemize}
+
+\section{Proceso 2: Reporte por Institución Específica}
+\begin{enumerate}
+    \item En el Dashboard, busca la \textbf{lista de instituciones}
+    \item Haz clic en el \textbf{nombre} de la institución
+    \item O usa el filtro \textbf{Institución} en Reportes
+    \item Selecciona curso/paralelo si deseas filtrar más
+    \item Genera reporte (PDF/Excel)
+\end{enumerate}
+
+\section{Comparar Instituciones}
+\begin{enumerate}
+    \item Ve a \textbf{Reportes} $\rightarrow$ \textbf{Comparativo}
+    \item Selecciona \textbf{múltiples instituciones} (checkboxes)
+    \item Elige período de tiempo
+\item Haz clic en \textbf{Comparar}
+\item Verás un informe con:
+    \begin{itemize}
+        \item Tabla comparativa de promedios por área
+        \item Gráfico de barras agrupadas
+        \item Diferencias significativas
+    \end{itemize}
+\end{enumerate}
+
+% ===========================================================================
+% CAPÍTULO 6: GUÍA PARA ADMINISTRADOR
+% ===========================================================================
+\chapter{GUÍA PARA ADMINISTRADOR (\roleadmin)}
+
+\section{¿Qué puede hacer un Administrador?}
+El Administrador tiene control total sobre el sistema:
+\begin{itemize}
+    \item \textbf{Gestión de usuarios}: Crear, editar, eliminar, asignar roles
+    \item \textbf{Gestión de instituciones}: Alta, baja, modificación
+    \item \textbf{Gestión de preguntas}: Banco de preguntas, importación masiva
+    \item \textbf{Reportes globales}: Acceso a todos los datos del sistema
+    \item \textbf{Configuración}: Parámetros del test, umbrales
+    \item \textbf{Supervisión}: Monitoreo de actividad del sistema
+\end{itemize}
+
+\section{Acceso al Panel Admin}
+\begin{enumerate}
+    \item Inicia sesión con credenciales de administrador
+    \item Serás redirigido al \textbf{Dashboard Administrativo}
+    \item URL directa: \texttt{/admin} o \texttt{/admin/dashboard}
+\end{enumerate}
+
+\section{Dashboard Admin - Elementos}
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Widget} & \textbf{Información que muestra} \\
+\hline
+Estudiantes totales & Cantidad de usuarios con rol estudiante \\
+\hline
+Tests realizados & Número de tests completados hoy/esta semana/mes \\
+\hline
+Instituciones activas & Número de instituciones registradas \\
+\hline
+Distribución RIASEC & Gráfico de promedios globales por categoría \\
+\hline
+Actividad reciente & Últimos registros, tests, logs importantes \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Proceso 1: Gestionar Instituciones}
+
+\subsection{Crear nueva institución}
+\begin{enumerate}
+    \item Ve a \textbf{ Instituciones} $\rightarrow$ \textbf{Nueva Institución"}
+    \item Completa el formulario:
+    \begin{itemize}
+        \item Nombre de la institución
+        \item Código AMIE (código oficial del Ministerio de Educación)
+        \item Tipo (Pública/Privada/FIS)
+        \item Dirección completa
+        \item Teléfono
+        \item Email de contacto
+        \item Representante legal
+        \item Zona (Costal, Sierra, Amazónica, Insular)
+    \end{itemize}
+    \item Haz clic en \textbf{Guardar"}
+    \item La institución aparece en la lista con estado \textbf{Activo"}
+\end{enumerate}
+
+\textbf{Importante}: El \textbf{código AMIE} es único y obligatorio. Verifica que no exista antes de guardar.
+
+\subsection{Editar institución}
+\begin{enumerate}
+    \item En la lista de instituciones, haz clic en \textbf{"Editar"} (icono lápiz)
+    \item Modifica los campos necesarios
+    \item Haz clic en \textbf{Actualizar"}
+\end{enumerate}
+
+\subsection{Desactivar institución}
+\begin{enumerate}
+    \item En la lista, haz clic en \textbf{Desactivar"} (icono de interruptor)
+    \item Confirma la acción
+    \item La institución se marca como inactiva, pero \underline{no se eliminan sus datos}
+\end{enumerate}
+
+\section{Proceso 2: Gestionar Usuarios}
+
+\subsection{Crear usuario (DecE, Zonal, Estudiante)}
+\begin{enumerate}
+    \item Ve a \textbf{Usuarios} $\rightarrow$ \textbf{Nuevo Usuario"}
+    \item Completa el formulario:
+    \begin{itemize}
+        \item \textbf{Tipo de registro}: Manual o Masivo (Excel)
+        \item \textbf{Rol}: Selecciona (estudiante, DECE, zonal, admin)
+        \item \textbf{Cédula}: Número único
+        \item \textbf{Nombre completo}
+        \item \textbf{Email} (para login y notificaciones)
+        \item \textbf{Contraseña temporal} (el usuario debe cambiarla)
+        \item \textbf{Institución}: (solo para estudiantes y DECE)
+        \item \textbf{Zona}: (solo para zonales)
+    \end{itemize}
+    \item Haz clic en \textbf{Crear Usuario"}
+    \item \textbf{Nota}: Si es estudiante, se envía email de bienvenida (si SMTP configurado)
+\end{enumerate}
+
+\subsection{Importar usuarios masivamente (Excel)}
+\begin{enumerate}
+    \item Ve a \textbf{Usuarios} $\rightarrow$ \textbf{Importar"}
+    \item Descarga la \textbf{plantilla Excel} oficial
+    \item Llena la plantilla con estos campos:
+    \begin{itemize}
+        \item cedula
+        \item nombre
+        \item email
+        \item password (temporal)
+        \item rol
+        \item institucion\_id (si aplica)
+        \item zona (si aplica)
+    \end{itemize}
+    \item Guarda el archivo
+    \item En la página de importación, haz clic en \textbf{Seleccionar archivo"}
+    \item Elige tu Excel y haz clic en \textbf{Importar"}
+    \item El sistema mostrará un resumen: X usuarios creados, Y errores, Z duplicados
+\end{enumerate}
+
+\underline{Formato de plantilla Excel:}
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+cedula | nombre | email | password | rol | institucion_id | zona
+1234567| Juan Pérez| juan@mail.com| Temp123| estudiante| 5| sierra
+\end{lstlisting}
+
+\subsection{Editar usuario}
+\begin{enumerate}
+    \item En la lista de usuarios, busca el usuario
+    \item Haz clic en \textbf{"Editar"} (icono lápiz)
+    \item Puedes modificar:
+    \begin{itemize}
+        \item Datos personales (nombre, email, cédula - con cuidado)
+        \item Rol (cambiar permiso)
+        \item Institución asignada (para DECE/estudiantes)
+        \item Zona (para zonales)
+        \item Estado (activo/inactivo)
+        \item Forzar cambio de contraseña (checkboxes)
+    \end{itemize}
+    \item Haz clic en \textbf{Guardar cambios"}
+\end{enumerate}
+
+\subsection{Eliminar usuario}
+\begin{enumerate}
+    \item En la lista, marca el checkbox del usuario
+    \item Haz clic en \textbf{Eliminar seleccionados"}
+    \item \textbf{¡PRECAUCIÓN!} Confirma que realmente deseas eliminarlo
+    \item El usuario se elimina permanentemente (o se marca como inactivo, según configuración)
+\end{enumerate}
+
+\section{Proceso 3: Gestionar Banco de Preguntas}
+
+\subsection{Ver preguntas existentes}
+\begin{enumerate}
+    \item Ve a \textbf{Preguntas} en el menú
+    \item Verás una tabla con todas las preguntas
+    \item Columnas: ID, Texto, Categoría (R,I,A,S,E,C), Tipo (intereses/habilidades/valores), Estado
+    \item Puedes filtrar por:
+    \begin{itemize}
+        \item Categoría
+        \item Tipo
+        \item Estado (activas/inactivas)
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Agregar pregunta individual}
+\begin{enumerate}
+    \item Haz clic en \textbf{Nueva Pregunta"}
+    \item Completa:
+    \begin{itemize}
+        \item \textbf{Texto}: La pregunta (clara, sin errores ortográficos)
+        \item \textbf{Categoría RIASEC}: R, I, A, S, E, o C
+        \item \textbf{Tipo}: Intereses, Habilidades o Valores
+        \item \textbf{Orden}: Posición en que aparecerá (0 por defecto)
+        \item \textbf{Estado}: Activo / Inactivo
+    \end{itemize}
+    \item Haz clic en \textbf{Guardar"}
+\end{enumerate}
+
+\subsection{Importar preguntas masivamente (Excel)}
+\begin{enumerate}
+    \item Haz clic en \textbf{Importar Preguntas"}
+    \item Descarga la \textbf{plantilla oficial} (Excel .xlsx)
+    \item La plantilla tiene estas columnas:
+    \begin{lstlisting}[basicstyle=\ttfamily\small]
+categoria | tipo | pregunta | peso
+R         | intereses| Me gusta trabajar con herramientas| 1
+    \end{lstlisting}
+    \item Llena tantas filas como preguntas tengas
+    \item Guarda el archivo
+    \item En la página de importación, haz clic en \textbf{Seleccionar archivo}
+    \item Arrastra tu archivo Excel
+    \item Verás una \textbf{previsualización} de las primeras 5 preguntas
+    \item Si se ve correcto, haz clic en \textbf{Importar"}
+    \item El sistema procesará y mostrará: X importadas, Y duplicadas, Z con errores
+\end{enumerate}
+
+\textbf{Formatos soportados:}
+\begin{itemize}
+    \item \textbf{Excel (.xlsx, .xls)}: Recomendado
+    \item \textbf{Word (.docx, .doc)}: Formato estructurado
+\end{itemize}
+
+\subsection{Eliminar preguntas}
+\begin{enumerate}
+    \item En la lista de preguntas, marca los checkboxes
+    \item Haz clic en \textbf{Eliminar seleccionadas"}
+    \item Confirma la eliminación
+    \item \textbf{¡CUIDADO!}: Las preguntas eliminadas se quitan del test
+\end{enumerate}
+
+\subsection{Cambiar estado de preguntas}
+\begin{enumerate}
+    \item En la lista, usa el \textbf{selector de estado} (Activo/Inactivo)
+    \item Las preguntas \textbf{inactivas} no aparecen en el test
+    \item Útil para desactivar preguntas obsoletas sin borrarlas
+\end{enumerate}
+
+\section{Proceso 4: Generar Reportes Globales}
+
+\subsection{Reporte individual de cualquier estudiante}
+\begin{enumerate}
+    \item Ve a \textbf{Reportes} $\rightarrow$ \textbf{Individual"}
+    \item Busca el estudiante por:
+    \begin{itemize}
+        \item Cédula
+        \item Nombre
+        \item Institución + curso
+    \end{itemize}
+    \item Selecciona al estudiante
+    \item Haz clic en \textbf{Generar PDF"}
+    \item Descarga el reporte
+\end{enumerate}
+
+\subsection{Reporte grupal (todos los datos)}
+\begin{enumerate}
+    \item Ve a \textbf{Reportes} $\rightarrow$ \textbf{Grupal"}
+    \item Aplica \textbf{filtros} (opcional):
+    \begin{itemize}
+        \item Zona
+        \item Institución (una o múltiples)
+        \item Curso
+        \item Paralelo
+        \item Rango de fechas
+    \end{itemize}
+    \item Selecciona \textbf{formato}: PDF o Excel
+    \item Haz clic en \textbf{Generar"}
+    \item Descarga el archivo
+\end{enumerate}
+
+\textbf{Reporte Excel contiene:}
+\begin{itemize}
+    \item Hoja 1: Datos de estudiantes
+    \item Hoja 2: Promedios por categoría RIASEC
+    \item Hoja 3: Estadísticas por institución
+    \item Hoja 4: Top carreras recomendadas
+\end{itemize}
+
+\subsection{Estadísticas en tiempo real}
+\begin{itemize}
+    \item En el Dashboard, todos los gráficos son \textbf{en tiempo real}
+    \item Se actualizan cada vez que recargas la página
+    \item Reflejan los datos más recientes de la base de datos
+\end{itemize}
+
+\section{Proceso 5: Configuración del Sistema}
+
+\subsection{Ajustar parámetros del test}
+\begin{enumerate}
+    \item Ve a \textbf{Configuración} $\rightarrow$ \textbf{Parámetros"}
+    \item Puedes modificar:
+    \begin{itemize}
+        \item \textbf{Tiempo entre tests}: Meses que debe pasar para repetir (default: 6)
+        \item \textbf{Umbral APTO}: Porcentaje mínimo (default: 80\%)
+        \item \textbf{Umbral POTENCIAL}: Porcentaje mínimo (default: 60\%)
+        \item \textbf{Preguntas por categoría}: Número de preguntas (default: 10)
+    \end{itemize}
+    \item \textbf{¡CUIDADO!}: Cambios aquí afectan a \underline{todos los usuarios}
+    \item Haz clic en \textbf{Guardar configuración"}
+\end{enumerate}
+
+\subsection{Gestionar zonas geográficas}
+\begin{enumerate}
+    \item Ve a \textbf{Configuración} $\rightarrow$ \textbf{Zonas"}
+    \item Puedes ver/cambiar:
+    \begin{itemize}
+        \item Zona Costal
+        \item Zona Sierra
+        \item Zona Amazónica
+        \item Zona Insular
+    \end{itemize}
+    \item Asignar instituciones a zonas
+\end{enumerate}
+
+% ===========================================================================
+% CAPÍTULO 7: USABILIDAD Y CONSEJOS
+% ===========================================================================
+\chapter{USABILIDAD Y CONSEJOS PRÁCTICOS}
+
+\section{Consejos Generales para Todos los Usuarios}
+\begin{tcolorbox}[colback=lightgray, colframe=successgreen, title=Mejores Prácticas]
+\begin{itemize}
+    \item \textbf{No uses el botón "Atrás" del navegador}. Usa los botones del sistema (« Anterior)
+    \item \textbf{No cierres el navegador} a mitad del test sin guardar
+    \item \textbf{Usa contraseñas seguras}: combinación de letras, números y símbolos
+    \item \textbf{Cierra sesión} en computadoras compartidas
+    \item \textbf{Reporta errores}: Si ves algo inusual, avisa al administrador
+\end{itemize}
+\end{tcolorbox}
+
+\section{Navegación por el Sistema}
+\begin{itemize}
+    \item \textbf{Menú superior}: Acceso rápido a perfil y logout
+    \item \textbf{Menú lateral}: Funcionalidades principales (varía por rol)
+    \item \textbf{Breadcrumbs}: Muestra tu ubicación actual (ej: Inicio > Reportes > Individual)
+    \item \textbf{Botones de acción}: Siempre verdes o azules (positivos)
+    \item \textbf{Botones de cancelar}: Grises o rojos (negativos)
+\end{itemize}
+
+\section{Interpretación de Iconos}
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|c|l|}
+\hline
+\textbf{Icono} & \textbf{Significado} \\
+\hline
+\includegraphics[height=0.8em]{eye.png} & Ver detalle \\
+\hline
+\includegraphics[height=0.8em]{edit.png} & Editar \\
+\hline
+\includegraphics[height=0.8em]{delete.png} & Eliminar \\
+\hline
+\includegraphics[height=0.8em]{download.png} & Descargar \\
+\hline
+\includegraphics[height=0.8em]{print.png} & Imprimir \\
+\hline
+\includegraphics[height=0.8em]{pdf.png} & PDF \\
+\hline
+\includegraphics[height=0.8em]{excel.png} & Excel \\
+\hline
+\includegraphics[height=0.8em]{search.png} & Buscar \\
+\hline
+\end{tabularx}
+\caption{Iconos comunes en la interfaz}
+\end{table}
+
+\section{Mensajes del Sistema}
+El sistema muestra 4 tipos de mensajes:
+
+\begin{tcolorbox}[colback=successgreen!10, colframe=successgreen, title=ÉXITO (Verde)]
+Operación completada correctamente.\\
+Ej: "Usuario creado exitosamente"
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=dangerred!10, colframe=dangerred, title=ERROR (Rojo)]
+Algo salió mal. La acción no se completó.\\
+Ej: "Contraseña incorrecta"
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=infoblue!10, colframe=infoblue, title=INFO (Azul)]
+Información importante o sugerencias.\\
+Ej: "Tu test expira en 3 días"
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=warningorange!10, colframe=warningorange, title=ADVERTENCIA (Amarillo)]
+Precaución, algo no es ideal pero no es error.\\
+Ej: "Estás por eliminar un registro permanentemente"
+\end{tcolorbox}
+
+% ===========================================================================
+% CAPÍTULO 8: PREGUNTAS FRECUENTES (FAQ)
+% ===========================================================================
+\chapter{PREGUNTAS FRECUENTES (FAQ)}
+
+\section{Estudiantes}
+
+\subsection{No puedo iniciar sesión}
+\textbf{P: Al intentar login, dice "Usuario o contraseña incorrectos"}\\
+\textbf{R:}
+\begin{enumerate}
+    \item Verifica que estás usando el \textbf{usuario correcto} (cédula o email)
+    \item Asegúrate de que \underline{Caps Lock no esté activado}
+    \item Si olvidaste tu contraseña, haz clic en \textbf{¿Olvidaste tu contraseña?"}
+    \item Si el problema persiste, contacta a tu DECE o administrador
+\end{enumerate}
+
+\subsection{El test se cerró accidentalmente}
+\textbf{P: Cerré la ventana a mitad del test, ¿puedo recuperar mis respuestas?}\\
+\textbf{R:} Sí:
+\begin{enumerate}
+    \item Vuelve a la página del test
+    \item Haz clic en \textbf{Recuperar respuestas guardadas"}
+    \item Verás las preguntas que ya respondiste
+    \item Continúa desde donde te quedaste
+\end{enumerate}
+\textbf{Importante}: Esto solo funciona si no enviaste el test final. Una vez finalizado, no se puede modificar.
+
+\subsection{Veo resultados antiguos}
+\textbf{P: Realicé un test hace 7 meses, ¿puedo hacer uno nuevo?}\\
+\textbf{R:} Sí. Deben haber pasado al menos \underline{6 meses (180 días)}. Si han pasado 7, ya puedes realizar un nuevo test. El sistema calculará automáticamente el nuevo resultado y guardará ambos (historial).
+
+\subsection{No entiendo mis resultados}
+\textbf{P: ¿Qué significa que tengo "APTO" en Realista?}\\
+\textbf{R:}
+\begin{itemize}
+    \item \textbf{APTO} (verde): Tu afinidad con esa área es alta (≥80\%). Es una fortaleza.
+    \item \textbf{POTENCIAL} (amarillo): Tienes buen nivel (60-79\%) pero puedes fortalecerlo.
+    \item \textbf{POR REFORZAR} (rojo): Es un área de menor afinidad (<60\%).
+\end{itemize}
+El \textbf{área predominante} es la que tiene puntaje más alto. Enfócate en carreras relacionadas con esa área.
+
+\section{DECE y Zonal}
+
+\subsection{No veo estudiantes de cierta institución}
+\textbf{P: En mi lista faltan estudiantes de la escuela "X"}\\
+\textbf{R:}
+\begin{enumerate}
+    \item Verifica que la institución esté \textbf{asignada a tu cuenta}
+    \item Como DECE, solo ves tu institución
+    \item Como Zonal, debes tener la zona correcta configurada
+    \item Contacta al Administrador para que asigne la institución a tu rol
+\end{enumerate}
+
+\subsection{Reporte grupal no muestra todos los datos}
+\textbf{P: Generé un reporte y solo aparecen 10 de 30 estudiantes}\\
+\textbf{R:}
+\begin{itemize}
+    \item Revisa los \textbf{filtros aplicados} (curso, paralelo, fecha)
+    \item Asegúrate de que el rango de fechas incluya el período deseado
+    \item Verifica que los estudiantes hayan completo el test (solo aparecen con resultados)
+    \item Intenta con \textbf{"Limpiar filtros"} y generar de nuevo
+\end{itemize}
+
+\subsection{No puedo importar preguntas}
+\textbf{P: Al importar Excel, dice "Formato inválido"}\\
+\textbf{R:}
+\begin{enumerate}
+    \item Verifica que uses la \textbf{plantilla oficial} (no modifiques encabezados)
+    \item Las columnas deben ser exactamente: categoria, tipo, pregunta, peso
+    \item La categoría debe ser una letra: R, I, A, S, E, o C
+    \item El tipo: intereses, habilidades o valores
+    \item El archivo debe ser .xlsx (no .xls en algunas versiones)
+    \item Tamaño máximo: 10MB
+\end{enumerate}
+
+\section{Administradores}
+
+\subsection{Error al crear usuario}
+\textbf{P: Al crear usuario manual, dice "Email ya existe"}\\
+\textbf{R:} El email debe ser único. Verifica:
+\begin{enumerate}
+    \item Que el email no esté ya registrado (busca en la lista)
+    \item Si es un estudiante que ya tenía cuenta, actívala en lugar de crearla nueva
+    \item Usa un email diferente (puedes agregar +númerosin Gmail)
+\end{enumerate}
+
+\subsection{Reporte PDF no se genera}
+\textbf{P: Hago clic en "Generar PDF" y no descarga nada}\\
+\textbf{R:}
+\begin{itemize}
+    \item Verifica que \textbf{TCPDF esté instalado} (composer install)
+    \item Revisa logs de PHP: \texttt{/var/log/php\_errors.log}
+    \item Asegúrate de que el estudiante tenga resultados guardados
+    \item Prueba con otro navegador
+    \item Si persiste, reinicia el servidor Apache/PHP
+\end{itemize}
+
+\section{Todos los Usuarios}
+
+\subsection{La página se queda cargando}
+\textbf{P: Hago clic en algo y aparece la rueda girando eternamente}\\
+\textbf{R:}
+\begin{enumerate}
+    \item Espera 30 segundos (a veces el servidor es lento)
+    \item Recarga la página (F5 o Ctrl+R)
+    \item Verifica tu conexión a internet
+    \item Si es un test, revisa si guardó respuestas (localStorage)
+    \item Contacta al administrador si es recurrente
+\end{enumerate}
+
+\subsection{No veo gráficos/estadísticas}
+\textbf{P: Las páginas de resultados están en blanco o sin gráficos}\\
+\textbf{R:}
+\begin{itemize}
+    \item Asegúrate de que JavaScript esté \textbf{habilitado} en tu navegador
+    \item Prueba con Chrome o Firefox
+    \item Limpia la caché del navegador (Ctrl+Shift+Del)
+    \item Verifica que Chart.js esté cargando (F12 $\rightarrow$ Console)
+\end{itemize}
+
+% ===========================================================================
+% CAPÍTULO 9: GLOSARIO
+% ===========================================================================
+\chapter{GLOSARIO DE TÉRMINOS}
+
+\begin{description}[leftmargin=2cm, font=\normalfont]
+    \item[RIASEC] Modelo tipológico de John Holland: Realista, Investigador, Artístico, Social, Emprendedor, Convencional.
+    
+    \item[Escala Likert] Escala de medición ordinal del 1 al 5 que mide grado de acuerdo/desacuerdo.
+    
+    \item[DECE] Departamento de Estudios y Consejería Estudiantil. Personal orientador en instituciones educativas.
+    
+    \item[Zonal] Coordinador zonal que supervisa múltiples instituciones en una región geográfica.
+    
+    \item[Código AMIE] Código único que el Ministerio de Educación asigna a cada institución educativa.
+    
+    \item[Paralelo] División o grupo de estudiantes dentro de un mismo curso (ej: 1ro "A", 1ro "B").
+    
+    \item[PDF] Portable Document Format. Formato de archivo para documentos.
+    
+    \item[Excel] Hoja de cálculo de Microsoft (formato .xlsx).
+    
+    \item[LocalStorage] Almacenamiento del navegador que guarda datos temporalmente.
+    
+    \item[QR] Código QR (Quick Response) que contiene información escaneable.
+    
+    \item[Middleware] Software que filtra peticiones antes de llegar al controlador (autenticación).
+    
+    \item[API] Application Programming Interface (no expuesta directamente a usuarios).
+    
+    \item[SMTP] Protocolo para envío de correos electrónicos.
+    
+    \item[Roles] Niveles de acceso: Administrador > Zonal > DECE > Estudiante.
+    
+    \item[Test de Re-take] Segundo test vocacional (permitido cada 6 meses).
+    
+    \item[Perfil vocacional] Conjunto de puntajes RIASEC que definen tendencias de carrera.
+\end{description}
+
+% ===========================================================================
+% CAPÍTULO 10: SOPORTE Y CONTACTO
+% ===========================================================================
+\chapter{SOPORTE Y CONTACTO}
+
+\section{¿Necesitas ayuda?}
+Si tienes problemas o preguntas:
+
+\begin{itemize}
+    \item \textbf{Primero}: Consulta este manual (índice al inicio)
+    \item \textbf{Segundo}: Revisa la sección \textbf{Preguntas Frecuentes} (Capítulo 8)
+    \item \textbf{Tercero}: Contacta al administrador de tu institución (DECE)
+    \item \textbf{Cuarto}: Si es un error técnico, envía un ticket a \textbf{soporte@testvocacional.edu.ec}
+\end{itemize}
+
+\section{Información para Reportar Errores}
+Al reportar un error, incluye:
+\begin{enumerate}
+    \item \textbf{Tu rol}: Estudiante / DECE / Zonal / Administrador
+    \item \textbf{Institución}: Nombre de tu escuela/colegio
+    \item \textbf{Paso a paso}: Qué hiciste antes del error
+    \item \textbf{Descripción exacta}: Copia y pega mensajes de error
+    \item \textbf{Navegador}: Chrome/Firefox y versión
+    \item \textbf{Fecha y hora} del incidente
+    \item \textbf{Captura de pantalla} (si es posible)
+\end{enumerate}
+
+\section{Contacto Institucional}
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Concepto} & \textbf{Contacto} \\
+\hline
+Soporte técnico general & soporte@testvocacional.edu.ec \\
+Coordinación DECE & dece@testvocacional.edu.ec \\
+Administrador del sistema & admin@testvocacional.edu.ec \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Tiempos de Respuesta}
+\begin{itemize}
+    \item \textbf{Errores críticos}: 2-4 horas (sistema caído, sin acceso)
+    \item \textbf{Problemas funcionales}: 8-24 horas (no puede realizar test)
+    \item \textbf{Consultas generales}: 1-2 días hábiles
+\end{itemize}
+
+\section{Cursos de Capacitación}
+Se ofrecen capacitaciones virtuales periódicas:
+\begin{itemize}
+    \item \textbf{Para DECE}: "Gestión del Test Vocacional en tu Institución"
+    \item \textbf{Para Zonales}: "Reportes y Análisis de Datos Vocacionales"
+    \item \textbf{Para Administradores}: "Administración Avanzada del Sistema"
+\end{itemize}
+Contacta a \textbf{capacitacion@testvocacional.edu.ec} para inscribirte.
+
+% ===========================================================================
+% APÉNDICES
+% ===========================================================================
+\appendix
+\chapter{APÉNDICES}
+
+\section{Checklist - Antes del Test (Estudiante)}
+\begin{itemize}
+    \item Tener acceso a una computadora (no celular)
+    \item Conexión a internet estable
+    \item Navegador actualizado (Chrome recomendado)
+    \item 45-60 minutos de tiempo disponible (sin interrupciones)
+    \item Ambientes tranquilo y bien iluminado
+    \item Lápiz y papel para notas (opcional)
+    \item No consumir cafeína o azúcar en exceso antes del test
+\end{itemize}
+
+\section{Checklist - DECE: Revisión de Resultados}
+\begin{itemize}
+    \item Verificar que todos los estudiantes de la institución hayan sido asignados
+    \item Revisar estudiantes pendientes (que no han hecho test)
+    \item Analizar gráficos de distribución vocacional
+    \item Identificar estudiantes con APTO en áreas clave
+    \item Generar reporte grupal por curso
+    \item Planificar sesiones de orientación individual
+    \item Documentar observaciones en el sistema
+\end{itemize}
+
+\section{Checklist - Administrador: Mantenimiento Mensual}
+\begin{itemize}
+    \item Revisar logs de errores
+    \item Verificar backups automáticos de BD
+    \item Actualizar preguntas (agregar nuevo, eliminar obsoletas)
+    \item Revisar usuarios inactivos (limpiar si es necesario)
+    \item Monitorear espacio en disco
+    \item Verificar envío de emails (SMTP)
+    \item Actualizar lista de instituciones
+\end{itemize}
+
+\section{Atajos de Teclado}
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|}
+\hline
+\textbf{Atajo} & \textbf{Acción} \\
+\hline
+F5 & Recargar página \\
+\hline
+Ctrl+F & Buscar en la página \\
+\hline
+Ctrl+P & Imprimir página actual \\
+\hline
+Ctrl+S & Guardar (en formularios) \\
+\hline
+Alt + Flecha Izq & Volver atrás (historial navegador) \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Resolución de Problemas Rápidos}
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Síntoma} & \textbf{Solución inmediata} \\
+\hline
+No puedo loguearme & 1. Limpiar caché del navegador \\
+& 2. Probar en modo incógnito \\
+& 3. Recuperar contraseña \\
+\hline
+Test se cuelga & 1. Esperar 30 segundos \\
+& 2. Recuperar respuestas guardadas \\
+& 3. Si no funciona, reportar \\
+\hline
+PDF no descarga & 1. Verificar pop-ups habilitados \\
+& 2. Probar navegador diferente \\
+& 3. Desactivar ad-blocker \\
+\hline
+Gráficos no se ven & 1. Habilitar JavaScript \\
+& 2. Actualizar navegador \\
+& 3. Limpiar caché \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Plantillas y Formatos}
+Adjuntos a este manual (archivos separados):
+\begin{itemize}
+    \item \textbf{Plantilla Excel para importar preguntas} (preguntas\_template.xlsx)
+    \item \textbf{Plantilla Excel para importar usuarios} (usuarios\_template.xlsx)
+    \item \textbf{Formato de reporte grupal} (ejemplo\_reporte.pdf)
+    \item \textbf{Glosario RIASEC} (carreras\_por_categoria.pdf)
+\end{itemize}
+
+\end{document}

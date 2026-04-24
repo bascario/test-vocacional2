@@ -1,9 +1,18 @@
 <?php
+require_once __DIR__ . '/../models/User.php';
+
 class AuthMiddleware {
     // Verifica que exista sesión activa; si no, redirige al login
     public static function checkAuth() {
         if (!isset($_SESSION['user_id'])) {
             header('Location: /test-vocacional/login');
+            exit;
+        }
+
+        $userModel = new User();
+        $user = $userModel->find($_SESSION['user_id']);
+        if ($user && !$userModel->isPaymentAllowed($user)) {
+            header('Location: /test-vocacional/cuenta-suspendida');
             exit;
         }
     }

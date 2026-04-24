@@ -434,4 +434,79 @@ class AdminController
         header('Location: /test-vocacional/admin/users');
         exit;
     }
+
+    /**
+     * Muestra la página de administración de estado de pago.
+     */
+    public function paymentStatus()
+    {
+        if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'cuenta_oculta') {
+            $_SESSION['error'] = 'Acceso no autorizado';
+            header('Location: /test-vocacional/login');
+            exit;
+        }
+
+        $perPage = 20;
+        $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+        if ($page < 1) {
+            $page = 1;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        $filters = [
+            'rol' => $_GET['rol'] ?? null,
+            'institucion_id' => $_GET['institucion_id'] ?? null,
+            'search' => $_GET['search'] ?? null,
+        ];
+
+        $totalRecords = $this->userService->countAll($filters);
+        $totalPages = ceil($totalRecords / $perPage);
+        $users = $this->userService->findAll($perPage, $offset, $filters);
+        $currentPage = $page;
+
+        $institutions = $this->institutionService->getAll(10000, 0, []);
+        require_once 'views/admin_payment_status.php';
+    }
+
+    /**
+     * Actualiza el estado de pago de un usuario.
+     */
+    public function updatePaymentStatus()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $_SESSION['error'] = 'Método inválido';
+            header('Location: /test-vocacional/admin/payment-status');
+            exit;
+        }
+
+        if (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'cuenta_oculta') {
+            $_SESSION['error'] = 'Acceso no autorizado';
+            header('Location: /test-vocacional/login');
+            exit;
+        }
+
+        $targetUserId = $_POST['user_id'] ?? null;
+        $paymentStatus = $_POST['payment_status'] ?? null;
+
+        if (empty($targetUserId) || empty($paymentStatus)) {
+            $_SESSION['error'] = 'Faltan datos para actualizar el estado de pago';
+            header('Location: /test-vocacional/admin/payment-status');
+            exit;
+        }
+
+        try {
+            $currentUser = [
+                'id' => $_SESSION['user_id'] ?? null,
+                'rol' => $_SESSION['user_role'] ?? null,
+            ];
+
+            $this->userService->updatePaymentStatus($currentUser, (int)$targetUserId, $paymentStatus);
+            $_SESSION['success'] = 'Estado de pago actualizado correctamente';
+        } catch (Exception $e) {
+            $_SESSION['error'] = 'Error al actualizar estado de pago: ' . $e->getMessage();
+        }
+
+        header('Location: /test-vocacional/admin/payment-status');
+        exit;
+    }
 }
